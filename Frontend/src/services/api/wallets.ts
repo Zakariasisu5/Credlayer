@@ -1,5 +1,5 @@
 import api from './client';
-import type { PaginationParams, PaginatedResponse } from '@/types/api';
+import type { PaginationParams } from '@/types/api';
 import type {
   Wallet,
   WalletActivity,
@@ -16,8 +16,7 @@ export const walletsApi = {
 
   // Get wallet activity timeline
   getWalletActivity: async (address: string, params?: PaginationParams) => {
-    const response = await api.get<PaginatedResponse<WalletActivity>>(`/wallets/${address}/activity`, { params });
-    return response.data;
+    return api.getPaginated<WalletActivity>(`/wallets/${address}/activity`, { params });
   },
 
   // Get wallet analytics
@@ -28,7 +27,7 @@ export const walletsApi = {
 
   // Search wallets by address or ENS
   searchWallets: async (query: string, params?: PaginationParams) => {
-    return api.get<PaginatedResponse<Wallet>>('/wallets/search', {
+    return api.getPaginated<Wallet>('/wallets/search', {
       params: { query, ...params },
     });
   },

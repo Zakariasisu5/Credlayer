@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import type { ApiResponse, ApiError } from '@/types/api';
+import type { ApiResponse, PaginatedResponse, ApiError } from '@/types/api';
+import type { AuthResponse } from '@/types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000', 10);
@@ -52,16 +53,19 @@ apiClient.interceptors.response.use(
         // Attempt to refresh token
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refreshToken,
-          });
+          const response = await axios.post<ApiResponse<AuthResponse>>(
+            `${API_BASE_URL}/auth/refresh`,
+            { refreshToken }
+          );
 
-          const { accessToken } = response.data.data;
-          localStorage.setItem('accessToken', accessToken);
+          // Refresh tokens rotate on every use - always persist the new pair.
+          const { tokens } = response.data.data;
+          localStorage.setItem('accessToken', tokens.accessToken);
+          localStorage.setItem('refreshToken', tokens.refreshToken);
 
           // Retry original request
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
           }
           return apiClient(originalRequest);
         }
@@ -111,10 +115,31 @@ export async function apiRequest<T>(
   }
 }
 
+// Paginated list wrapper. PaginatedResponse<T> already models the full
+// top-level body ({success, data, pagination, timestamp}) - it is NOT nested
+// inside another ApiResponse envelope, so this must not go through
+// apiRequest<PaginatedResponse<T>>, which would expect a doubly-wrapped body.
+export async function apiRequestPaginated<T>(
+  config: AxiosRequestConfig
+): Promise<PaginatedResponse<T>> {
+  try {
+    const response = await apiClient.request<PaginatedResponse<T>>(config);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new APIError(error);
+    }
+    throw error;
+  }
+}
+
 // HTTP Methods
 export const api = {
   get: <T>(url: string, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'GET', url }),
+
+  getPaginated: <T>(url: string, config?: AxiosRequestConfig) =>
+    apiRequestPaginated<T>({ ...config, method: 'GET', url }),
 
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'POST', url, data }),

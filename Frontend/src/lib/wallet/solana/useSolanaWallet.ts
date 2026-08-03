@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { SOLANA_NETWORK_LABEL } from "./SolanaProvider";
+import { authApi } from "@/services/api";
 
 const AUTH_KEY = "credlayer.solana.siws";
 
@@ -102,28 +103,41 @@ export function useSolanaWallet() {
     setAuthError(null);
     setSigning(true);
     try {
-      const domain =
-        typeof window !== "undefined" ? window.location.host : "credlayer.io";
-      const nonce = Math.random().toString(36).slice(2, 12);
-      const issuedAt = new Date().toISOString();
-      const message = [
-        `${domain} wants you to sign in with your Solana account:`,
-        publicKey.toBase58(),
-        "",
-        "Sign this message to verify wallet ownership and access your CredLayer reputation profile.",
-        "",
-        `URI: ${typeof window !== "undefined" ? window.location.origin : ""}`,
-        `Version: 1`,
-        `Network: ${SOLANA_NETWORK_LABEL}`,
-        `Nonce: ${nonce}`,
-        `Issued At: ${issuedAt}`,
-      ].join("\n");
+      const address = publicKey.toBase58();
+
+      // Get the challenge message from the backend (single source of truth
+      // for the nonce - the server verifies the signed bytes match exactly
+      // what it issued).
+      const messageRes = await authApi.getSignMessage({
+        walletAddress: address,
+        chain: "solana",
+      });
+      const message = messageRes.data.message;
 
       const encoded = new TextEncoder().encode(message);
       const sig = await signMessage(encoded);
+      const signature = toBase64(sig);
+
+      // Authenticate with backend
+      const authRes = await authApi.authenticateWallet({
+        walletAddress: address,
+        signature,
+        message,
+        chain: "solana",
+      });
+
+      const tokens = authRes.data.tokens;
+      if (tokens?.accessToken) {
+        localStorage.setItem("accessToken", tokens.accessToken);
+      }
+      if (tokens?.refreshToken) {
+        localStorage.setItem("refreshToken", tokens.refreshToken);
+      }
+
+      const issuedAt = new Date().toISOString();
       const s: SolanaSession = {
-        address: publicKey.toBase58(),
-        signature: toBase64(sig),
+        address,
+        signature,
         message,
         issuedAt,
         walletProvider: wallet?.adapter.name ?? "unknown",
@@ -141,6 +155,10 @@ export function useSolanaWallet() {
   }, [publicKey, signMessage, wallet]);
 
   const signOut = useCallback(async () => {
+    // Clear backend tokens
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
     clearSession(address);
     setSession(null);
     try {

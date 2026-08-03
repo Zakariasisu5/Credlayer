@@ -75,10 +75,10 @@ export function useWallet() {
       // Store tokens from backend
       const tokens = authRes.data.tokens;
       if (tokens?.accessToken) {
-        localStorage.setItem("credlayer.access_token", tokens.accessToken);
+        localStorage.setItem("accessToken", tokens.accessToken);
       }
       if (tokens?.refreshToken) {
-        localStorage.setItem("credlayer.refresh_token", tokens.refreshToken);
+        localStorage.setItem("refreshToken", tokens.refreshToken);
       }
 
       // Store session locally for UI state
@@ -98,8 +98,8 @@ export function useWallet() {
 
   const signOut = useCallback(() => {
     // Clear backend tokens
-    localStorage.removeItem("credlayer.access_token");
-    localStorage.removeItem("credlayer.refresh_token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
 
     // Clear session
     clearSession(address);
