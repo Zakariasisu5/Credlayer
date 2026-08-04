@@ -26,19 +26,23 @@ function AIAnalysisPage() {
         <div className="space-y-4">
           <div className="glass-strong rounded-lg p-6">
             <p className="text-muted-foreground mb-4">
-              Every wallet analysis includes an AI-generated summary that explains the reputation score
-              in plain English, highlighting key insights and behavioral patterns.
+              Every wallet analysis includes an AI-generated summary that explains the reputation
+              score in plain English, highlighting key insights and behavioral patterns.
             </p>
-            
+
             <div className="glass rounded-lg p-5 border-l-4 border-accent">
               <p className="text-sm font-semibold text-accent mb-2">Example AI Summary</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                "Wallet 0x742d...0bEb shows <span className="text-foreground font-medium">excellent on-chain reputation</span> with 
-                a <span className="text-foreground font-medium">3.2-year history</span> across <span className="text-foreground font-medium">5 networks</span>. 
-                Behavior is consistent with a long-term power user: <span className="text-success">strong sybil resistance</span> and 
-                <span className="text-success"> diverse protocol usage</span>. Recent activity indicates{" "}
-                <span className="text-success">no elevated risk signals</span>. The wallet demonstrates mature DeFi participation with
-                regular interactions across established protocols and maintains verified credentials from Gitcoin Passport and ENS."
+                "Wallet 0x742d...0bEb shows{" "}
+                <span className="text-foreground font-medium">excellent on-chain reputation</span>{" "}
+                with a <span className="text-foreground font-medium">3.2-year history</span> across{" "}
+                <span className="text-foreground font-medium">5 networks</span>. Behavior is
+                consistent with a long-term power user:{" "}
+                <span className="text-success">strong sybil resistance</span> and
+                <span className="text-success"> diverse protocol usage</span>. Recent activity
+                indicates <span className="text-success">no elevated risk signals</span>. The wallet
+                demonstrates mature DeFi participation with regular interactions across established
+                protocols and maintains verified credentials from Gitcoin Passport and ENS."
               </p>
             </div>
           </div>
@@ -78,7 +82,11 @@ function AIAnalysisPage() {
             />
             <PatternCard
               pattern="DeFi Farmer"
-              indicators={["Frequent yield farming", "Multiple LP positions", "Quick entry/exit patterns"]}
+              indicators={[
+                "Frequent yield farming",
+                "Multiple LP positions",
+                "Quick entry/exit patterns",
+              ]}
               color="gold"
             />
             <PatternCard
@@ -93,7 +101,11 @@ function AIAnalysisPage() {
             />
             <PatternCard
               pattern="Potential Sybil"
-              indicators={["Similar patterns to other wallets", "Minimal diversity", "Short lifespan"]}
+              indicators={[
+                "Similar patterns to other wallets",
+                "Minimal diversity",
+                "Short lifespan",
+              ]}
               color="danger"
             />
           </div>
@@ -115,7 +127,7 @@ function AIAnalysisPage() {
                   "Unusual transaction timing",
                   "Suspicious value patterns",
                   "Wash trading indicators",
-                  "Front-running behavior"
+                  "Front-running behavior",
                 ]}
               />
               <RiskCategory
@@ -124,7 +136,7 @@ function AIAnalysisPage() {
                   "High-risk contract calls",
                   "Unverified contract usage",
                   "Flash loan participation",
-                  "Mixer/tumbler activity"
+                  "Mixer/tumbler activity",
                 ]}
               />
               <RiskCategory
@@ -133,7 +145,7 @@ function AIAnalysisPage() {
                   "Coordinated activity",
                   "Sybil attack patterns",
                   "Bot-like behavior",
-                  "Cluster membership"
+                  "Cluster membership",
                 ]}
               />
               <RiskCategory
@@ -142,7 +154,7 @@ function AIAnalysisPage() {
                   "Lack of verified identity",
                   "Suspicious social links",
                   "Blacklist presence",
-                  "Sanction screening"
+                  "Sanction screening",
                 ]}
               />
             </div>
@@ -200,11 +212,12 @@ console.log(deepAnalysis.recommendations);`}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Built for AI Agents</h3>
                 <p className="text-sm text-muted-foreground">
-                  CredLayer's AI summaries are designed to be easily consumed by autonomous AI agents,
-                  providing them with trustworthiness signals to make safe on-chain decisions.
+                  CredLayer's AI summaries are designed to be easily consumed by autonomous AI
+                  agents, providing them with trustworthiness signals to make safe on-chain
+                  decisions.
                 </p>
               </div>
-              
+
               <div className="glass rounded-lg p-4">
                 <p className="text-sm font-medium mb-2">Agent Use Cases</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
@@ -229,7 +242,9 @@ console.log(deepAnalysis.recommendations);`}
           </div>
           <div className="glass rounded-lg p-4">
             <p className="text-sm font-medium mb-1">Update Frequency</p>
-            <p className="text-xs text-muted-foreground">Models retrained weekly with latest data</p>
+            <p className="text-xs text-muted-foreground">
+              Models retrained weekly with latest data
+            </p>
           </div>
           <div className="glass rounded-lg p-4">
             <p className="text-sm font-medium mb-1">Accuracy</p>
@@ -241,7 +256,15 @@ console.log(deepAnalysis.recommendations);`}
   );
 }
 
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -253,7 +276,15 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   );
 }
 
-function AIFeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+function AIFeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
   return (
     <div className="glass rounded-lg p-4 text-center">
       <div className="text-accent mb-2 flex justify-center">{icon}</div>
@@ -263,13 +294,21 @@ function AIFeatureCard({ icon, title, description }: { icon: React.ReactNode; ti
   );
 }
 
-function PatternCard({ pattern, indicators, color }: { pattern: string; indicators: string[]; color: string }) {
+function PatternCard({
+  pattern,
+  indicators,
+  color,
+}: {
+  pattern: string;
+  indicators: string[];
+  color: string;
+}) {
   const colorClasses = {
     success: "border-success",
     gold: "border-gold",
     azure: "border-azure",
     warn: "border-warn",
-    danger: "border-danger"
+    danger: "border-danger",
   }[color];
 
   return (

@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  
+
   // Check if we're on developer pages
   const isDeveloperPage = pathname.startsWith("/app/developers");
 
@@ -97,8 +97,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold/0 via-gold/5 to-gold/0 
-                            opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-gold/0 via-gold/5 to-gold/0 
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              />
               {desktopCollapsed ? (
                 <ChevronRight className="size-4 text-muted-foreground group-hover:text-gold transition-colors relative z-10" />
               ) : (
@@ -115,7 +117,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         style={{ "--sidebar-w": desktopCollapsed ? "80px" : "256px" } as React.CSSProperties}
       >
         <div className="p-4">
-
           <div className="glass-strong flex items-center justify-between rounded-2xl px-4 py-2.5">
             <div className="flex items-center gap-2 flex-1 max-w-md">
               <div className="glass flex items-center gap-2 rounded-lg px-3 py-1.5 w-full">
@@ -198,7 +199,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="p-3 sm:p-4 pt-2 pb-16">{children}</div>
       </main>
-
     </div>
   );
 }
