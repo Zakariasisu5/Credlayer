@@ -1,4 +1,10 @@
-FROM python:3.12-slim AS base
+FROM python:3.12.8-slim-bookworm AS base
+
+# Update system packages to patch vulnerabilities
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
