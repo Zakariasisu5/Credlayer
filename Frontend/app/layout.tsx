@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./styles.css";
 import { ThemeProvider } from "./lib/theme";
+import { WalletProvider } from "./lib/wallet/WalletProvider";
+import { SolanaProvider } from "./lib/wallet/solana/SolanaProvider";
+import { WalletSessionProvider } from "./lib/wallet/session";
 
 export const metadata: Metadata = {
   title: "CredLayer — The Reputation Layer for Web3",
@@ -26,9 +29,9 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "/assets/favicon.png",
+    shortcut: "/assets/favicon.png",
+    apple: "/assets/favicon.png",
   },
 };
 
@@ -46,7 +49,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <WalletProvider>
+            <SolanaProvider>
+              <WalletSessionProvider>
+                {children}
+              </WalletSessionProvider>
+            </SolanaProvider>
+          </WalletProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

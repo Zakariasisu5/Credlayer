@@ -2,11 +2,11 @@
 
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
-import { Wallet, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/credlayer/Logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ConnectWalletButton } from "@/components/wallet/ConnectWalletButton";
 
 const links = [
   { label: "Protocol", href: "#features" },
@@ -62,13 +62,7 @@ export function Nav() {
               >
                 Open App
               </Link>
-              <Button asChild size="sm" variant="gold" className="h-9">
-                <Link href="/app">
-                  <Wallet className="mr-1.5 size-4" />
-                  <span className="hidden sm:inline">Connect Wallet</span>
-                  <span className="sm:hidden">Connect</span>
-                </Link>
-              </Button>
+              <ConnectWalletButton />
               <button
                 onClick={() => setOpen((v) => !v)}
                 aria-label={open ? "Close menu" : "Open menu"}

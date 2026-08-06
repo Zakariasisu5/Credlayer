@@ -1,20 +1,15 @@
-import logo from "@/assets/icon.webp?url";
-
-const fallbackLogo = "/favicon.png";
+"use client";
 
 export function Logo({ className = "h-9" }: { className?: string }) {
   return (
-    <img
-      src={logo ?? fallbackLogo}
-      alt="CredLayer"
-      className={`${className} block`}
-      style={{ objectFit: "contain" }}
-      onError={(event) => {
-        const target = event.currentTarget as HTMLImageElement;
-        if (target.src !== fallbackLogo) {
-          target.src = fallbackLogo;
-        }
-      }}
-    />
+    <div className="flex items-center gap-2">
+      <img
+        src="/assets/favicon.png"
+        alt="CredLayer"
+        className={className}
+        style={{ objectFit: "contain" }}
+      />
+      <span className="font-bold text-lg text-foreground whitespace-nowrap">CredLayer</span>
+    </div>
   );
 }
