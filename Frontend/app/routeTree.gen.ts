@@ -1,0 +1,633 @@
+
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAgentsRouteImport } from './routes/app.agents'
+import { Route as AppCredentialsRouteImport } from './routes/app.credentials'
+import { Route as AppDevelopersRouteImport } from './routes/app.developers'
+import { Route as AppExplorerRouteImport } from './routes/app.explorer'
+import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppDevelopersIndexRouteImport } from './routes/app.developers.index'
+import { Route as AppDevelopersApiKeysRouteImport } from './routes/app.developers.api-keys'
+import { Route as AppDevelopersApiReferenceRouteImport } from './routes/app.developers.api-reference'
+import { Route as AppDevelopersDashboardRouteImport } from './routes/app.developers.dashboard'
+import { Route as AppDevelopersErrorsRouteImport } from './routes/app.developers.errors'
+import { Route as AppDevelopersQuickstartRouteImport } from './routes/app.developers.quickstart'
+import { Route as AppDevelopersRateLimitsRouteImport } from './routes/app.developers.rate-limits'
+import { Route as AppDevelopersWebhooksRouteImport } from './routes/app.developers.webhooks'
+import { Route as AppDevelopersDocsAiAnalysisRouteImport } from './routes/app.developers.docs.ai-analysis'
+import { Route as AppDevelopersDocsAuthenticationRouteImport } from './routes/app.developers.docs.authentication'
+import { Route as AppDevelopersDocsBestPracticesRouteImport } from './routes/app.developers.docs.best-practices'
+import { Route as AppDevelopersDocsGettingStartedRouteImport } from './routes/app.developers.docs.getting-started'
+import { Route as AppDevelopersDocsReputationRouteImport } from './routes/app.developers.docs.reputation'
+import { Route as AppDevelopersDocsWalletAnalysisRouteImport } from './routes/app.developers.docs.wallet-analysis'
+import { Route as AppDevelopersSdksCurlRouteImport } from './routes/app.developers.sdks.curl'
+import { Route as AppDevelopersSdksJavascriptRouteImport } from './routes/app.developers.sdks.javascript'
+import { Route as AppDevelopersSdksPythonRouteImport } from './routes/app.developers.sdks.python'
+import { Route as AppDevelopersSdksTypescriptRouteImport } from './routes/app.developers.sdks.typescript'
+
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAgentsRoute = AppAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCredentialsRoute = AppCredentialsRouteImport.update({
+  id: '/credentials',
+  path: '/credentials',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDevelopersRoute = AppDevelopersRouteImport.update({
+  id: '/developers',
+  path: '/developers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExplorerRoute = AppExplorerRouteImport.update({
+  id: '/explorer',
+  path: '/explorer',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDevelopersIndexRoute = AppDevelopersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersApiKeysRoute = AppDevelopersApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersApiReferenceRoute =
+  AppDevelopersApiReferenceRouteImport.update({
+    id: '/api-reference',
+    path: '/api-reference',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersDashboardRoute = AppDevelopersDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersErrorsRoute = AppDevelopersErrorsRouteImport.update({
+  id: '/errors',
+  path: '/errors',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersQuickstartRoute = AppDevelopersQuickstartRouteImport.update({
+  id: '/quickstart',
+  path: '/quickstart',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersRateLimitsRoute = AppDevelopersRateLimitsRouteImport.update({
+  id: '/rate-limits',
+  path: '/rate-limits',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersWebhooksRoute = AppDevelopersWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersDocsAiAnalysisRoute =
+  AppDevelopersDocsAiAnalysisRouteImport.update({
+    id: '/docs/ai-analysis',
+    path: '/docs/ai-analysis',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersDocsAuthenticationRoute =
+  AppDevelopersDocsAuthenticationRouteImport.update({
+    id: '/docs/authentication',
+    path: '/docs/authentication',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersDocsBestPracticesRoute =
+  AppDevelopersDocsBestPracticesRouteImport.update({
+    id: '/docs/best-practices',
+    path: '/docs/best-practices',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersDocsGettingStartedRoute =
+  AppDevelopersDocsGettingStartedRouteImport.update({
+    id: '/docs/getting-started',
+    path: '/docs/getting-started',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersDocsReputationRoute =
+  AppDevelopersDocsReputationRouteImport.update({
+    id: '/docs/reputation',
+    path: '/docs/reputation',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersDocsWalletAnalysisRoute =
+  AppDevelopersDocsWalletAnalysisRouteImport.update({
+    id: '/docs/wallet-analysis',
+    path: '/docs/wallet-analysis',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersSdksCurlRoute = AppDevelopersSdksCurlRouteImport.update({
+  id: '/sdks/curl',
+  path: '/sdks/curl',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersSdksJavascriptRoute =
+  AppDevelopersSdksJavascriptRouteImport.update({
+    id: '/sdks/javascript',
+    path: '/sdks/javascript',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+const AppDevelopersSdksPythonRoute = AppDevelopersSdksPythonRouteImport.update({
+  id: '/sdks/python',
+  path: '/sdks/python',
+  getParentRoute: () => AppDevelopersRoute,
+} as any)
+const AppDevelopersSdksTypescriptRoute =
+  AppDevelopersSdksTypescriptRouteImport.update({
+    id: '/sdks/typescript',
+    path: '/sdks/typescript',
+    getParentRoute: () => AppDevelopersRoute,
+  } as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/agents': typeof AppAgentsRoute
+  '/app/credentials': typeof AppCredentialsRoute
+  '/app/developers': typeof AppDevelopersRouteWithChildren
+  '/app/explorer': typeof AppExplorerRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/developers/api-keys': typeof AppDevelopersApiKeysRoute
+  '/app/developers/api-reference': typeof AppDevelopersApiReferenceRoute
+  '/app/developers/dashboard': typeof AppDevelopersDashboardRoute
+  '/app/developers/errors': typeof AppDevelopersErrorsRoute
+  '/app/developers/quickstart': typeof AppDevelopersQuickstartRoute
+  '/app/developers/rate-limits': typeof AppDevelopersRateLimitsRoute
+  '/app/developers/webhooks': typeof AppDevelopersWebhooksRoute
+  '/app/developers/': typeof AppDevelopersIndexRoute
+  '/app/developers/docs/ai-analysis': typeof AppDevelopersDocsAiAnalysisRoute
+  '/app/developers/docs/authentication': typeof AppDevelopersDocsAuthenticationRoute
+  '/app/developers/docs/best-practices': typeof AppDevelopersDocsBestPracticesRoute
+  '/app/developers/docs/getting-started': typeof AppDevelopersDocsGettingStartedRoute
+  '/app/developers/docs/reputation': typeof AppDevelopersDocsReputationRoute
+  '/app/developers/docs/wallet-analysis': typeof AppDevelopersDocsWalletAnalysisRoute
+  '/app/developers/sdks/curl': typeof AppDevelopersSdksCurlRoute
+  '/app/developers/sdks/javascript': typeof AppDevelopersSdksJavascriptRoute
+  '/app/developers/sdks/python': typeof AppDevelopersSdksPythonRoute
+  '/app/developers/sdks/typescript': typeof AppDevelopersSdksTypescriptRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/app/agents': typeof AppAgentsRoute
+  '/app/credentials': typeof AppCredentialsRoute
+  '/app/explorer': typeof AppExplorerRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app': typeof AppIndexRoute
+  '/app/developers/api-keys': typeof AppDevelopersApiKeysRoute
+  '/app/developers/api-reference': typeof AppDevelopersApiReferenceRoute
+  '/app/developers/dashboard': typeof AppDevelopersDashboardRoute
+  '/app/developers/errors': typeof AppDevelopersErrorsRoute
+  '/app/developers/quickstart': typeof AppDevelopersQuickstartRoute
+  '/app/developers/rate-limits': typeof AppDevelopersRateLimitsRoute
+  '/app/developers/webhooks': typeof AppDevelopersWebhooksRoute
+  '/app/developers': typeof AppDevelopersIndexRoute
+  '/app/developers/docs/ai-analysis': typeof AppDevelopersDocsAiAnalysisRoute
+  '/app/developers/docs/authentication': typeof AppDevelopersDocsAuthenticationRoute
+  '/app/developers/docs/best-practices': typeof AppDevelopersDocsBestPracticesRoute
+  '/app/developers/docs/getting-started': typeof AppDevelopersDocsGettingStartedRoute
+  '/app/developers/docs/reputation': typeof AppDevelopersDocsReputationRoute
+  '/app/developers/docs/wallet-analysis': typeof AppDevelopersDocsWalletAnalysisRoute
+  '/app/developers/sdks/curl': typeof AppDevelopersSdksCurlRoute
+  '/app/developers/sdks/javascript': typeof AppDevelopersSdksJavascriptRoute
+  '/app/developers/sdks/python': typeof AppDevelopersSdksPythonRoute
+  '/app/developers/sdks/typescript': typeof AppDevelopersSdksTypescriptRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/agents': typeof AppAgentsRoute
+  '/app/credentials': typeof AppCredentialsRoute
+  '/app/developers': typeof AppDevelopersRouteWithChildren
+  '/app/explorer': typeof AppExplorerRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/developers/api-keys': typeof AppDevelopersApiKeysRoute
+  '/app/developers/api-reference': typeof AppDevelopersApiReferenceRoute
+  '/app/developers/dashboard': typeof AppDevelopersDashboardRoute
+  '/app/developers/errors': typeof AppDevelopersErrorsRoute
+  '/app/developers/quickstart': typeof AppDevelopersQuickstartRoute
+  '/app/developers/rate-limits': typeof AppDevelopersRateLimitsRoute
+  '/app/developers/webhooks': typeof AppDevelopersWebhooksRoute
+  '/app/developers/': typeof AppDevelopersIndexRoute
+  '/app/developers/docs/ai-analysis': typeof AppDevelopersDocsAiAnalysisRoute
+  '/app/developers/docs/authentication': typeof AppDevelopersDocsAuthenticationRoute
+  '/app/developers/docs/best-practices': typeof AppDevelopersDocsBestPracticesRoute
+  '/app/developers/docs/getting-started': typeof AppDevelopersDocsGettingStartedRoute
+  '/app/developers/docs/reputation': typeof AppDevelopersDocsReputationRoute
+  '/app/developers/docs/wallet-analysis': typeof AppDevelopersDocsWalletAnalysisRoute
+  '/app/developers/sdks/curl': typeof AppDevelopersSdksCurlRoute
+  '/app/developers/sdks/javascript': typeof AppDevelopersSdksJavascriptRoute
+  '/app/developers/sdks/python': typeof AppDevelopersSdksPythonRoute
+  '/app/developers/sdks/typescript': typeof AppDevelopersSdksTypescriptRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/agents'
+    | '/app/credentials'
+    | '/app/developers'
+    | '/app/explorer'
+    | '/app/profile'
+    | '/app/settings'
+    | '/app/'
+    | '/app/developers/api-keys'
+    | '/app/developers/api-reference'
+    | '/app/developers/dashboard'
+    | '/app/developers/errors'
+    | '/app/developers/quickstart'
+    | '/app/developers/rate-limits'
+    | '/app/developers/webhooks'
+    | '/app/developers/'
+    | '/app/developers/docs/ai-analysis'
+    | '/app/developers/docs/authentication'
+    | '/app/developers/docs/best-practices'
+    | '/app/developers/docs/getting-started'
+    | '/app/developers/docs/reputation'
+    | '/app/developers/docs/wallet-analysis'
+    | '/app/developers/sdks/curl'
+    | '/app/developers/sdks/javascript'
+    | '/app/developers/sdks/python'
+    | '/app/developers/sdks/typescript'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/app/agents'
+    | '/app/credentials'
+    | '/app/explorer'
+    | '/app/profile'
+    | '/app/settings'
+    | '/app'
+    | '/app/developers/api-keys'
+    | '/app/developers/api-reference'
+    | '/app/developers/dashboard'
+    | '/app/developers/errors'
+    | '/app/developers/quickstart'
+    | '/app/developers/rate-limits'
+    | '/app/developers/webhooks'
+    | '/app/developers'
+    | '/app/developers/docs/ai-analysis'
+    | '/app/developers/docs/authentication'
+    | '/app/developers/docs/best-practices'
+    | '/app/developers/docs/getting-started'
+    | '/app/developers/docs/reputation'
+    | '/app/developers/docs/wallet-analysis'
+    | '/app/developers/sdks/curl'
+    | '/app/developers/sdks/javascript'
+    | '/app/developers/sdks/python'
+    | '/app/developers/sdks/typescript'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/agents'
+    | '/app/credentials'
+    | '/app/developers'
+    | '/app/explorer'
+    | '/app/profile'
+    | '/app/settings'
+    | '/app/'
+    | '/app/developers/api-keys'
+    | '/app/developers/api-reference'
+    | '/app/developers/dashboard'
+    | '/app/developers/errors'
+    | '/app/developers/quickstart'
+    | '/app/developers/rate-limits'
+    | '/app/developers/webhooks'
+    | '/app/developers/'
+    | '/app/developers/docs/ai-analysis'
+    | '/app/developers/docs/authentication'
+    | '/app/developers/docs/best-practices'
+    | '/app/developers/docs/getting-started'
+    | '/app/developers/docs/reputation'
+    | '/app/developers/docs/wallet-analysis'
+    | '/app/developers/sdks/curl'
+    | '/app/developers/sdks/javascript'
+    | '/app/developers/sdks/python'
+    | '/app/developers/sdks/typescript'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/agents': {
+      id: '/app/agents'
+      path: '/agents'
+      fullPath: '/app/agents'
+      preLoaderRoute: typeof AppAgentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/credentials': {
+      id: '/app/credentials'
+      path: '/credentials'
+      fullPath: '/app/credentials'
+      preLoaderRoute: typeof AppCredentialsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/developers': {
+      id: '/app/developers'
+      path: '/developers'
+      fullPath: '/app/developers'
+      preLoaderRoute: typeof AppDevelopersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/explorer': {
+      id: '/app/explorer'
+      path: '/explorer'
+      fullPath: '/app/explorer'
+      preLoaderRoute: typeof AppExplorerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/profile': {
+      id: '/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/developers/': {
+      id: '/app/developers/'
+      path: '/'
+      fullPath: '/app/developers/'
+      preLoaderRoute: typeof AppDevelopersIndexRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/api-keys': {
+      id: '/app/developers/api-keys'
+      path: '/api-keys'
+      fullPath: '/app/developers/api-keys'
+      preLoaderRoute: typeof AppDevelopersApiKeysRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/api-reference': {
+      id: '/app/developers/api-reference'
+      path: '/api-reference'
+      fullPath: '/app/developers/api-reference'
+      preLoaderRoute: typeof AppDevelopersApiReferenceRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/dashboard': {
+      id: '/app/developers/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/developers/dashboard'
+      preLoaderRoute: typeof AppDevelopersDashboardRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/errors': {
+      id: '/app/developers/errors'
+      path: '/errors'
+      fullPath: '/app/developers/errors'
+      preLoaderRoute: typeof AppDevelopersErrorsRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/quickstart': {
+      id: '/app/developers/quickstart'
+      path: '/quickstart'
+      fullPath: '/app/developers/quickstart'
+      preLoaderRoute: typeof AppDevelopersQuickstartRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/rate-limits': {
+      id: '/app/developers/rate-limits'
+      path: '/rate-limits'
+      fullPath: '/app/developers/rate-limits'
+      preLoaderRoute: typeof AppDevelopersRateLimitsRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/webhooks': {
+      id: '/app/developers/webhooks'
+      path: '/webhooks'
+      fullPath: '/app/developers/webhooks'
+      preLoaderRoute: typeof AppDevelopersWebhooksRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/docs/ai-analysis': {
+      id: '/app/developers/docs/ai-analysis'
+      path: '/docs/ai-analysis'
+      fullPath: '/app/developers/docs/ai-analysis'
+      preLoaderRoute: typeof AppDevelopersDocsAiAnalysisRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/docs/authentication': {
+      id: '/app/developers/docs/authentication'
+      path: '/docs/authentication'
+      fullPath: '/app/developers/docs/authentication'
+      preLoaderRoute: typeof AppDevelopersDocsAuthenticationRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/docs/best-practices': {
+      id: '/app/developers/docs/best-practices'
+      path: '/docs/best-practices'
+      fullPath: '/app/developers/docs/best-practices'
+      preLoaderRoute: typeof AppDevelopersDocsBestPracticesRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/docs/getting-started': {
+      id: '/app/developers/docs/getting-started'
+      path: '/docs/getting-started'
+      fullPath: '/app/developers/docs/getting-started'
+      preLoaderRoute: typeof AppDevelopersDocsGettingStartedRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/docs/reputation': {
+      id: '/app/developers/docs/reputation'
+      path: '/docs/reputation'
+      fullPath: '/app/developers/docs/reputation'
+      preLoaderRoute: typeof AppDevelopersDocsReputationRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/docs/wallet-analysis': {
+      id: '/app/developers/docs/wallet-analysis'
+      path: '/docs/wallet-analysis'
+      fullPath: '/app/developers/docs/wallet-analysis'
+      preLoaderRoute: typeof AppDevelopersDocsWalletAnalysisRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/sdks/curl': {
+      id: '/app/developers/sdks/curl'
+      path: '/sdks/curl'
+      fullPath: '/app/developers/sdks/curl'
+      preLoaderRoute: typeof AppDevelopersSdksCurlRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/sdks/javascript': {
+      id: '/app/developers/sdks/javascript'
+      path: '/sdks/javascript'
+      fullPath: '/app/developers/sdks/javascript'
+      preLoaderRoute: typeof AppDevelopersSdksJavascriptRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/sdks/python': {
+      id: '/app/developers/sdks/python'
+      path: '/sdks/python'
+      fullPath: '/app/developers/sdks/python'
+      preLoaderRoute: typeof AppDevelopersSdksPythonRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+    '/app/developers/sdks/typescript': {
+      id: '/app/developers/sdks/typescript'
+      path: '/sdks/typescript'
+      fullPath: '/app/developers/sdks/typescript'
+      preLoaderRoute: typeof AppDevelopersSdksTypescriptRouteImport
+      parentRoute: typeof AppDevelopersRoute
+    }
+  }
+}
+
+interface AppDevelopersRouteChildren {
+  AppDevelopersApiKeysRoute: typeof AppDevelopersApiKeysRoute
+  AppDevelopersApiReferenceRoute: typeof AppDevelopersApiReferenceRoute
+  AppDevelopersDashboardRoute: typeof AppDevelopersDashboardRoute
+  AppDevelopersErrorsRoute: typeof AppDevelopersErrorsRoute
+  AppDevelopersQuickstartRoute: typeof AppDevelopersQuickstartRoute
+  AppDevelopersRateLimitsRoute: typeof AppDevelopersRateLimitsRoute
+  AppDevelopersWebhooksRoute: typeof AppDevelopersWebhooksRoute
+  AppDevelopersIndexRoute: typeof AppDevelopersIndexRoute
+  AppDevelopersDocsAiAnalysisRoute: typeof AppDevelopersDocsAiAnalysisRoute
+  AppDevelopersDocsAuthenticationRoute: typeof AppDevelopersDocsAuthenticationRoute
+  AppDevelopersDocsBestPracticesRoute: typeof AppDevelopersDocsBestPracticesRoute
+  AppDevelopersDocsGettingStartedRoute: typeof AppDevelopersDocsGettingStartedRoute
+  AppDevelopersDocsReputationRoute: typeof AppDevelopersDocsReputationRoute
+  AppDevelopersDocsWalletAnalysisRoute: typeof AppDevelopersDocsWalletAnalysisRoute
+  AppDevelopersSdksCurlRoute: typeof AppDevelopersSdksCurlRoute
+  AppDevelopersSdksJavascriptRoute: typeof AppDevelopersSdksJavascriptRoute
+  AppDevelopersSdksPythonRoute: typeof AppDevelopersSdksPythonRoute
+  AppDevelopersSdksTypescriptRoute: typeof AppDevelopersSdksTypescriptRoute
+}
+
+const AppDevelopersRouteChildren: AppDevelopersRouteChildren = {
+  AppDevelopersApiKeysRoute: AppDevelopersApiKeysRoute,
+  AppDevelopersApiReferenceRoute: AppDevelopersApiReferenceRoute,
+  AppDevelopersDashboardRoute: AppDevelopersDashboardRoute,
+  AppDevelopersErrorsRoute: AppDevelopersErrorsRoute,
+  AppDevelopersQuickstartRoute: AppDevelopersQuickstartRoute,
+  AppDevelopersRateLimitsRoute: AppDevelopersRateLimitsRoute,
+  AppDevelopersWebhooksRoute: AppDevelopersWebhooksRoute,
+  AppDevelopersIndexRoute: AppDevelopersIndexRoute,
+  AppDevelopersDocsAiAnalysisRoute: AppDevelopersDocsAiAnalysisRoute,
+  AppDevelopersDocsAuthenticationRoute: AppDevelopersDocsAuthenticationRoute,
+  AppDevelopersDocsBestPracticesRoute: AppDevelopersDocsBestPracticesRoute,
+  AppDevelopersDocsGettingStartedRoute: AppDevelopersDocsGettingStartedRoute,
+  AppDevelopersDocsReputationRoute: AppDevelopersDocsReputationRoute,
+  AppDevelopersDocsWalletAnalysisRoute: AppDevelopersDocsWalletAnalysisRoute,
+  AppDevelopersSdksCurlRoute: AppDevelopersSdksCurlRoute,
+  AppDevelopersSdksJavascriptRoute: AppDevelopersSdksJavascriptRoute,
+  AppDevelopersSdksPythonRoute: AppDevelopersSdksPythonRoute,
+  AppDevelopersSdksTypescriptRoute: AppDevelopersSdksTypescriptRoute,
+}
+
+const AppDevelopersRouteWithChildren = AppDevelopersRoute._addFileChildren(
+  AppDevelopersRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppAgentsRoute: typeof AppAgentsRoute
+  AppCredentialsRoute: typeof AppCredentialsRoute
+  AppDevelopersRoute: typeof AppDevelopersRouteWithChildren
+  AppExplorerRoute: typeof AppExplorerRoute
+  AppProfileRoute: typeof AppProfileRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAgentsRoute: AppAgentsRoute,
+  AppCredentialsRoute: AppCredentialsRoute,
+  AppDevelopersRoute: AppDevelopersRouteWithChildren,
+  AppExplorerRoute: AppExplorerRoute,
+  AppProfileRoute: AppProfileRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+}
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router'
+import type { startInstance } from './start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

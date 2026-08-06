@@ -1,26 +1,34 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
-import "./globals.css";
-import { Providers } from "./components/providers";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "./styles.css";
+import { ThemeProvider } from "./lib/theme";
 
 export const metadata: Metadata = {
-  title: "Solana dApp Starter",
-  description: "A minimal Next.js starter powered by @solana/kit",
+  title: "CredLayer — The Reputation Layer for Web3",
+  description: "Portable Web3 reputation for wallets, users, and AI agents — trust scores, verified credentials, and on-chain behavior analysis.",
+  authors: [{ name: "Lovable" }],
+  openGraph: {
+    title: "CredLayer — The Reputation Layer for Web3",
+    description: "Portable Web3 reputation for wallets, users, and AI agents — trust scores, verified credentials, and on-chain behavior analysis.",
+    type: "website",
+    images: [
+      {
+        url: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/010cad31-f20a-4f1d-990b-7cd3c3012b3b/id-preview-ee19c208--58dc7b40-951b-4d3f-9b04-d0aeebd51c2b.lovable.app-1785028396079.png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@Lovable",
+    title: "CredLayer — The Reputation Layer for Web3",
+    description: "Portable Web3 reputation for wallets, users, and AI agents — trust scores, verified credentials, and on-chain behavior analysis.",
+    images: [
+      "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/010cad31-f20a-4f1d-990b-7cd3c3012b3b/id-preview-ee19c208--58dc7b40-951b-4d3f-9b04-d0aeebd51c2b.lovable.app-1785028396079.png",
+    ],
+  },
   icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
@@ -31,8 +39,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
-        <Providers>{children}</Providers>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
+        />
+      </head>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
