@@ -1,8 +1,9 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiResponse, ApiError } from '@/types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000', 10);
+// Next.js environment variables - must be prefixed with NEXT_PUBLIC_ for client-side access
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
+const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10);
 
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
@@ -16,11 +17,13 @@ export const apiClient: AxiosInstance = axios.create({
 // Request interceptor - Add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // Get token from localStorage or auth store
-    const token = localStorage.getItem('accessToken');
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Get token from localStorage or auth store (only in browser)
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('credlayer.access_token');
+
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     // Add timestamp to prevent caching
@@ -44,20 +47,20 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<ApiError>) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
-    // Handle 401 - Unauthorized
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 - Unauthorized (only in browser)
+    if (error.response?.status === 401 && !originalRequest._retry && typeof window !== 'undefined') {
       originalRequest._retry = true;
 
       try {
         // Attempt to refresh token
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = localStorage.getItem('credlayer.refresh_token');
         if (refreshToken) {
           const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken,
           });
 
           const { accessToken } = response.data.data;
-          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('credlayer.access_token', accessToken);
 
           // Retry original request
           if (originalRequest.headers) {
@@ -67,8 +70,8 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed - logout user
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('credlayer.access_token');
+        localStorage.removeItem('credlayer.refresh_token');
         window.location.href = '/';
         return Promise.reject(refreshError);
       }
@@ -88,7 +91,7 @@ export class APIError extends Error {
   constructor(error: AxiosError<ApiError>) {
     const message = error.response?.data?.error?.message || error.message || 'An error occurred';
     super(message);
-    
+
     this.name = 'APIError';
     this.statusCode = error.response?.status || 500;
     this.code = error.response?.data?.error?.code || 'UNKNOWN_ERROR';

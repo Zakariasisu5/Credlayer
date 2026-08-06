@@ -2,12 +2,21 @@
 
 import type { ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createAppKit } from "@reown/appkit/react";
 import { wagmiConfig, networks, projectId, appMetadata, wagmiAdapter } from "./config";
 
-// Initialize AppKit once at module load. Guarded so it only runs in the browser;
-// the /app route tree renders inside <ClientOnly>, so this module is not
-// evaluated during SSR for that subtree.
+// Create QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+// Initialize AppKit once at module load
 let appKitInitialized = false;
 if (typeof window !== "undefined" && !appKitInitialized) {
   appKitInitialized = true;
@@ -29,6 +38,9 @@ if (typeof window !== "undefined" && !appKitInitialized) {
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  return <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+    </QueryClientProvider>
+  );
 }
-
