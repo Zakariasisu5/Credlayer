@@ -35,11 +35,13 @@ export class CredLayerClient {
                 : walletAddress;
 
             // 1. Derive where the score should be stored
-            const [attestationPda] = await deriveAttestationPda({
-                credential: this.CREDENTIAL_PDA,
-                schema: this.SCHEMA_PDA,
-                holder: targetWallet,
+            const [attestationPdaStr] = await deriveAttestationPda({
+                credential: this.CREDENTIAL_PDA.toBase58() as any,
+                schema: this.SCHEMA_PDA.toBase58() as any,
+                nonce: targetWallet.toBase58() as any,
             });
+            
+            const attestationPda = new PublicKey(attestationPdaStr);
 
             // 2. Fetch from Solana
             const accountInfo = await this.connection.getAccountInfo(attestationPda);
