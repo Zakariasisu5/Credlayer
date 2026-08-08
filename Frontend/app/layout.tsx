@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/providers";
-import { AppHeader } from "./components/app-header";
-import { GridBackground } from "./components/grid-background";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Solana Kit Starter",
+  title: "CredLayer — Trust, made portable",
   description:
-    "Wallet connection and on-chain actions with @solana/kit, the kit plugin client, and @solana/react",
+    "CredLayer is the verification layer for portable, permissioned digital reputation.",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
@@ -36,12 +34,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
         <Providers>
-          <div className="relative min-h-screen bg-background text-foreground">
-            <GridBackground />
-            <div className="relative z-10">
-              <AppHeader />
-              {children}
-            </div>
+          <div className="min-h-screen bg-transparent text-foreground">
+            {children}
           </div>
         </Providers>
       </body>
