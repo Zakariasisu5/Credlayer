@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
         <Providers>
-          <div className="min-h-screen bg-background text-foreground">
+          <div className="min-h-screen bg-transparent text-foreground">
             {children}
           </div>
         </Providers>
