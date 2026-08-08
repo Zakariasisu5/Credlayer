@@ -67,6 +67,10 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    background-image: linear-gradient(rgba(3, 12, 24, 0.68), rgba(3, 12, 24, 0.68)), url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/file_00000000732481f4927d767692a00c44-KRU8LyZt0dJDBrXZZkjak0CelyVoas.png");
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
     font-family: var(--font-sans);
   }
 }
