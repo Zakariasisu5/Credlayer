@@ -1,7 +1,3 @@
-Absolutely. I’d make the README feel more like a serious Web3 infrastructure project rather than a basic project description, with a terminal animation immediately under the title.
-
-Below is a ready-to-use improved README.md. It assumes you will place the terminal animation at assets/credlayer-terminal.gif.
-
 # CredLayer
 
 <div align="center">
