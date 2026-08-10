@@ -1,9 +1,6 @@
 # CredLayer
 
 <div align="center">
-
-<img src="./assets/credlayer-logo.png" alt="CredLayer Logo" width="110"/>
-
 # CredLayer
 
 ### AI-Powered Trust & Reputation Infrastructure for Web3
