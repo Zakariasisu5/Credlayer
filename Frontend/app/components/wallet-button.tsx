@@ -18,6 +18,16 @@ const solFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 5,
 });
 
+function formatWalletError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.toLowerCase();
+  if (normalized.includes("reject") || normalized.includes("denied")) return "Connection request was rejected.";
+  if (normalized.includes("locked")) return "Unlock your wallet extension and try again.";
+  if (normalized.includes("timeout") || normalized.includes("timed out")) return "The wallet took too long to respond. Try again.";
+  if (normalized.includes("not found") || normalized.includes("not installed")) return "Install a Solana wallet extension to continue.";
+  return message.length > 180 ? `${message.slice(0, 180)}…` : message;
+}
+
 export function WalletButton() {
   const client = useAppClient();
   const wallets = useWallets(client);
@@ -29,6 +39,8 @@ export function WalletButton() {
   const { getExplorerUrl } = useCluster();
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [requestingWallet, setRequestingWallet] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const walletAddress = connected?.account.address;
@@ -38,6 +50,7 @@ export function WalletButton() {
 
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
+  const isConnecting = status === "connecting" || (requestingWallet !== null && error == null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -76,19 +89,33 @@ export function WalletButton() {
               Choose a wallet
             </p>
             {wallets.length === 0 ? (
-              <p className="text-xs text-muted">
-                No wallets detected. Install a Solana wallet extension.
-              </p>
+              <div className="flex flex-col gap-2 text-xs text-muted">
+                <p>No Solana wallets detected in this browser.</p>
+                <div className="flex gap-2">
+                  <a className="text-primary underline underline-offset-4" href="https://phantom.app/download" target="_blank" rel="noreferrer">Install Phantom</a>
+                  <a className="text-primary underline underline-offset-4" href="https://backpack.app/download" target="_blank" rel="noreferrer">Install Backpack</a>
+                </div>
+              </div>
             ) : (
               <div className="space-y-1">
                 {wallets.map((wallet) => (
                   <button
                     key={wallet.name}
-                    onClick={() => {
-                      connect(wallet);
-                      close();
+                    onClick={async () => {
+                      if (isConnecting) return;
+                      setRequestingWallet(wallet.name);
+                      setRequestError(null);
+                      try {
+                        await Promise.race([
+                          Promise.resolve(connect(wallet)),
+                          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Wallet connection timed out.")), 15000)),
+                        ]);
+                      } catch (connectionError) {
+                        setRequestingWallet(null);
+                        setRequestError(formatWalletError(connectionError));
+                      }
                     }}
-                    disabled={status === "connecting"}
+                    disabled={isConnecting}
                     className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition hover:bg-cream disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {wallet.icon && (
@@ -104,12 +131,12 @@ export function WalletButton() {
                 ))}
               </div>
             )}
-            {status === "connecting" && (
-              <p className="mt-2 text-xs text-muted">Connecting...</p>
+            {isConnecting && (
+              <p className="mt-2 text-xs text-muted">Connecting to {requestingWallet ?? "wallet"}… Keep this menu open.</p>
             )}
-            {error != null && (
-              <p className="mt-2 text-xs text-destructive">
-                {error instanceof Error ? error.message : String(error)}
+            {(requestError || error != null) && (
+              <p role="alert" className="mt-2 text-xs text-destructive">
+                {requestError ?? formatWalletError(error)}
               </p>
             )}
           </div>
