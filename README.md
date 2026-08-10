@@ -292,13 +292,6 @@ The CredLayer team will include:
 * Product Designers
 * Community & Growth Team
 
-Roles will be assigned based on:
-
-* Skills.
-* Experience.
-* Commitment.
-* Responsibilities.
-
 ---
 
 # 13. Development Roadmap
