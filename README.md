@@ -1,5 +1,9 @@
 # CredLayer
 
+<p align="center">
+  <img src="demo.gif" alt="CredLayer Demo" width="100%" />
+</p>
+
 ## Decentralized Reputation Infrastructure for Web3
 
 CredLayer is a reputation protocol for Web3 that converts wallet behavior into trust intelligence for users, developers, protocols, and AI systems.
