@@ -1,40 +1,10 @@
 # CredLayer
 
-<div align="center">
-# CredLayer
+<p align="center">
+  <img src="demo.gif" alt="CredLayer Demo" width="100%" />
+</p>
 
-### AI-Powered Trust & Reputation Infrastructure for Web3
-
-**Analyze. Verify. Score. Trust.**
-
-CredLayer analyzes on-chain behavior and transforms blockchain activity into
-portable, verifiable reputation and risk intelligence for wallets, users,
-protocols, and AI agents.
-
-<br />
-
-[![Website](https://img.shields.io/badge/Website-CredLayer-00D9FF?style=for-the-badge)](#)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-111827?style=for-the-badge&logo=github)](#)
-[![Solana](https://img.shields.io/badge/Solana-Integration-14F195?style=for-the-badge&logo=solana)](#)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](#)
-
-</div>
-
----
-
-## ⚡ CredLayer in Action
-
-<div align="center">
-
-<img src="./assets/credlayer-terminal.gif" alt="CredLayer Terminal Animation" width="900"/>
-
-</div>
-
-> **CredLayer is building a trust layer for the decentralized internet — turning blockchain behavior into actionable reputation intelligence.**
-
----
-
-# 🚀 What is CredLayer?
+## Decentralized Reputation Infrastructure for Web3
 
 CredLayer is a **B2B Web3 trust, risk, and reputation infrastructure platform**.
 
