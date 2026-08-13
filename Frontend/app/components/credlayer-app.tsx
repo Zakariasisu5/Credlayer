@@ -7,8 +7,9 @@ import { Activity, ArrowRight, BarChart3, BookOpen, Code2, Database, Globe2, Key
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import heroBg from "../assets/file_00000000015881f490e0017d49398100.png";
-import credLayerLogo from "../assets/logo.jpeg";
 import { WalletButton } from "./wallet-button";
+
+const credLayerLogo = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/file_0000000050c081f4ade2ab8730a0e87d-RQX8RDIugIzMfNeu4oYtO2nx88jhHr.png";
 
 const nav = [{ href: "/protocol", label: "Protocol" }, { href: "/explorer", label: "Explorer" }, { href: "/developers", label: "Developers" }, { href: "/dashboard-preview", label: "Dashboard" }];
 const appNav: { href: string; label: string; icon: LucideIcon }[] = [{ href: "/app", label: "Overview", icon: LayoutDashboard }, { href: "/app/profile", label: "Profile", icon: UserRound }, { href: "/app/analysis", label: "Analysis", icon: BarChart3 }, { href: "/app/agents", label: "Agents", icon: Sparkles }, { href: "/app/credentials", label: "Credentials", icon: ShieldCheck }, { href: "/app/activity", label: "Activity", icon: Activity }, { href: "/app/settings", label: "Settings", icon: Settings }];
