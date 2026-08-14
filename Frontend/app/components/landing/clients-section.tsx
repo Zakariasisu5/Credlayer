@@ -3,7 +3,7 @@
 import { FcGoogle } from "react-icons/fc";
 import { FaMicrosoft, FaAws } from "react-icons/fa";
 import { SiInfosys, SiTcs } from "react-icons/si";
-import { BsBuilding } from "react-icons/bs";
+import { Building2 } from "lucide-react";
 
 const CLIENTS = [
   { 
@@ -33,7 +33,7 @@ const CLIENTS = [
   },
   { 
     name: "Deloitte", 
-    icon: BsBuilding,
+    icon: Building2,
     color: "text-green-500"
   },
 ];
