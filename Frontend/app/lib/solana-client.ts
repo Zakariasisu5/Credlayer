@@ -1,3 +1,4 @@
+import "./polyfills";
 import { createClient, MicroLamports } from "@solana/kit";
 import { walletSigner } from "@solana/kit-plugin-wallet";
 import { solanaRpc, rpcAirdrop } from "@solana/kit-plugin-rpc";

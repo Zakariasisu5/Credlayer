@@ -42,6 +42,7 @@ export function WalletButton() {
   const [requestingWallet, setRequestingWallet] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   const walletAddress = connected?.account.address;
   const balance = useBalance(
@@ -53,6 +54,7 @@ export function WalletButton() {
   const isConnecting = status === "connecting" || (requestingWallet !== null && error == null);
 
   useEffect(() => {
+    setMounted(true);
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         close();
@@ -73,7 +75,7 @@ export function WalletButton() {
     }
   };
 
-  if (!connected) {
+  if (!mounted || !connected) {
     return (
       <div className="relative" ref={ref}>
         <button

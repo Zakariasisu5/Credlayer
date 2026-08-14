@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./lib/polyfills";
 import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/providers";
