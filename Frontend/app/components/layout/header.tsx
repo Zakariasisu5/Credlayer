@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { Brand } from "./brand.tsx";
+import { Brand } from "./brand";
 import { Button } from "../ui/button";
 
 interface NavItem {
