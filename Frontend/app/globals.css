@@ -68,18 +68,31 @@
   html {
     min-height: 100%;
     background-color: #030c18;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply text-foreground antialiased;
     min-height: 100vh;
     background-color: #030c18;
-    background-image: linear-gradient(rgba(3, 12, 24, 0.48), rgba(3, 12, 24, 0.58)), url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/file_00000000732481f4927d767692a00c44-KRU8LyZt0dJDBrXZZkjak0CelyVoas.png");
-    background-attachment: fixed;
-    background-position: center top;
-    background-repeat: no-repeat;
-    background-size: cover;
     font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  /* Prevent text size adjustment on mobile */
+  @media (max-width: 768px) {
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+  }
+
+  /* Smooth scrolling behavior */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 }
 
@@ -112,6 +125,28 @@
 @keyframes particle-float {
   0%, 100% { opacity: 0.25; scale: 0.7; }
   50% { opacity: 1; scale: 1.2; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-fadeIn {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+  }
+
+  .bg-gradient-radial {
+    background-image: radial-gradient(var(--tw-gradient-stops));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
