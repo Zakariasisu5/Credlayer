@@ -8,7 +8,13 @@ import { AppClientProvider } from "../lib/client-provider";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark">
+    <ThemeProvider 
+      attribute="class" 
+      defaultTheme="dark" 
+      enableSystem={false}
+      disableTransitionOnChange
+      storageKey="credlayer-theme"
+    >
       <ClusterProvider>
         <AppClientProvider>{children}</AppClientProvider>
         <Toaster position="bottom-right" richColors />

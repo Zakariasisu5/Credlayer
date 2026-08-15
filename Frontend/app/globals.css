@@ -68,17 +68,94 @@
   html {
     min-height: 100%;
     background-color: #030c18;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply text-foreground antialiased;
     min-height: 100vh;
     background-color: #030c18;
-    background-image: linear-gradient(rgba(3, 12, 24, 0.48), rgba(3, 12, 24, 0.58)), url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/file_00000000732481f4927d767692a00c44-KRU8LyZt0dJDBrXZZkjak0CelyVoas.png");
-    background-attachment: fixed;
-    background-position: center top;
-    background-repeat: no-repeat;
-    background-size: cover;
     font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  /* Prevent text size adjustment on mobile */
+  @media (max-width: 768px) {
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+  }
+
+  /* Smooth scrolling behavior */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+@keyframes scan {
+  0%, 100% { transform: translateY(-120px); opacity: 0; }
+  35%, 65% { opacity: 0.85; }
+  50% { transform: translateY(120px); }
+}
+
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes shield-pulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.35; }
+  50% { transform: scale(1.08); opacity: 0.7; }
+}
+
+@keyframes ground-pulse {
+  0%, 100% { transform: translateX(-50%) scaleX(0.8); opacity: 0.3; }
+  50% { transform: translateX(-50%) scaleX(1.1); opacity: 0.65; }
+}
+
+@keyframes security-pulse {
+  0%, 100% { transform: scale(0.96); opacity: 0.35; }
+  50% { transform: scale(1.04); opacity: 0.8; }
+}
+
+@keyframes particle-float {
+  0%, 100% { opacity: 0.25; scale: 0.7; }
+  50% { opacity: 1; scale: 1.2; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-fadeIn {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+  }
+
+  .bg-gradient-radial {
+    background-image: radial-gradient(var(--tw-gradient-stops));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
