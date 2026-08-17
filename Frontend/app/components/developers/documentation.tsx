@@ -19,7 +19,7 @@ const docContent: Record<string, { title: string; content: React.ReactNode }> = 
     content: (
       <>
         <p className="text-sm leading-7 text-muted-foreground">
-          Welcome to the CredLayer API documentation. This guide will help you integrate CredLayer's verification and credential infrastructure into your application.
+          Welcome to the CredLayer API documentation. This guide will help you integrate CredLayer&apos;s verification and credential infrastructure into your application.
         </p>
         <h3 className="mt-6 text-lg font-semibold">Quick Start</h3>
         <ol className="mt-4 space-y-3 text-sm text-muted-foreground">

@@ -3,46 +3,56 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { ArrowLeft, Menu, X } from "lucide-react";
 import { 
-  Activity, 
-  ArrowLeft,
-  ArrowRight, 
-  BarChart3, 
-  Code2, 
-  LayoutDashboard, 
-  Menu, 
-  Radar, 
-  Settings, 
-  ShieldCheck, 
-  Sparkles, 
-  UserRound, 
-  X 
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+  MdDashboard, 
+  MdSpaceDashboard,
+  MdPerson,
+  MdAnalytics,
+  MdSmartToy,
+  MdVerifiedUser,
+  MdTimeline,
+  MdSettings,
+  MdCode,
+  MdKey,
+  MdMenuBook,
+  MdDeveloperMode
+} from "react-icons/md";
+import { FaHome, FaServicestack, FaBriefcase, FaInfoCircle, FaBlog, FaEnvelope } from "react-icons/fa";
+import type { IconType } from "react-icons";
 import { WalletButton } from "../wallet-button";
 import { Header, Brand } from "../layout";
 import { Button } from "../ui";
 
-export const appNav: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/app", label: "Overview", icon: LayoutDashboard },
-  { href: "/app/dashboard", label: "Dashboard", icon: Radar },
-  { href: "/app/profile", label: "Profile", icon: UserRound },
-  { href: "/app/analysis", label: "Analysis", icon: BarChart3 },
-  { href: "/app/agents", label: "Agents", icon: Sparkles },
-  { href: "/app/credentials", label: "Credentials", icon: ShieldCheck },
-  { href: "/app/activity", label: "Activity", icon: Activity },
-  { href: "/app/settings", label: "Settings", icon: Settings }
+export const appNav: { href: string; label: string; icon: IconType; color: string }[] = [
+  { href: "/app", label: "Overview", icon: MdDashboard, color: "#3b82f6" }, // Blue
+  { href: "/app/dashboard", label: "Dashboard", icon: MdSpaceDashboard, color: "#8b5cf6" }, // Purple
+  { href: "/app/profile", label: "Profile", icon: MdPerson, color: "#ec4899" }, // Pink
+  { href: "/app/analysis", label: "Analysis", icon: MdAnalytics, color: "#10b981" }, // Green
+  { href: "/app/agents", label: "Agents", icon: MdSmartToy, color: "#f59e0b" }, // Amber
+  { href: "/app/credentials", label: "Credentials", icon: MdVerifiedUser, color: "#06b6d4" }, // Cyan
+  { href: "/app/activity", label: "Activity", icon: MdTimeline, color: "#6366f1" }, // Indigo
+  { href: "/app/settings", label: "Settings", icon: MdSettings, color: "#64748b" } // Slate
 ];
 
-export const developerNav: { href: string; label: string }[] = [
-  { href: "/developers/dashboard", label: "Dashboard" },
-  { href: "/developers/api-keys", label: "API keys" },
-  { href: "/developers/docs", label: "Documentation" },
-  { href: "/developers/sdk", label: "SDK" }
+export const developerNav: { href: string; label: string; icon: IconType; color: string }[] = [
+  { href: "/developers/dashboard", label: "Dashboard", icon: MdCode, color: "#8b5cf6" }, // Purple
+  { href: "/developers/api-keys", label: "API keys", icon: MdKey, color: "#f59e0b" }, // Amber
+  { href: "/developers/docs", label: "Documentation", icon: MdMenuBook, color: "#10b981" }, // Green
+  { href: "/developers/sdk", label: "SDK", icon: MdDeveloperMode, color: "#06b6d4" } // Cyan
+];
+
+export const publicNav: { href: string; label: string; icon: IconType; color: string }[] = [
+  { href: "/", label: "Home", icon: FaHome, color: "#3b82f6" }, // Blue
+  { href: "/services", label: "Services", icon: FaServicestack, color: "#10b981" }, // Green
+  { href: "/case-studies", label: "Case Studies", icon: FaBriefcase, color: "#8b5cf6" }, // Purple
+  { href: "/about", label: "About", icon: FaInfoCircle, color: "#06b6d4" }, // Cyan
+  { href: "/blog", label: "Blog", icon: FaBlog, color: "#f59e0b" }, // Amber
+  { href: "/contact", label: "Contact", icon: FaEnvelope, color: "#ec4899" } // Pink
 ];
 
 function AppSidebar({ developer = false }: { developer?: boolean }) {
-  const items = developer ? developerNav.map((item) => ({ ...item, icon: Code2 })) : appNav;
+  const items = developer ? developerNav : appNav;
   const pathname = usePathname();
   
   return (
@@ -55,7 +65,7 @@ function AppSidebar({ developer = false }: { developer?: boolean }) {
       </p>
       <div className="flex flex-col gap-1">
         {items.map((item) => {
-          const Icon: LucideIcon = item.icon;
+          const Icon: IconType = item.icon;
           const active = pathname === item.href;
           return (
             <Link
@@ -64,10 +74,10 @@ function AppSidebar({ developer = false }: { developer?: boolean }) {
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                 active
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "text-foreground hover:bg-accent"
               }`}
             >
-              <Icon className="size-4" />
+              <Icon className="size-5" style={{ color: item.color }} />
               {item.label}
             </Link>
           );
@@ -80,10 +90,10 @@ function AppSidebar({ developer = false }: { developer?: boolean }) {
             className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm transition hover:bg-primary/10 hover:border-primary/40"
           >
             <div className="flex items-center gap-3">
-              <Code2 className="size-4 text-primary" />
+              <MdCode className="size-5" style={{ color: "#22d3ee" }} />
               <span className="font-medium text-primary">Developers Portal</span>
             </div>
-            <ArrowRight className="size-3.5 text-primary" />
+            <ArrowLeft className="size-3.5 text-primary rotate-180" />
           </Link>
         </div>
       )}
@@ -107,7 +117,7 @@ function AppSidebar({ developer = false }: { developer?: boolean }) {
             Read the docs or talk to the community.
           </p>
           <Button href="/developers/docs" variant="ghost">
-            Open docs <ArrowRight className="size-3" />
+            Open docs <ArrowLeft className="size-3 rotate-180" />
           </Button>
         </div>
       </div>
@@ -131,7 +141,7 @@ export function Shell({
   developer?: boolean 
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const items = developer ? developerNav.map((item) => ({ ...item, icon: Code2 })) : appNav;
+  const items = developer ? developerNav : appNav;
   const pathname = usePathname();
   
   return (
@@ -188,7 +198,7 @@ export function Shell({
               </p>
               <div className="flex flex-col gap-1">
                 {items.map((item) => {
-                  const Icon: LucideIcon = item.icon;
+                  const Icon: IconType = item.icon;
                   const active = pathname === item.href;
                   return (
                     <Link
@@ -198,10 +208,10 @@ export function Shell({
                       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                         active
                           ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          : "text-foreground hover:bg-accent"
                       }`}
                     >
-                      <Icon className="size-4" />
+                      <Icon className="size-5" style={{ color: item.color }} />
                       {item.label}
                     </Link>
                   );
@@ -215,10 +225,10 @@ export function Shell({
                     className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm transition hover:bg-primary/10 hover:border-primary/40"
                   >
                     <div className="flex items-center gap-3">
-                      <Code2 className="size-4 text-primary" />
+                      <MdCode className="size-5" style={{ color: "#22d3ee" }} />
                       <span className="font-medium text-primary">Developers Portal</span>
                     </div>
-                    <ArrowRight className="size-3.5 text-primary" />
+                    <ArrowLeft className="size-3.5 text-primary rotate-180" />
                   </Link>
                 </div>
               )}

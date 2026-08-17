@@ -1,46 +1,228 @@
-# nextjs
+# CredLayer Frontend
 
-Next.js starter built on `@solana/kit` v7 with the kit plugin client and [`@solana/react`](https://www.npmjs.com/package/@solana/react). Connect a browser wallet, switch networks, and send real transactions — SOL transfers, SPL token actions, and memos — with zero manual `pipe()` boilerplate.
+> AI-powered reputation and verification infrastructure for Web3.
 
-## Getting Started
+CredLayer provides trust and reputation scoring for Solana wallets, AI agents, and decentralized applications using advanced blockchain analysis and machine learning.
 
-```shell
-npx -y create-solana-dapp@latest -t solana-foundation/templates/kit/nextjs
+## 🌟 Features
+
+- **Wallet Reputation Analysis** - AI-powered trust scoring for Solana wallets
+- **Risk Assessment** - Real-time risk level evaluation
+- **Behavioral Metrics** - Detailed on-chain behavior analysis
+- **Verifiable Credentials** - Blockchain-based attestations and credentials
+- **AI Agent Trust** - Reputation scoring for autonomous agents
+- **Developer API Platform** - Full-featured API for B2B integration
+- **Real-time Analysis** - Live wallet reputation monitoring
+
+## 🏗️ Architecture
+
+```
+Frontend (Next.js)
+      ↓
+FastAPI Backend
+      ↓
+AI Reputation Engine
+      ↓
+Blockchain Data Providers
+      ↓
+Solana / Multi-chain
 ```
 
-```shell
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js >= 24
+- npm or yarn
+- Solana wallet (Phantom, Solflare, etc.)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/credlayer-frontend.git
+cd credlayer-frontend
+
+# Install dependencies
 npm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Configure your environment variables
+# Edit .env.local with your API URL and settings
+
+# Run the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), connect a wallet, and (on devnet) click **Airdrop 1 SOL** to fund it. Then try the actions. Need devnet SOL another way? [faucet.solana.com](https://faucet.solana.com/).
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-## What's Included
+## 🔧 Environment Variables
 
-- **Wallet connection** via [`@solana/kit-plugin-wallet`](https://www.npmjs.com/package/@solana/kit-plugin-wallet) (wallet-standard discovery, auto-reconnect)
-- **Network switcher** — devnet, testnet, mainnet, localnet
-- **Transfer SOL** with the (`@solana-program/system`)[https://www.npmjs.com/package/@solana-program/system] kit plugin
-- **Token actions** — create a mint, mint tokens, and transfer them with the [`@solana-program/token`](https://www.npmjs.com/package/@solana-program/token) kit plugin (associated token accounts created for you)
-- **Add memo** with the [`@solana-program/memo`](https://www.npmjs.com/package/@solana-program/memo) kit plugin
-- **Live balance** and **toast notifications** with explorer links
-- **Tailwind CSS v4** with light/dark mode
+Create a `.env.local` file in the root directory:
 
-## How it works
+```env
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:8000
 
-The app builds one kit client per selected cluster in [`app/lib/solana-client.ts`](app/lib/solana-client.ts) and provides it through `@solana/react`'s `ClientProvider`:
+# Solana Configuration
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
 
-```ts
-createClient()
-  .use(walletSigner({ chain })) // wallet as payer + identity; must precede rpc
-  .use(solanaRpc({ rpcUrl, rpcSubscriptionsUrl })) // rpc, subscriptions, getMinimumBalance, sendTransaction
-  .use(rpcAirdrop()) // client.airdrop (non-mainnet)
-  .use(systemProgram()) // client.system.instructions.transferSol
-  .use(tokenProgram()) // client.token.instructions.{createMint,mintToATA,transferToATA}
-  .use(memoProgram()); // client.memo.instructions.addMemo
+# Application
+NEXT_PUBLIC_APP_NAME=CredLayer
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Components read the client with `useClient()` and the connected wallet with the `@solana/kit-plugin-wallet/react` hooks (`useWallets`, `useConnect`, `useConnectedWallet`, `useDisconnect`). Sending is a single call — `client.sendTransaction([instruction])` for raw instructions, or `client.token.instructions.createMint({...}).sendTransaction()` for the token plugin's built-in instruction plans.
+See `.env.example` for all available configuration options.
 
-### Switching networks
+## 📁 Project Structure
 
-A kit client is bound to one chain and RPC endpoint. The cluster dropdown rebuilds the client in a `useMemo` keyed on the cluster and hands the new instance to `ClientProvider`, which reprovisions the subtree. See [`app/lib/client-provider.tsx`](app/lib/client-provider.tsx).
+```
+Frontend/
+├── app/
+│   ├── components/
+│   │   ├── layout/          # Layout components
+│   │   ├── workspace/       # Workspace pages
+│   │   ├── developers/      # Developer platform
+│   │   ├── reputation/      # Reputation components
+│   │   ├── credentials/     # Credential components
+│   │   ├── wallet/          # Wallet components
+│   │   ├── loading/         # Loading skeletons
+│   │   ├── empty/           # Empty states
+│   │   └── ui/              # UI primitives
+│   ├── lib/
+│   │   └── api/             # API client layer
+│   └── types/               # TypeScript types
+├── public/                  # Static assets
+└── types/                   # Shared types
+```
+
+## 🔌 API Integration
+
+The frontend integrates with the CredLayer FastAPI backend:
+
+### Reputation API
+```typescript
+import { analyzeWallet, getWalletReputation } from '@/lib/api';
+
+// Analyze a wallet
+const score = await analyzeWallet('WALLET_ADDRESS');
+
+// Get cached reputation
+const reputation = await getWalletReputation('WALLET_ADDRESS');
+```
+
+### Credentials API
+```typescript
+import { getCredentials, verifyCredential } from '@/lib/api';
+
+// Get wallet credentials
+const creds = await getCredentials({ wallet: 'WALLET_ADDRESS' });
+
+// Verify a credential
+const verification = await verifyCredential('CREDENTIAL_ID');
+```
+
+### Developer API
+```typescript
+import { createApiKey, getApiUsage } from '@/lib/api';
+
+// Create API key
+const key = await createApiKey({ name: 'My Project' });
+
+// Get usage stats
+const usage = await getApiUsage();
+```
+
+## 🎨 Tech Stack
+
+- **Framework**: Next.js 16
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Blockchain**: Solana Web3.js
+- **Wallet**: @solana/kit
+- **Icons**: Lucide React + React Icons
+- **HTTP Client**: Native Fetch API
+- **Theme**: next-themes
+
+## 🧪 Development
+
+```bash
+# Development server
+npm run dev
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Format code
+npm run format
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+```
+
+## 🛡️ Security
+
+- Never commit `.env.local` or any files containing secrets
+- API keys and private keys are never exposed to the browser
+- All sensitive operations happen on the backend
+- Wallet connections use industry-standard wallet-adapter
+
+## 📊 Features Status
+
+### ✅ Implemented
+- Wallet connection (Solana)
+- Network switching
+- Responsive layout
+- Theme switching
+- Component architecture
+- Type system
+- API client layer
+
+### 🔄 Integration Ready
+- Reputation analysis (API ready)
+- Credentials system (API ready)
+- AI agent trust (API ready)
+- Developer platform (API ready)
+- Activity tracking (API ready)
+
+### 🚧 Coming Soon
+- Blockchain attestation verification
+- Multi-chain support
+- Advanced analytics dashboard
+- Webhook management
+- Team collaboration features
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is proprietary and confidential.
+
+## 🔗 Links
+
+- [CredLayer Website](https://credlayer.com)
+- [API Documentation](https://docs.credlayer.com)
+- [Developer Portal](https://credlayer.com/developers)
+
+## 📧 Support
+
+For support, email support@credlayer.com or join our Discord community.
+
+---
+
+Built with ❤️ by the CredLayer team

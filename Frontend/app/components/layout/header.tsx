@@ -4,21 +4,25 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { FaHome, FaServicestack, FaBriefcase, FaInfoCircle, FaBlog, FaEnvelope } from "react-icons/fa";
+import type { IconType } from "react-icons";
 import { Brand } from "./brand";
 import { Button } from "../ui/button";
 
 interface NavItem {
   href: string;
   label: string;
+  icon: IconType;
+  color: string;
 }
 
 const navigationItems: NavItem[] = [
-  { href: "/", label: "Home" },
-  { href: "/protocol", label: "Services" },
-  { href: "/explorer", label: "Case Studies" },
-  { href: "/developers", label: "About" },
-  { href: "/dashboard-preview", label: "Blog" },
-  { href: "/app", label: "Contact" },
+  { href: "/", label: "Home", icon: FaHome, color: "#3b82f6" },
+  { href: "/protocol", label: "Services", icon: FaServicestack, color: "#10b981" },
+  { href: "/explorer", label: "Case Studies", icon: FaBriefcase, color: "#8b5cf6" },
+  { href: "/developers", label: "About", icon: FaInfoCircle, color: "#06b6d4" },
+  { href: "/dashboard-preview", label: "Blog", icon: FaBlog, color: "#f59e0b" },
+  { href: "/app", label: "Contact", icon: FaEnvelope, color: "#ec4899" },
 ];
 
 export function Header() {
@@ -46,16 +50,20 @@ export function Header() {
 
         {/* Desktop Navigation - Hidden on Mobile */}
         <nav className="hidden items-center gap-6 lg:gap-8 lg:flex">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="relative text-sm font-medium text-gray-300 transition-colors hover:text-cyan-400 group whitespace-nowrap"
-            >
-              {item.label}
-              <span className="absolute -bottom-1 left-0 h-px w-0 bg-gradient-to-r from-cyan-400 to-blue-400 transition-all duration-300 group-hover:w-full" />
-            </Link>
-          ))}
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="relative flex items-center gap-2 text-sm font-medium text-gray-300 transition-colors hover:text-cyan-400 group whitespace-nowrap"
+              >
+                <Icon className="size-4" style={{ color: item.color }} />
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-gradient-to-r from-cyan-400 to-blue-400 transition-all duration-300 group-hover:w-full" />
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Desktop CTA - Hidden on Mobile */}
@@ -100,17 +108,21 @@ export function Header() {
           }`}
         >
           <nav className="flex flex-col px-4 py-6 max-h-[calc(100vh-4rem)] overflow-y-auto">
-            {navigationItems.map((item, index) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={closeMenu}
-                className="rounded-lg px-4 py-4 text-base font-medium text-gray-300 transition-all hover:bg-cyan-500/10 hover:text-cyan-400 border-b border-cyan-500/10 last:border-b-0"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navigationItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex items-center gap-3 rounded-lg px-4 py-4 text-base font-medium text-gray-300 transition-all hover:bg-cyan-500/10 hover:text-cyan-400 border-b border-cyan-500/10 last:border-b-0"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <Icon className="size-5" style={{ color: item.color }} />
+                  {item.label}
+                </Link>
+              );
+            })}
             
             {/* Mobile CTA Button */}
             <div className="mt-6 px-4">
