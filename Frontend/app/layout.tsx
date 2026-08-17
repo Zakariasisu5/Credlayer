@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CredLayer — Trust, made portable",
+  title: "CredLayer — AI-Powered Web3 Trust & Verification",
   description:
-    "CredLayer is the verification layer for portable, permissioned digital reputation.",
+    "CredLayer is the AI-powered verification layer for Web3. Build trust with reputation scoring, verifiable credentials, and blockchain attestations.",
   icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/assets/icon.jpeg",
+    shortcut: "/assets/icon.jpeg",
+    apple: "/assets/icon.jpeg",
   },
 };
 

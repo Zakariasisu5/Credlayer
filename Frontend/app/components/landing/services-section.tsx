@@ -50,32 +50,32 @@ const CORE_SERVICES = [
 
 export function ServicesSection() {
   return (
-    <section className="relative mx-auto max-w-7xl px-4 sm:px-5 py-16 sm:py-20 lg:px-8 lg:py-32 border-t border-cyan-500/10">
+    <section className="relative mx-auto max-w-7xl px-4 sm:px-5 py-12 sm:py-20 lg:px-8 lg:py-32 border-t border-cyan-500/10">
       {/* Decorative elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-cyan-500/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 sm:h-20 bg-gradient-to-b from-cyan-500/50 to-transparent" />
       
       <div className="relative">
-        {/* Section Header */}
-        <div className="mb-12 sm:mb-16 text-center">
-          <div className="inline-block mb-4">
+        {/* Section Header - Mobile optimized */}
+        <div className="mb-8 sm:mb-16 text-center px-2 sm:px-0">
+          <div className="inline-block mb-3 sm:mb-4">
             <div className="relative">
-              <h2 className="text-xs font-mono uppercase tracking-[0.35em] text-cyan-400 mb-2 flex items-center gap-2 justify-center">
-                <div className="w-8 h-px bg-gradient-to-r from-transparent to-cyan-400" />
+              <h2 className="text-xs font-mono uppercase tracking-[0.25em] sm:tracking-[0.35em] text-cyan-400 mb-2 flex items-center gap-2 justify-center">
+                <div className="w-6 sm:w-8 h-px bg-gradient-to-r from-transparent to-cyan-400" />
                 CORE SERVICES
-                <div className="w-8 h-px bg-gradient-to-l from-transparent to-cyan-400" />
+                <div className="w-6 sm:w-8 h-px bg-gradient-to-l from-transparent to-cyan-400" />
               </h2>
             </div>
           </div>
-          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+          <h3 className="text-xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 px-4 sm:px-0">
             Enterprise Trust Infrastructure
           </h3>
-          <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto px-4 sm:px-0">
             Comprehensive verification solutions powered by AI and blockchain technology
           </p>
         </div>
 
-        {/* Service Cards Grid */}
-        <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Service Cards Grid - Mobile optimized */}
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {CORE_SERVICES.map((service, index) => (
             <div
               key={service.title}
@@ -90,9 +90,9 @@ export function ServicesSection() {
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="mt-12 sm:mt-16 text-center">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-400">
+        {/* Bottom CTA - Mobile optimized */}
+        <div className="mt-8 sm:mt-16 text-center px-4 sm:px-0">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-2 text-xs sm:text-sm text-gray-400">
             <span>Looking for custom solutions?</span>
             <a 
               href="/developers" 
