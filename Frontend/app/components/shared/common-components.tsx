@@ -16,7 +16,7 @@ export function Empty({
   return (
     <div className="grid min-h-52 place-items-center rounded-xl border border-dashed border-border bg-card/30 p-8 text-center">
       <div>
-        <span className="mx-auto mb-4 grid size-10 place-items-center rounded-full border border-border bg-accent text-muted-foreground">
+        <span className="mx-auto mb-4 grid size-10 place-items-center rounded-full border border-border bg-transparent text-muted-foreground">
           <Icon className="size-4" />
         </span>
         <h3 className="text-sm font-semibold">{title}</h3>

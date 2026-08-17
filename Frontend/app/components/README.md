@@ -114,9 +114,3 @@ import { HeroSection, ServicesSection } from "@/components/landing";
 3. **A11y Testing** - Accessibility compliance
 4. **Performance Optimization** - Code splitting, lazy loading
 5. **Design Tokens** - Centralized theme configuration
-
-
-import { FcGoogle } from "react-icons/fc";
-import { FaMicrosoft } from "react-icons/fa";
-import { SiInfosys } from "react-icons/si";
-import { SiTcs } from "react-icons/si";

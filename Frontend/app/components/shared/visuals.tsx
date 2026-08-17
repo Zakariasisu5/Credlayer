@@ -15,13 +15,13 @@ export function NetworkVisual({ dashboard = false }: { dashboard?: boolean }) {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.08)_1px,transparent_1px)] bg-[size:36px_36px]" />
       <div className="absolute left-1/2 top-[42%] size-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/20 opacity-70 animate-[ping_4s_ease-in-out_infinite]" />
       <div className="absolute left-1/2 top-[42%] size-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/10 opacity-50 animate-[ping_5s_ease-in-out_1s_infinite]" />
-      <div className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-primary/40 bg-background/80 p-3 shadow-[0_0_34px_rgba(32,214,208,0.24)] transition duration-500 group-hover:scale-110">
+      <div className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-primary/40 bg-transparent p-3 shadow-[0_0_34px_rgba(32,214,208,0.24)] transition duration-500 group-hover:scale-110">
         <Image 
           src={credLayerLogo} 
           alt="CredLayer verification infrastructure" 
           width={72} 
           height={72} 
-          className="size-16 object-cover" 
+          className="size-16 object-contain" 
         />
       </div>
       <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">

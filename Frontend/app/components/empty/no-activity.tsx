@@ -5,7 +5,7 @@ import { Activity } from "lucide-react";
 export function NoActivity() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center">
-      <div className="rounded-full bg-accent p-6 mb-6">
+      <div className="rounded-full bg-transparent border border-accent p-6 mb-6">
         <Activity className="size-12 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-semibold mb-2">No Activity Yet</h3>

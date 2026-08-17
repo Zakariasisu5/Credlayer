@@ -25,7 +25,7 @@ export function ServiceCard({
       {/* Card */}
       <div className="relative h-full rounded-xl border border-cyan-500/30 bg-[#0a1628]/95 backdrop-blur-sm p-5 sm:p-6 transition-all duration-500 group-hover:border-cyan-400/60 group-active:scale-[0.98] lg:group-hover:-translate-y-1">
         {/* Icon Container */}
-        <div className="mb-4 sm:mb-5 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/5 transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+        <div className="mb-4 sm:mb-5 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-lg border border-cyan-500/30 bg-transparent transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]">
           <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-cyan-400 transition-transform duration-300 group-hover:scale-110" />
         </div>
 

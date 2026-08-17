@@ -213,12 +213,6 @@ npm run start
 
 This project is proprietary and confidential.
 
-## 🔗 Links
-
-- [CredLayer Website](https://credlayer.com)
-- [API Documentation](https://docs.credlayer.com)
-- [Developer Portal](https://credlayer.com/developers)
-
 ## 📧 Support
 
 For support, email support@credlayer.com or join our Discord community.
