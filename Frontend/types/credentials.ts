@@ -16,7 +16,7 @@ export interface Credential {
   status: CredentialStatus;
   issued_at: string;
   expires_at?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   attestation_id?: string;
   transaction_id?: string;
   blockchain?: string;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 if (typeof globalThis.DisposableStack === "undefined") {
   globalThis.DisposableStack = class DisposableStack {
     private stack: Array<() => void> = [];

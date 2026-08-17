@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, ShieldCheck, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Empty, Stat } from "../shared/common-components";
 

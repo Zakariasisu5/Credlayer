@@ -45,7 +45,7 @@ export async function verifyCredential(
 export async function requestCredential(data: {
   wallet: string;
   type: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }) {
   return apiClient.post('/credentials/request', data);
 }

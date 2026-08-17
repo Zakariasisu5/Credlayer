@@ -18,7 +18,7 @@ export enum ApiErrorCode {
 export interface ApiError {
   code: ApiErrorCode;
   message: string;
-  details?: any;
+  details?: unknown;
   timestamp?: string;
 }
 

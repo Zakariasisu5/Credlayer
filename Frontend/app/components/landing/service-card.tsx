@@ -9,7 +9,6 @@ interface ServiceCardProps {
   title: string;
   description: string;
   href?: string;
-  iconGradient?: string;
 }
 
 export function ServiceCard({
@@ -17,7 +16,6 @@ export function ServiceCard({
   title,
   description,
   href = "/protocol",
-  iconGradient = "from-cyan-400 to-blue-500",
 }: ServiceCardProps) {
   return (
     <Link href={href} className="group relative block h-full min-h-[200px] sm:min-h-[220px]">

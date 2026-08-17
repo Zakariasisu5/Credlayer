@@ -35,7 +35,7 @@ export interface WalletActivityItem {
   type: 'ANALYSIS' | 'CREDENTIAL_ISSUED' | 'CREDENTIAL_VERIFIED' | 'ATTESTATION' | 'API_REQUEST';
   description: string;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   status?: 'SUCCESS' | 'FAILED' | 'PENDING';
 }
 
@@ -43,5 +43,5 @@ export interface ConnectedWallet {
   address: string;
   publicKey: string;
   signMessage?: (message: Uint8Array) => Promise<Uint8Array>;
-  signTransaction?: (transaction: any) => Promise<any>;
+  signTransaction?: (transaction: unknown) => Promise<unknown>;
 }

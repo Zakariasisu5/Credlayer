@@ -81,7 +81,7 @@ class ApiClient {
     }
   }
 
-  private isApiError(error: any): error is ApiError {
+  private isApiError(error: unknown): error is ApiError {
     return (
       error !== null &&
       typeof error === 'object' &&
@@ -113,7 +113,7 @@ class ApiClient {
   private createError(
     code: ApiErrorCode,
     message: string,
-    details?: any
+    details?: unknown
   ): ApiError {
     return {
       code,
@@ -130,7 +130,7 @@ class ApiClient {
 
   async post<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -142,7 +142,7 @@ class ApiClient {
 
   async put<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -158,7 +158,7 @@ class ApiClient {
 
   async patch<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
