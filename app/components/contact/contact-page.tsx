@@ -183,10 +183,13 @@ export function ContactPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
+                <button
+                  type="submit"
+                  className="w-full px-6 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                >
                   Send Message
-                  <Send className="ml-2 h-4 w-4" />
-                </Button>
+                  <Send className="h-4 w-4" />
+                </button>
               </form>
             </div>
 
