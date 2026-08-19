@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, MessageSquare, Phone, MapPin, Send, Github, Twitter, Linkedin } from "lucide-react";
+import { Mail, MessageSquare, Phone, MapPin, Send } from "lucide-react";
 import { Header } from "../layout/header";
 import { Footer } from "../landing/footer";
 import { Button } from "../ui/button";
@@ -51,9 +51,9 @@ const OFFICES = [
 ];
 
 const SOCIAL_LINKS = [
-  { icon: Twitter, label: "Twitter", href: "https://twitter.com/credlayer" },
-  { icon: Github, label: "GitHub", href: "https://github.com/credlayer" },
-  { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com/company/credlayer" }
+  { icon: Mail, label: "Twitter", href: "https://twitter.com/credlayer" },
+  { icon: MapPin, label: "GitHub", href: "https://github.com/credlayer" },
+  { icon: MessageSquare, label: "LinkedIn", href: "https://linkedin.com/company/credlayer" }
 ];
 
 export function ContactPage() {
