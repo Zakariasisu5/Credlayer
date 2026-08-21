@@ -14,15 +14,35 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["ws"],
+  transpilePackages: ["@credlayer/sdk"],
   turbopack: {
     resolveAlias: {
       fs: { browser: "./empty-module.js" },
     },
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = { ...config.resolve.fallback, fs: false };
     }
+    
+    // Prevent webpack from following symlinks into other workspaces
+    config.resolve.symlinks = false;
+    
+    // Optimize file watching to prevent WSL memory spikes
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        // Use polling in WSL — inotify is unreliable across the 9P filesystem
+        poll: 1000,
+        ignored: [
+          '**/node_modules/**', 
+          '**/.git/**', 
+          '**/.next/**', 
+          '**/blockchain/**',
+        ],
+      };
+    }
+    
     return config;
   },
 };

@@ -22,7 +22,7 @@
   "scripts": {
     "build": "next build",
     "ci": "npm run build && npm run lint && npm run format:check",
-    "dev": "next dev --webpack",
+    "dev": "next dev --turbo",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint",
@@ -30,10 +30,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@credlayer/sdk": "file:../blockchain/sdk",
+    "@credlayer/sdk": "file:./lib/credlayer-sdk",
     "@solana-program/memo": "^0.12.0",
-    "@solana-program/token": "^0.13.0",
-    "@solana/kit": "^7.0.0",
+    "@solana-program/token": "^0.15.0",
+    "@solana/kit": "^7.1.1",
     "@solana/kit-plugin-rpc": "^0.15.0",
     "@solana/kit-plugin-wallet": "^0.14.0",
     "@solana/react": "^7.0.0",
@@ -45,6 +45,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.7.0",
+    "sas-lib": "^1.0.10",
     "sonner": "^2.0.7",
     "swr": "^2.2.0"
   },
