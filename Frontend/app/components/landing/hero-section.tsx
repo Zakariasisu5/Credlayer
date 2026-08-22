@@ -7,27 +7,6 @@ import { SecurityVisualization } from "./security-visualization";
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-transparent min-h-[90vh] flex items-center">
-      {/* Animated background gradient circles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 right-1/3 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/3 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse [animation-delay:2s]" />
-      </div>
-
-      {/* Animated particles effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-40 animate-pulse"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
-
       {/* Content */}
       <div className="relative mx-auto max-w-7xl px-4 sm:px-5 py-20 lg:px-8 w-full">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
