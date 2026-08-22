@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["ws"],
+  transpilePackages: ["@credlayer/sdk", "sas-lib"],
   turbopack: {
     resolveAlias: {
       fs: { browser: "./empty-module.js" },
@@ -21,8 +22,18 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      config.resolve.fallback = { ...config.resolve.fallback, fs: false };
+      config.resolve.fallback = { 
+        ...config.resolve.fallback, 
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+      };
     }
+    
+    // Ensure node_modules are resolved properly for local packages
+    config.resolve.symlinks = false;
+    
     return config;
   },
 };

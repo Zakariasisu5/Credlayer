@@ -14,6 +14,7 @@ export function Providers({ children }: PropsWithChildren) {
       enableSystem={false}
       disableTransitionOnChange
       storageKey="credlayer-theme"
+      enableColorScheme={false}
     >
       <ClusterProvider>
         <AppClientProvider>{children}</AppClientProvider>

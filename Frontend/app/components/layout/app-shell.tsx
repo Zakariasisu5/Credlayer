@@ -25,8 +25,7 @@ import { Header, Brand } from "../layout";
 import { Button } from "../ui";
 
 export const appNav: { href: string; label: string; icon: IconType; color: string }[] = [
-  { href: "/app", label: "Overview", icon: MdDashboard, color: "#3b82f6" }, // Blue
-  { href: "/app/dashboard", label: "Dashboard", icon: MdSpaceDashboard, color: "#8b5cf6" }, // Purple
+  { href: "/app", label: "Dashboard", icon: MdSpaceDashboard, color: "#8b5cf6" }, // Purple
   { href: "/app/profile", label: "Profile", icon: MdPerson, color: "#ec4899" }, // Pink
   { href: "/app/analysis", label: "Analysis", icon: MdAnalytics, color: "#10b981" }, // Green
   { href: "/app/agents", label: "Agents", icon: MdSmartToy, color: "#f59e0b" }, // Amber

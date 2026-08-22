@@ -14,6 +14,15 @@ import { ellipsify } from "../lib/explorer";
 import { useCluster } from "./cluster-context";
 import { useAppClient } from "../lib/client-provider";
 
+// Prevent hydration mismatch by only showing wallet state after mount
+function useHasMounted() {
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  return hasMounted;
+}
+
 const solFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 5,
 });
@@ -29,6 +38,7 @@ function formatWalletError(error: unknown) {
 }
 
 export function WalletButton() {
+  const hasMounted = useHasMounted();
   const client = useAppClient();
   const wallets = useWallets(client);
   const status = useWalletStatus(client);
@@ -72,6 +82,20 @@ export function WalletButton() {
       // Clipboard API unavailable (insecure origin) or permission denied.
     }
   };
+
+  // Show a placeholder during SSR and initial client render to prevent hydration mismatch
+  if (!hasMounted) {
+    return (
+      <div className="relative">
+        <button
+          disabled
+          className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs opacity-50"
+        >
+          Connect Wallet
+        </button>
+      </div>
+    );
+  }
 
   if (!connected) {
     return (

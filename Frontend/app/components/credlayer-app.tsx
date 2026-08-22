@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { LandingPage } from "./landing";
 
 // Workspace pages
-import { OverviewPage } from "./workspace/overview";
 import { DashboardPage } from "./workspace/dashboard";
 import { ProfilePage } from "./workspace/profile";
 import { AnalysisPage } from "./workspace/analysis";
@@ -36,7 +35,7 @@ export default function CredLayerApp() {
   if (pathname === "/dashboard-preview") return <DashboardPreviewPage />;
 
   // Workspace pages
-  if (pathname === "/app") return <OverviewPage />;
+  if (pathname === "/app") return <DashboardPage />;
   if (pathname === "/app/dashboard") return <DashboardPage />;
   if (pathname === "/app/profile") return <ProfilePage />;
   if (pathname === "/app/analysis") return <AnalysisPage />;

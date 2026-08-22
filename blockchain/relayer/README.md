@@ -99,3 +99,54 @@ curl -X POST http://localhost:3001/api/v1/attestations/issue \
   "riskLevel": "MEDIUM"
 }'
 ```
+
+
+## Troubleshooting
+
+### Error: "Cannot find module 'D:\...\dist\index.js'"
+**Solution:** Run `npm run build` to compile TypeScript to JavaScript first.
+
+### Error: "Relayer environment variables are unconfigured"
+**Solution:** 
+- Make sure you've created a `.env` file (copy from `.env.example`)
+- Verify that all required variables are set with actual values (not placeholders)
+- Required variables: `ISSUER_PRIVATE_KEY`, `CREDENTIAL_PDA`, `SCHEMA_PDA`
+
+### Error: "Account not found" or "Transaction failed"
+**Solution:**
+- Ensure your issuer account has sufficient SOL for transaction fees
+  - Get devnet SOL from: https://faucet.solana.com/
+- Verify that the `CREDENTIAL_PDA` and `SCHEMA_PDA` exist on-chain
+- Confirm the issuer has authority to issue attestations
+
+### How to Get Credential and Schema PDAs
+
+If you don't have these values yet, you need to create them using the SAS scripts:
+
+```bash
+# Navigate to the SAS directory
+cd ../sas
+
+# Install dependencies
+npm install
+
+# Configure your .env file in the sas directory
+# Then create a schema
+npm run create-schema
+
+# Create a credential
+npm run create-credential
+```
+
+The scripts will output the PDA addresses - copy them to your relayer `.env` file.
+
+## Frontend Integration
+
+The relayer works seamlessly with the CredLayer frontend. When you click "Issue Attestation" in the dashboard:
+
+1. Frontend sends wallet address to relayer
+2. Relayer generates mock trust score (600-850)
+3. Relayer creates on-chain attestation
+4. Frontend displays transaction hash and Solana Explorer link
+
+Make sure the frontend's `NEXT_PUBLIC_RELAYER_URL` matches this service's URL (default: `http://localhost:3001/api/v1/attestations/issue`).

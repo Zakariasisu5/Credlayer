@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-
-const credLayerLogo = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/file_0000000050c081f4ade2ab8730a0e87d-RQX8RDIugIzMfNeu4oYtO2nx88jhHr.png";
+import credLayerLogo from "@/app/assets/Futuristic Cybersecurity Shield Emblem.png";
 
 export function SecurityVisualization() {
   return (
@@ -13,29 +12,21 @@ export function SecurityVisualization() {
       <div className="absolute inset-[16%] rounded-full border border-cyan-300/10 animate-pulse [animation-delay:2s]" />
 
       {/* Central logo container */}
-      <div className="absolute inset-[28%] flex items-center justify-center">
+      <div className="absolute inset-[20%] flex items-center justify-center">
         <div className="relative w-full h-full">
           {/* Animated glow */}
-          <div className="absolute -inset-6 rounded-full bg-cyan-400/20 blur-2xl animate-pulse" />
+          <div className="absolute -inset-8 rounded-full bg-cyan-400/20 blur-3xl animate-pulse" />
           
-          {/* Logo container with transparent background */}
-          <div className="relative w-full h-full rounded-2xl border border-cyan-400/40 bg-transparent backdrop-blur-sm shadow-[0_0_60px_rgba(34,211,238,0.25)] p-8 transition-all duration-300 hover:border-cyan-300/60 hover:shadow-[0_0_80px_rgba(34,211,238,0.35)]">
-            <div className="relative w-full h-full">
-              <Image
-                src={credLayerLogo}
-                alt="CredLayer Security Shield"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+          {/* Logo without border box */}
+          <div className="relative w-full h-full">
+            <Image
+              src={credLayerLogo}
+              alt="CredLayer Security Shield"
+              fill
+              className="object-contain drop-shadow-[0_0_40px_rgba(34,211,238,0.4)] transition-all duration-300 hover:drop-shadow-[0_0_60px_rgba(34,211,238,0.5)]"
+              priority
+            />
           </div>
-
-          {/* Animated corner accents */}
-          <div className="absolute -top-1 -left-1 w-5 h-5 border-l-2 border-t-2 border-cyan-400/70 animate-pulse" />
-          <div className="absolute -top-1 -right-1 w-5 h-5 border-r-2 border-t-2 border-cyan-400/70 animate-pulse [animation-delay:0.5s]" />
-          <div className="absolute -bottom-1 -left-1 w-5 h-5 border-l-2 border-b-2 border-cyan-400/70 animate-pulse [animation-delay:1s]" />
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 border-r-2 border-b-2 border-cyan-400/70 animate-pulse [animation-delay:1.5s]" />
         </div>
       </div>
 

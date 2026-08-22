@@ -32,7 +32,7 @@
   "dependencies": {
     "@credlayer/sdk": "file:../blockchain/sdk",
     "@solana-program/memo": "^0.12.0",
-    "@solana-program/token": "^0.13.0",
+    "@solana-program/token": "^0.15.0",
     "@solana/kit": "^7.0.0",
     "@solana/kit-plugin-rpc": "^0.15.0",
     "@solana/kit-plugin-wallet": "^0.14.0",
@@ -45,6 +45,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.7.0",
+    "sas-lib": "^1.0.10",
     "sonner": "^2.0.7",
     "swr": "^2.2.0"
   },

@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-
-const credLayerLogo = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/file_0000000050c081f4ade2ab8730a0e87d-RQX8RDIugIzMfNeu4oYtO2nx88jhHr.png";
+import credLayerLogo from "@/app/assets/Futuristic Cybersecurity Shield Emblem.png";
 
 // Network topology visualization
 export function NetworkVisual({ dashboard = false }: { dashboard?: boolean }) {
