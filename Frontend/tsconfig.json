@@ -35,8 +35,16 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "../app-header.tsx"  ],
+  ],
   "exclude": [
-    "node_modules"
-  ]
+    "node_modules",
+    "../blockchain"
+  ],
+  "watchOptions": {
+    "excludeDirectories": [
+      "node_modules",
+      ".next",
+      "../blockchain"
+    ]
+  }
 }
