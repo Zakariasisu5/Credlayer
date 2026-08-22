@@ -15,10 +15,18 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["ws"],
   transpilePackages: ["@credlayer/sdk", "sas-lib"],
+  experimental: {
+    // Enable Turbopack to resolve local packages correctly
+    turbo: {
+      resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
+    },
+  },
   turbopack: {
     resolveAlias: {
       fs: { browser: "./empty-module.js" },
     },
+    // Ensure Turbopack follows symlinks for local packages
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
   webpack: (config, { isServer, dev }) => {
     if (!isServer) {
@@ -31,8 +39,9 @@ const nextConfig: NextConfig = {
       };
     }
     
-    // Prevent webpack from following symlinks into other workspaces
-    config.resolve.symlinks = false;
+    // ENABLE symlink resolution for local packages
+    // The SDK is installed as a symlink from ../blockchain/sdk
+    config.resolve.symlinks = true;
     
     // Optimize file watching to prevent WSL memory spikes
     if (dev) {
