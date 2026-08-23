@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useSyncExternalStore } from "react";
+import { WalletCards } from "lucide-react";
 import { address, formatDecimalFixedPoint, lamportsToSol } from "@solana/kit";
 import {
   useWallets,
@@ -16,11 +17,11 @@ import { useAppClient } from "../lib/client-provider";
 
 // Prevent hydration mismatch by only showing wallet state after mount
 function useHasMounted() {
-  const [hasMounted, setHasMounted] = useState(false);
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-  return hasMounted;
+  return useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
 }
 
 const solFormatter = new Intl.NumberFormat("en-US", {
@@ -35,6 +36,17 @@ function formatWalletError(error: unknown) {
   if (normalized.includes("timeout") || normalized.includes("timed out")) return "The wallet took too long to respond. Try again.";
   if (normalized.includes("not found") || normalized.includes("not installed")) return "Install a Solana wallet extension to continue.";
   return message.length > 180 ? `${message.slice(0, 180)}…` : message;
+}
+
+function getWalletBrowseUrl(wallet: "phantom" | "solflare" | "backpack") {
+  if (typeof window === "undefined") return "#";
+  const pageUrl = encodeURIComponent(window.location.href);
+  const browseUrls = {
+    phantom: `https://phantom.app/ul/browse/${pageUrl}?ref=${pageUrl}`,
+    solflare: `https://solflare.com/ul/v1/browse/${pageUrl}`,
+    backpack: `https://backpack.app/ul/browse/${pageUrl}`,
+  };
+  return browseUrls[wallet];
 }
 
 export function WalletButton() {
@@ -89,9 +101,11 @@ export function WalletButton() {
       <div className="relative">
         <button
           disabled
-          className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs opacity-50"
+          aria-label="Connect wallet"
+          className="flex size-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-2 py-2 text-xs font-medium text-primary-foreground shadow-xs opacity-50 sm:h-auto sm:w-auto sm:px-4"
         >
-          Connect Wallet
+          <WalletCards className="size-4 shrink-0" aria-hidden="true" />
+          <span className="hidden sm:inline">Connect Wallet</span>
         </button>
       </div>
     );
@@ -102,23 +116,43 @@ export function WalletButton() {
       <div className="relative" ref={ref}>
         <button
           onClick={() => (isOpen ? close() : open())}
-          className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90"
+          aria-label="Connect wallet"
+          title="Connect wallet"
+          className="flex size-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-2 py-2 text-xs font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90 sm:h-auto sm:w-auto sm:px-4"
         >
-          Connect Wallet
+          <WalletCards className="size-4 shrink-0" aria-hidden="true" />
+          <span className="hidden sm:inline">Connect Wallet</span>
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border-low bg-card p-3 shadow-lg">
+          <div className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-border-low bg-card p-3 shadow-lg">
             <p className="mb-2 text-xs font-medium text-muted">
               Choose a wallet
             </p>
             {wallets.length === 0 ? (
               <div className="flex flex-col gap-2 text-xs text-muted">
-                <p>No Solana wallets detected in this browser.</p>
-                <div className="flex gap-2">
-                  <a className="text-primary underline underline-offset-4" href="https://phantom.app/download" target="_blank" rel="noreferrer">Install Phantom</a>
-                  <a className="text-primary underline underline-offset-4" href="https://backpack.app/download" target="_blank" rel="noreferrer">Install Backpack</a>
+                <p>No wallet extension was detected. On mobile, open CredLayer inside a wallet app to connect.</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["phantom", "solflare", "backpack"] as const).map((wallet) => (
+                    <a
+                      key={wallet}
+                      className="rounded-lg border border-border-low px-2 py-2 text-center font-medium capitalize text-foreground transition hover:bg-cream"
+                      href={getWalletBrowseUrl(wallet)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {wallet}
+                    </a>
+                  ))}
                 </div>
+                <p className="pt-1 text-[11px] text-muted-foreground">
+                  Desktop users can install a wallet extension:
+                  <span className="ml-1">
+                    <a className="text-primary underline underline-offset-4" href="https://phantom.app/download" target="_blank" rel="noreferrer">Phantom</a>
+                    {" or "}
+                    <a className="text-primary underline underline-offset-4" href="https://backpack.app/download" target="_blank" rel="noreferrer">Backpack</a>
+                  </span>
+                </p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -173,10 +207,13 @@ export function WalletButton() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => (isOpen ? close() : open())}
-        className="flex cursor-pointer items-center gap-2 rounded-lg border border-border-low bg-card px-3 py-2 text-xs font-medium transition hover:bg-cream"
+        aria-label={`Wallet connected: ${ellipsify(walletAddress!, 4)}`}
+        title="Wallet account"
+        className="flex size-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border-low bg-card px-2 py-2 text-xs font-medium transition hover:bg-cream sm:h-auto sm:w-auto sm:px-3"
       >
         <span className="h-2 w-2 rounded-full bg-green-500" />
-        <span className="font-mono">{ellipsify(walletAddress!, 4)}</span>
+        <WalletCards className="size-4 sm:hidden" aria-hidden="true" />
+        <span className="hidden font-mono sm:inline">{ellipsify(walletAddress!, 4)}</span>
       </button>
 
       {isOpen && (

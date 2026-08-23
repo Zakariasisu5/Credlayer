@@ -44,7 +44,7 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#061426]/95 backdrop-blur-xl border-b border-cyan-500/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
       <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-8">
         {/* Logo - Always Visible */}
-        <div className="relative z-50 flex-shrink-0">
+        <div className="relative z-50 shrink-0">
           <Brand />
         </div>
 
@@ -60,14 +60,14 @@ export function Header() {
               >
                 <Icon className="size-4" style={{ color: item.color }} />
                 {item.label}
-                <span className="absolute -bottom-1 left-0 h-px w-0 bg-gradient-to-r from-cyan-400 to-blue-400 transition-all duration-300 group-hover:w-full" />
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-linear-to-r from-cyan-400 to-blue-400 transition-all duration-300 group-hover:w-full" />
               </Link>
             );
           })}
         </nav>
 
         {/* Desktop CTA - Hidden on Mobile */}
-        <div className="hidden lg:flex flex-shrink-0">
+        <div className="hidden lg:flex shrink-0">
           <Button 
             href="/app" 
             className="bg-cyan-500 hover:bg-cyan-600 text-white whitespace-nowrap"

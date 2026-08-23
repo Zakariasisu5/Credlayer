@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Menu, X } from "lucide-react";
 import { 
-  MdDashboard, 
   MdSpaceDashboard,
   MdPerson,
   MdAnalytics,
@@ -146,13 +145,13 @@ export function Shell({
   return (
     <>
       <Header />
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1440px]">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-360">
         {title && <AppSidebar developer={developer} />}
         <main className="min-w-0 flex-1">
           {title && (
             <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm px-5 py-7 lg:px-10">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     className="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors"
@@ -160,11 +159,11 @@ export function Shell({
                   >
                     <Menu className="size-5" />
                   </button>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
                       {eyebrow || "CredLayer"}
                     </p>
-                    <h1 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight lg:text-3xl">
+                    <h1 className="mt-2 truncate text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">
                       {title}
                     </h1>
                   </div>
