@@ -63,6 +63,31 @@ async def score_wallet(address: str) -> Envelope[WalletScore]:
                 body = response.json()
                 data = body.get("data", body)
                 validated_score = WalletScore.model_validate(data)
+
+                # --- NEW: post the relayer to mint on-chain ---
+                relayer_url = "http://localhost:3001/api/v1/attestations/issue"
+                
+                # the relayer expects the riskLevel as upeercase (LOW, MEDIUM, HIGH)
+                risk_level_upper = validated_score.risk_level.upper()
+
+                relayer_payload = {
+                    "targetWallet": validated_score.address,
+                    "trustScore": validated_score.trust_score,
+                    "riskLevel": risk_level_upper
+                }
+
+                try: 
+                    relayer_resp = await client.post(relayer_url, json=relayer_payload)
+                    if relayer_resp.status_code == 200:
+                        tx_hash = relayer_resp.json().get("txHash")
+                        logger.info("attestation_minted", error=relayer_resp.text)
+                    else:
+                        logger.error("relayer_mint_failed", error=relayer_resp.text)
+                except Exception as e:
+                    logger.error("relayer_unreachable", error=str(e))
+                    # --------------
+                    
+
                 return ok(validated_score)
             else:
                 logger.warning("ml_service_non_200", status_code=response.status_code, text=response.text)

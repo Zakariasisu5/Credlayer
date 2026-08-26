@@ -28,7 +28,7 @@ function toV1Instruction(ix: any): TransactionInstruction {
 }
 
 // PASTE THE PDA FROM STEP 2 HERE
-const CREDENTIAL_PDA = new PublicKey("YOUR_CREDENTIAL_PDA_HERE");
+const CREDENTIAL_PDA = new PublicKey(process.env.CREDENTIAL_PDA!);
 
 async function main() {
     const connection = new Connection(process.env.SOLANA_RPC_URL!, 'confirmed');
