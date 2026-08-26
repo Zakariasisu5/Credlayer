@@ -1,2 +1,125 @@
-node_modules
-node_modules
+# =============================================================================
+# CredLayer Root .gitignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# OS & Editor files
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# -----------------------------------------------------------------------------
+# Environment & Secrets (NEVER COMMIT SENSITIVE DATA)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa
+id_ecdsa
+id_ed25519
+
+# -----------------------------------------------------------------------------
+# Python / Virtual Environments
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+
+# -----------------------------------------------------------------------------
+# ML / Data / Model Weights & Checkpoints (Heavy Artifacts)
+# -----------------------------------------------------------------------------
+**/data/raw/
+**/data/processed/
+**/data/models/
+**/data/checkpoints/
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.ckpt
+
+# Keep .gitkeep or .gitignore in data directories
+!**/data/**/.gitkeep
+!**/data/**/.gitignore
+
+# -----------------------------------------------------------------------------
+# Node.js / Frontend
+# -----------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+.next/
+out/
+.turbo/
+
+# -----------------------------------------------------------------------------
+# Rust / Solana / Anchor
+# -----------------------------------------------------------------------------
+**/target/
+**/*.rs.bk
+Cargo.lock
+Anchor.lock
+.anchor/
+test-ledger/
+
+# -----------------------------------------------------------------------------
+# Logs & Temp
+# -----------------------------------------------------------------------------
+*.log
+logs/
+temp/
+tmp/
