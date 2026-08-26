@@ -1,0 +1,293 @@
+# .coderabbit.yaml
+
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+
+  request_changes_workflow: true
+
+  high_level_summary: true
+  poem: false
+
+  review_status: true
+  commit_status: true
+
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - develop
+
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/__pycache__/**"
+    - "!**/.venv/**"
+    - "!**/venv/**"
+    - "!**/.pytest_cache/**"
+    - "!**/.mypy_cache/**"
+    - "!**/*.lock"
+    - "!**/coverage/**"
+    - "!**/target/**"
+    - "!**/.anchor/**"
+
+  path_instructions:
+
+    - path: "Frontend/**"
+      instructions: |
+        Review this as a Next.js + TypeScript frontend.
+
+        Focus on:
+        - React and Next.js correctness
+        - Server vs Client Component boundaries
+        - hydration issues
+        - unnecessary client-side rendering
+        - TypeScript type safety
+        - wallet connection reliability
+        - Solana wallet integration
+        - Phantom and Backpack compatibility
+        - authentication and authorization
+        - API integration
+        - loading/error/empty states
+        - accessibility
+        - responsive UI
+        - performance
+        - unnecessary re-renders
+        - exposed secrets or API keys
+        - unsafe use of localStorage/sessionStorage
+        - insecure handling of wallet addresses and signatures
+
+        Do not complain about intentional UI animations or styling unless they
+        create performance, accessibility, or functional problems.
+
+    - path: "Frontend/app/**"
+      instructions: |
+        Pay special attention to:
+        - Next.js App Router conventions
+        - Server Components
+        - Client Components
+        - server actions
+        - route handlers
+        - metadata
+        - hydration
+        - useEffect misuse
+        - unnecessary browser-only APIs
+        - authentication boundaries
+
+        Flag architecture that could create production runtime errors.
+
+    - path: "Backend/**"
+      instructions: |
+        Review this as a production FastAPI backend.
+
+        Focus on:
+        - API design
+        - request validation
+        - Pydantic schemas
+        - authentication
+        - authorization
+        - rate limiting
+        - error handling
+        - HTTP status codes
+        - async correctness
+        - database access
+        - SQL injection
+        - dependency injection
+        - secrets management
+        - environment variables
+        - logging
+        - CORS
+        - transaction safety
+        - idempotency
+        - API performance
+
+        Ensure the backend does not trust wallet addresses, scores, risk levels,
+        or AI results supplied directly by the client.
+
+        Important trust rule:
+        Reputation scores and risk classifications must be generated or
+        validated server-side. Never trust values submitted by the frontend.
+
+    - path: "models/**"
+      instructions: |
+        Review this as CredLayer's Python AI/ML reputation and fraud detection
+        system.
+
+        Focus on:
+        - data leakage
+        - train/test contamination
+        - incorrect graph construction
+        - feature leakage
+        - class imbalance
+        - incorrect evaluation methodology
+        - reproducibility
+        - model serialization
+        - inference correctness
+        - input validation
+        - model versioning
+        - model loading failures
+        - CPU/GPU compatibility
+        - memory usage
+        - inference performance
+        - numerical stability
+        - missing data handling
+        - suspiciously optimistic metrics
+
+        Pay particular attention to whether wallet information from the
+        evaluation/test set can indirectly influence training.
+
+        For fraud detection, do not treat accuracy as sufficient evidence of
+        model quality. Check precision, recall, F1, AUROC, PR-AUC and confusion
+        matrix behavior where applicable.
+
+        Flag claims of high model accuracy when the implementation does not
+        provide sufficient evaluation evidence.
+
+    - path: "blockchain/**"
+      instructions: |
+        Review this as production Solana blockchain infrastructure.
+
+        Focus heavily on:
+        - Solana transaction correctness
+        - account validation
+        - PDA derivation
+        - signer validation
+        - ownership checks
+        - authority checks
+        - account constraints
+        - replay protection
+        - duplicate submissions
+        - transaction confirmation
+        - error handling
+        - RPC failures
+        - commitment levels
+        - serialization/deserialization
+        - network configuration
+        - Devnet vs Mainnet configuration
+        - secret key handling
+        - private key exposure
+        - wallet authorization
+        - program upgrade authority
+        - Anchor correctness
+
+        Treat blockchain code as security-critical.
+
+        Flag any possibility that an unauthorized wallet could:
+        - issue an attestation
+        - modify a reputation
+        - revoke a credential
+        - change an authority
+        - bypass verification
+        - manipulate a trust score
+
+        Never recommend putting private keys, seed phrases, or signing secrets
+        in source code, frontend code, GitHub, Docker images, or logs.
+
+    - path: "blockchain/programs/**"
+      instructions: |
+        Perform a security-focused Anchor/Solana smart contract review.
+
+        Check:
+        - account constraints
+        - PDA seeds
+        - bump validation
+        - signer requirements
+        - account ownership
+        - authority validation
+        - initialization logic
+        - duplicate initialization
+        - privilege escalation
+        - arbitrary account substitution
+        - integer overflow/underflow
+        - unsafe arithmetic
+        - missing validation
+        - CPI security
+        - unchecked accounts
+        - upgrade authority
+        - denial-of-service possibilities
+
+        Treat all externally supplied accounts and instruction parameters as
+        untrusted.
+
+    - path: "blockchain/sdk/**"
+      instructions: |
+        Review this as the public CredLayer developer SDK.
+
+        Focus on:
+        - API stability
+        - TypeScript type safety
+        - backwards compatibility
+        - transaction handling
+        - RPC failure handling
+        - timeout handling
+        - retry behavior
+        - wallet compatibility
+        - clean error messages
+        - input validation
+        - secure defaults
+        - documentation accuracy
+
+        Public SDK methods should not expose private keys or signing secrets.
+
+        Make sure SDK behavior is consistent with the actual Solana programs
+        and backend APIs.
+
+    - path: "**/*.py"
+      instructions: |
+        Follow Python best practices.
+
+        Check:
+        - type hints
+        - exception handling
+        - async/sync correctness
+        - resource cleanup
+        - dependency safety
+        - logging
+        - security
+        - testability
+        - unnecessary complexity
+
+    - path: "**/*.ts"
+      instructions: |
+        Follow strict TypeScript practices.
+
+        Focus on:
+        - avoiding any
+        - unsafe type assertions
+        - null/undefined handling
+        - API response validation
+        - error handling
+        - unnecessary abstractions
+        - maintainability
+
+    - path: "**/*.tsx"
+      instructions: |
+        Review React components for:
+        - state management
+        - effect dependencies
+        - unnecessary renders
+        - accessibility
+        - hydration problems
+        - component boundaries
+        - type safety
+        - error handling
+
+  tools:
+    eslint:
+      enabled: true
+
+    biome:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
