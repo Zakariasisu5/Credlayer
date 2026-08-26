@@ -8,10 +8,18 @@ import { useAppClient } from "../../lib/client-provider";
 import { AlertCircle } from "lucide-react";
 
 // Initialize the SDK (Devnet by default)
+
 const credlayer = new CredLayerClient();
 
+
+// @ts-ignore
+credlayer.CREDENTIAL_PDA = "AaNQ6yYSMD7PihrTXF65RwxPMyu2UJ9agtiutqrWh6bw";
+// @ts-ignore
+credlayer.SCHEMA_PDA = "GF4CFVovfTb8dHwHHc7rxVMNChc65HQPBfxoYoi4roHd";
+
 // URL of your running Express Relayer
-const RELAYER_URL = process.env.NEXT_PUBLIC_RELAYER_URL || "http://localhost:3001/api/v1/attestations/issue";
+// const RELAYER_URL = process.env.NEXT_PUBLIC_RELAYER_URL || "http://localhost:3001/api/v1/attestations/issue";
+const GATEWAY_URL = "http://localhost:3001/api/v1/attestations/issue"
 
 export function TrustScoreLiveDemo() {
     const [hasMounted, setHasMounted] = useState(false);
@@ -46,50 +54,25 @@ export function TrustScoreLiveDemo() {
 
     // 1. Simulate AI Backend -> Trigger Relayer to Mint On-Chain
     const handleMintMockScore = async () => {
-        if (!walletAddress) {
-            setStatus("Please connect your wallet first");
+        if (!walletAddress || walletAddress.length < 32) {
+            setStatus("Please enter a valid base58 wallet address.");
             return;
         }
 
-        setLoading(true);
-        setError(null);
-        setStatus("Broadcasting score to Solana Devnet via Relayer...");
-        setTxHash(null);
-
         try {
-            // Generate a mock score (e.g. between 600 and 850)
-            const randomScore = Math.floor(Math.random() * (850 - 600 + 1) + 600);
-            const risk = randomScore >= 750 ? "LOW" : randomScore >= 650 ? "MEDIUM" : "HIGH";
+            setStatus("1. Querying AI Engine & Minting...");
 
-            const response = await axios.post(
-                RELAYER_URL, 
-                {
-                    targetWallet: walletAddress,
-                    trustScore: randomScore,
-                    riskLevel: risk,
-                },
-                { timeout: 10000 } // 10 second timeout
-            );
+            // We send a GET request to the Python API Gateway with the wallet in the URL
+            const API_URL = `http://localhost:8000/api/v1/scores/${walletAddress}`;
+            const response = await axios.get(API_URL);
 
-            if (response.data.success) {
-                setTxHash(response.data.txHash);
-                setStatus(`Minted on-chain! Tx: ${response.data.txHash.slice(0, 8)}...`);
-            }
-        } catch (err: any) {
-            console.error("Attestation minting error:", err);
-            
-            if (err.code === "ECONNREFUSED" || err.message === "Network Error") {
-                setError(`Relayer service is not running. Please start the relayer on ${RELAYER_URL}`);
-                setStatus("Connection failed - Relayer offline");
-            } else if (err.code === "ECONNABORTED") {
-                setError("Request timed out. The relayer took too long to respond.");
-                setStatus("Request timeout");
-            } else {
-                setError(err.response?.data?.error || err.message || "Failed to mint attestation");
-                setStatus("Minting failed");
-            }
-        } finally {
-            setLoading(false);
+            // FastAPI returns our response inside a nested 'data' object
+            const scoreData = response.data.data;
+
+            setStatus(`✅ Success! AI Trust Score (${scoreData.trustScore}) minted on Devnet.`);
+        } catch (err) {
+            console.error("Gateway Error:", err);
+            setStatus("Error: Could not connect to API Gateway on Port 8000.");
         }
     };
 
@@ -220,7 +203,7 @@ export function TrustScoreLiveDemo() {
             {/* Info Card */}
             <div className="p-3 bg-blue-950/20 border border-blue-800/30 rounded-lg">
                 <p className="text-xs text-blue-200">
-                    <span className="font-semibold">Note:</span> The relayer service must be running to issue attestations. 
+                    <span className="font-semibold">Note:</span> The relayer service must be running to issue attestations.
                     Verification queries the blockchain directly and works independently.
                 </p>
             </div>
