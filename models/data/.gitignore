@@ -1,0 +1,8 @@
+# Raw datasets (large, downloaded at runtime)
+raw/
+
+# Processed graph artefacts
+processed/
+
+# Trained model checkpoints
+models/

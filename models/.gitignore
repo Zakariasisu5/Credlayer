@@ -1,0 +1,32 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python & Virtualenv
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Heavy Datasets & Model Weights
+data/raw/
+data/processed/
+data/models/
+data/checkpoints/
+*.pt
+*.pth
+*.parquet
+*.csv
+*.bin
+*.onnx
+*.safetensors
+
+# Retain gitignore / gitkeep
+!data/**/.gitignore
+!data/**/.gitkeep
