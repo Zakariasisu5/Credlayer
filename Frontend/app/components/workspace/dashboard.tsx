@@ -111,8 +111,28 @@ import { Shell } from "../layout/app-shell";
 import { Badge } from "../ui";
 import { Empty, Stat, StyledCard } from "../shared/common-components";
 import { TrustScoreLiveDemo } from "./sdk-client";
+import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
+import { useAppClient } from "../../lib/client-provider";
+import { useTrustScore, useCredentials, useConnections, useActivity } from "../../lib/hooks";
 
 export function DashboardPage() {
+  const client = useAppClient();
+  const connectedWallet = useConnectedWallet(client);
+  const walletAddress = connectedWallet?.account.address;
+
+  // Fetch real data from backend
+  const { data: trustScore, isLoading: scoreLoading } = useTrustScore(walletAddress);
+  const { data: credentials, isLoading: credentialsLoading } = useCredentials(walletAddress);
+  const { data: connections, isLoading: connectionsLoading } = useConnections(walletAddress);
+  const { data: activity, isLoading: activityLoading } = useActivity(walletAddress, 10);
+
+  // Calculate stats
+  const reputationScore = trustScore?.score ?? null;
+  const credentialCount = credentials?.length ?? 0;
+  const verifiedCredentials = credentials?.filter(c => c.verificationStatus === 'verified').length ?? 0;
+  const connectionCount = connections?.totalCount ?? 0;
+  const recentActivityCount = activity?.length ?? 0;
+
   return (
     <Shell title="Dashboard" eyebrow="App workspace">
       <div className="mx-auto max-w-7xl px-5 py-8 lg:px-10 space-y-6">
@@ -141,9 +161,21 @@ export function DashboardPage() {
 
         {/* Quick Stats Grid */}
         <div className="grid gap-5 md:grid-cols-3">
-          <Stat label="Reputation score" value="—" note="Run verification above" />
-          <Stat label="Credentials" value="—" note="SAS PDA schema v1" />
-          <Stat label="Network activity" value="—" note="Solana Devnet" />
+          <Stat 
+            label="Reputation score" 
+            value={scoreLoading ? "..." : reputationScore !== null ? reputationScore.toString() : "—"} 
+            note={walletAddress ? (reputationScore !== null ? `Confidence: ${trustScore?.confidence}%` : "No score yet") : "Connect wallet to view"} 
+          />
+          <Stat 
+            label="Credentials" 
+            value={credentialsLoading ? "..." : credentialCount > 0 ? credentialCount.toString() : "—"} 
+            note={walletAddress ? (credentialCount > 0 ? `${verifiedCredentials} verified` : "No credentials issued") : "Connect wallet"} 
+          />
+          <Stat 
+            label="Network activity" 
+            value={activityLoading ? "..." : recentActivityCount > 0 ? recentActivityCount.toString() : "—"} 
+            note={walletAddress ? (recentActivityCount > 0 ? "Recent events" : "No activity yet") : "Connect wallet"} 
+          />
         </div>
 
         {/* Signal & Identity Overview */}
@@ -159,25 +191,31 @@ export function DashboardPage() {
                   <p className="text-sm font-medium">Verified signals</p>
                   <p className="mt-1 text-xs text-muted-foreground">Total verification events</p>
                 </div>
-                <span className="text-2xl font-bold text-primary">—</span>
+                <span className="text-2xl font-bold text-primary">
+                  {scoreLoading ? "..." : trustScore?.signals.filter(s => s.verified).length ?? "—"}
+                </span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-4">
                 <div>
                   <p className="text-sm font-medium">Trust connections</p>
                   <p className="mt-1 text-xs text-muted-foreground">Linked identities</p>
                 </div>
-                <span className="text-2xl font-bold text-primary">—</span>
+                <span className="text-2xl font-bold text-primary">
+                  {connectionsLoading ? "..." : connectionCount > 0 ? connectionCount : "—"}
+                </span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-4">
                 <div>
                   <p className="text-sm font-medium">Attestations</p>
                   <p className="mt-1 text-xs text-muted-foreground">Third-party verifications</p>
                 </div>
-                <span className="text-2xl font-bold text-primary">—</span>
+                <span className="text-2xl font-bold text-primary">
+                  {credentialsLoading ? "..." : verifiedCredentials > 0 ? verifiedCredentials : "—"}
+                </span>
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground italic">
-              Connect a wallet or enter an address above to analyze signals
+              {walletAddress ? "Live data from backend" : "Connect a wallet or enter an address above to analyze signals"}
             </p>
           </StyledCard>
 
@@ -185,13 +223,15 @@ export function DashboardPage() {
             <div className="border-b border-primary/20 pb-4">
               <h2 className="font-semibold">Connected identity</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Link your wallet to view reputation data
+                {walletAddress ? "Wallet connected" : "Link your wallet to view reputation data"}
               </p>
             </div>
             <div className="mt-5 flex flex-col gap-3">
               <div className="flex items-center justify-between border-b border-border pb-3 text-sm">
                 <span className="text-muted-foreground">Wallet</span>
-                <span className="text-amber-400">Devnet Mock Target</span>
+                <span className={walletAddress ? "text-primary font-mono text-xs" : "text-amber-400"}>
+                  {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "Not connected"}
+                </span>
               </div>
               <div className="flex items-center justify-between border-b border-border pb-3 text-sm">
                 <span className="text-muted-foreground">Network</span>
@@ -219,11 +259,45 @@ export function DashboardPage() {
               <h2 className="font-semibold">Recent activity</h2>
               <Activity className="size-4 text-muted-foreground" />
             </div>
-            <Empty
-              icon={Activity}
-              title="No activity recorded"
-              description="Your verification events and credential issuance will appear here once you issue and verify an attestation."
-            />
+            {activityLoading ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">Loading activity...</div>
+            ) : activity && activity.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {activity.slice(0, 5).map((event) => (
+                  <div key={event.id} className="flex items-start gap-3 border-b border-border pb-3 last:border-0">
+                    <div className={`mt-1 size-2 rounded-full ${
+                      event.status === 'success' ? 'bg-green-500' : 
+                      event.status === 'pending' ? 'bg-yellow-500' : 
+                      'bg-red-500'
+                    }`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{event.title}</p>
+                      {event.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{event.description}</p>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(event.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      event.status === 'success' ? 'bg-green-500/10 text-green-500' :
+                      event.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
+                      'bg-red-500/10 text-red-500'
+                    }`}>
+                      {event.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty
+                icon={Activity}
+                title="No activity recorded"
+                description={walletAddress 
+                  ? "Your verification events and credential issuance will appear here once you issue and verify an attestation."
+                  : "Connect your wallet to view activity"}
+              />
+            )}
           </StyledCard>
         </div>
       </div>
