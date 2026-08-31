@@ -110,6 +110,7 @@ import { Activity, BarChart3, ShieldCheck } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Badge } from "../ui";
 import { Empty, Stat, StyledCard } from "../shared/common-components";
+import { ErrorBoundary } from "../shared/error-boundary";
 import { TrustScoreLiveDemo } from "./sdk-client";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
@@ -155,7 +156,9 @@ export function DashboardPage() {
             <ShieldCheck className="size-5 text-primary" />
           </div>
           <div className="mt-4">
-            <TrustScoreLiveDemo />
+            <ErrorBoundary>
+              <TrustScoreLiveDemo />
+            </ErrorBoundary>
           </div>
         </StyledCard>
 

@@ -8,14 +8,17 @@ import { useAppClient } from "../../lib/client-provider";
 import { AlertCircle } from "lucide-react";
 
 // Initialize the SDK (Devnet by default)
-
-const credlayer = new CredLayerClient();
-
-
-// @ts-ignore
-credlayer.CREDENTIAL_PDA = "AaNQ6yYSMD7PihrTXF65RwxPMyu2UJ9agtiutqrWh6bw";
-// @ts-ignore
-credlayer.SCHEMA_PDA = "GF4CFVovfTb8dHwHHc7rxVMNChc65HQPBfxoYoi4roHd";
+// Pass the PDAs directly to the constructor to avoid initialization errors
+let credlayer: any = null;
+try {
+    credlayer = new CredLayerClient(
+        "https://api.devnet.solana.com",
+        "AaNQ6yYSMD7PihrTXF65RwxPMyu2UJ9agtiutqrWh6bw",
+        "GF4CFVovfTb8dHwHHc7rxVMNChc65HQPBfxoYoi4roHd"
+    );
+} catch (err) {
+    console.error("Failed to initialize CredLayerClient:", err);
+}
 
 // URL of your running Express Relayer
 // const RELAYER_URL = process.env.NEXT_PUBLIC_RELAYER_URL || "http://localhost:3001/api/v1/attestations/issue";
@@ -60,6 +63,8 @@ export function TrustScoreLiveDemo() {
         }
 
         try {
+            setLoading(true);
+            setError(null);
             setStatus("1. Querying AI Engine & Minting...");
 
             // We send a GET request to the Python API Gateway with the wallet in the URL
@@ -70,14 +75,24 @@ export function TrustScoreLiveDemo() {
             const scoreData = response.data.data;
 
             setStatus(`✅ Success! AI Trust Score (${scoreData.trustScore}) minted on Devnet.`);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Gateway Error:", err);
-            setStatus("Error: Could not connect to API Gateway on Port 8000.");
+            const errorMsg = err?.response?.statusText || err?.message || "Could not connect to API Gateway on Port 8000";
+            setError(errorMsg);
+            setStatus(`Error: ${errorMsg}`);
+        } finally {
+            setLoading(false);
         }
     };
 
     // 2. Fetch directly from Solana using @credlayer/sdk
     const handleVerifyOnChain = async () => {
+        if (!credlayer) {
+            setError("SDK not initialized properly");
+            setStatus("Error: SDK initialization failed");
+            return;
+        }
+
         if (!walletAddress) {
             setStatus("Please connect your wallet first");
             return;
