@@ -2,7 +2,7 @@
  * Hooks for user settings
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import useSWR, { mutate } from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface Settings {
@@ -46,32 +46,23 @@ async function fetchSettings(wallet: string): Promise<Settings> {
 /**
  * Update settings for a wallet
  */
-async function updateSettings(wallet: string, data: UpdateSettingsRequest): Promise<Settings> {
+export async function updateSettings(wallet: string, data: UpdateSettingsRequest): Promise<Settings> {
   const response = await apiClient.put<ApiEnvelope<Settings>>(`/settings/${wallet}`, data);
-  return unwrap(response.data);
+  const result = unwrap(response.data);
+  // Revalidate after mutation
+  mutate(`/settings/${wallet}`);
+  return result;
 }
 
 /**
  * Hook to get settings for a wallet
  */
-export function useSettings(wallet: string | null | undefined): UseQueryResult<Settings, Error> {
-  return useQuery({
-    queryKey: ['settings', wallet],
-    queryFn: () => fetchSettings(wallet!),
-    enabled: !!wallet,
-  });
-}
-
-/**
- * Hook to update settings
- */
-export function useUpdateSettings(wallet: string) {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (data: UpdateSettingsRequest) => updateSettings(wallet, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings', wallet] });
-    },
-  });
+export function useSettings(wallet: string | null | undefined) {
+  return useSWR(
+    wallet ? `/settings/${wallet}` : null,
+    () => fetchSettings(wallet!),
+    {
+      revalidateOnFocus: false,
+    }
+  );
 }

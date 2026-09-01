@@ -2,7 +2,7 @@
  * Hooks for agent management
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import useSWR, { mutate } from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface Agent {
@@ -43,9 +43,12 @@ export interface RegisterAgentRequest {
 /**
  * Register a new agent
  */
-async function registerAgent(data: RegisterAgentRequest): Promise<Agent> {
+export async function registerAgent(data: RegisterAgentRequest): Promise<Agent> {
   const response = await apiClient.post<ApiEnvelope<Agent>>('/agents', data);
-  return unwrap(response.data);
+  const result = unwrap(response.data);
+  // Revalidate after mutation
+  mutate(`/agents/${result.agentId}`);
+  return result;
 }
 
 /**
@@ -67,28 +70,16 @@ async function fetchAgentActivity(agentId: string, limit = 100): Promise<AgentAc
 }
 
 /**
- * Hook to register an agent
- */
-export function useRegisterAgent() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: registerAgent,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
-    },
-  });
-}
-
-/**
  * Hook to get agent details
  */
-export function useAgent(agentId: string | null | undefined): UseQueryResult<Agent, Error> {
-  return useQuery({
-    queryKey: ['agent', agentId],
-    queryFn: () => fetchAgent(agentId!),
-    enabled: !!agentId,
-  });
+export function useAgent(agentId: string | null | undefined) {
+  return useSWR(
+    agentId ? `/agents/${agentId}` : null,
+    () => fetchAgent(agentId!),
+    {
+      revalidateOnFocus: false,
+    }
+  );
 }
 
 /**
@@ -97,11 +88,13 @@ export function useAgent(agentId: string | null | undefined): UseQueryResult<Age
 export function useAgentActivity(
   agentId: string | null | undefined,
   limit = 100
-): UseQueryResult<AgentActivity[], Error> {
-  return useQuery({
-    queryKey: ['agentActivity', agentId, limit],
-    queryFn: () => fetchAgentActivity(agentId!, limit),
-    enabled: !!agentId,
-    staleTime: 10000, // 10 seconds
-  });
+) {
+  return useSWR(
+    agentId ? `/agents/${agentId}/activity?limit=${limit}` : null,
+    () => fetchAgentActivity(agentId!, limit),
+    {
+      refreshInterval: 10000, // 10 seconds
+      revalidateOnFocus: true,
+    }
+  );
 }

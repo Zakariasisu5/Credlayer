@@ -2,7 +2,7 @@
  * Hook for fetching trust scores
  */
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import useSWR from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface TrustScore {
@@ -29,12 +29,13 @@ async function fetchTrustScore(address: string): Promise<TrustScore> {
 /**
  * Hook to get trust score for a wallet
  */
-export function useTrustScore(address: string | null | undefined): UseQueryResult<TrustScore, Error> {
-  return useQuery({
-    queryKey: ['trustScore', address],
-    queryFn: () => fetchTrustScore(address!),
-    enabled: !!address,
-    staleTime: 30000, // 30 seconds
-    retry: 2,
-  });
+export function useTrustScore(address: string | null | undefined) {
+  return useSWR(
+    address ? `/scores/${address}` : null,
+    () => fetchTrustScore(address!),
+    {
+      refreshInterval: 30000, // 30 seconds
+      revalidateOnFocus: false,
+    }
+  );
 }

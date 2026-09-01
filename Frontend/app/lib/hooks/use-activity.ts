@@ -2,7 +2,7 @@
  * Hook for fetching activity feed
  */
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import useSWR from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface ActivityEvent {
@@ -34,11 +34,13 @@ async function fetchActivity(wallet: string, limit = 100): Promise<ActivityEvent
 export function useActivity(
   wallet: string | null | undefined,
   limit = 100
-): UseQueryResult<ActivityEvent[], Error> {
-  return useQuery({
-    queryKey: ['activity', wallet, limit],
-    queryFn: () => fetchActivity(wallet!, limit),
-    enabled: !!wallet,
-    staleTime: 30000, // 30 seconds
-  });
+) {
+  return useSWR(
+    wallet ? `/activity/${wallet}?limit=${limit}` : null,
+    () => fetchActivity(wallet!, limit),
+    {
+      refreshInterval: 30000, // 30 seconds
+      revalidateOnFocus: true,
+    }
+  );
 }

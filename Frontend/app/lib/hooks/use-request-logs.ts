@@ -2,7 +2,7 @@
  * Hook for developer request logs (Developer Portal)
  */
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import useSWR from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export type RequestStatus = 'success' | 'error' | 'unauthorized' | 'rate_limited' | 'invalid';
@@ -39,13 +39,15 @@ async function fetchRequestLogs(ownerWallet: string, limit = 100): Promise<Reque
 export function useRequestLogs(
   ownerWallet: string | null | undefined,
   limit = 100
-): UseQueryResult<RequestLog[], Error> {
-  return useQuery({
-    queryKey: ['requestLogs', ownerWallet, limit],
-    queryFn: () => fetchRequestLogs(ownerWallet!, limit),
-    enabled: !!ownerWallet,
-    staleTime: 10000, // 10 seconds
-  });
+) {
+  return useSWR(
+    ownerWallet ? `/developer/requests?owner_wallet=${ownerWallet}&limit=${limit}` : null,
+    () => fetchRequestLogs(ownerWallet!, limit),
+    {
+      refreshInterval: 10000, // 10 seconds
+      revalidateOnFocus: true,
+    }
+  );
 }
 
 /**

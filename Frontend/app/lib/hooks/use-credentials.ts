@@ -2,7 +2,7 @@
  * Hook for fetching credentials
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import useSWR, { mutate } from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface Credential {
@@ -29,34 +29,24 @@ async function fetchCredentials(wallet: string): Promise<Credential[]> {
 /**
  * Trigger re-verification of a credential
  */
-async function reverifyCredential(credentialId: string): Promise<Credential> {
+export async function reverifyCredential(credentialId: string, walletAddress: string): Promise<Credential> {
   const response = await apiClient.post<ApiEnvelope<Credential>>(`/credentials/${credentialId}/verify`);
-  return unwrap(response.data);
+  const result = unwrap(response.data);
+  // Revalidate credentials after mutation
+  mutate(`/credentials/${walletAddress}`);
+  return result;
 }
 
 /**
  * Hook to get credentials for a wallet
  */
-export function useCredentials(wallet: string | null | undefined): UseQueryResult<Credential[], Error> {
-  return useQuery({
-    queryKey: ['credentials', wallet],
-    queryFn: () => fetchCredentials(wallet!),
-    enabled: !!wallet,
-    staleTime: 60000, // 1 minute
-  });
-}
-
-/**
- * Hook to re-verify a credential
- */
-export function useReverifyCredential() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: reverifyCredential,
-    onSuccess: (data) => {
-      // Invalidate credentials query to refetch
-      queryClient.invalidateQueries({ queryKey: ['credentials', data.walletAddress] });
-    },
-  });
+export function useCredentials(wallet: string | null | undefined) {
+  return useSWR(
+    wallet ? `/credentials/${wallet}` : null,
+    () => fetchCredentials(wallet!),
+    {
+      refreshInterval: 60000, // 1 minute
+      revalidateOnFocus: false,
+    }
+  );
 }

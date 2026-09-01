@@ -2,7 +2,7 @@
  * Hooks for webhook management (Developer Portal)
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import useSWR, { mutate } from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export type EventType = 'score_change' | 'credential_verified' | 'risk_flag' | 'connection_added';
@@ -29,9 +29,12 @@ export interface RegisterWebhookRequest {
 /**
  * Register a new webhook
  */
-async function registerWebhook(data: RegisterWebhookRequest): Promise<Webhook> {
+export async function registerWebhook(data: RegisterWebhookRequest): Promise<Webhook> {
   const response = await apiClient.post<ApiEnvelope<Webhook>>('/webhooks', data);
-  return unwrap(response.data);
+  const result = unwrap(response.data);
+  // Revalidate after mutation
+  mutate(`/webhooks?owner_wallet=${data.ownerWallet}`);
+  return result;
 }
 
 /**
@@ -47,46 +50,23 @@ async function fetchWebhooks(ownerWallet: string): Promise<Webhook[]> {
 /**
  * Delete a webhook
  */
-async function deleteWebhook(webhookId: string): Promise<{ deleted: boolean; webhookId: string }> {
+export async function deleteWebhook(webhookId: string, ownerWallet: string): Promise<{ deleted: boolean; webhookId: string }> {
   const response = await apiClient.delete<ApiEnvelope<{ deleted: boolean; webhookId: string }>>(`/webhooks/${webhookId}`);
-  return unwrap(response.data);
-}
-
-/**
- * Hook to register a webhook
- */
-export function useRegisterWebhook() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: registerWebhook,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['webhooks', data.ownerWallet] });
-    },
-  });
+  const result = unwrap(response.data);
+  // Revalidate after mutation
+  mutate(`/webhooks?owner_wallet=${ownerWallet}`);
+  return result;
 }
 
 /**
  * Hook to list webhooks for a wallet
  */
-export function useWebhooks(ownerWallet: string | null | undefined): UseQueryResult<Webhook[], Error> {
-  return useQuery({
-    queryKey: ['webhooks', ownerWallet],
-    queryFn: () => fetchWebhooks(ownerWallet!),
-    enabled: !!ownerWallet,
-  });
-}
-
-/**
- * Hook to delete a webhook
- */
-export function useDeleteWebhook() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: deleteWebhook,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['webhooks'] });
-    },
-  });
+export function useWebhooks(ownerWallet: string | null | undefined) {
+  return useSWR(
+    ownerWallet ? `/webhooks?owner_wallet=${ownerWallet}` : null,
+    () => fetchWebhooks(ownerWallet!),
+    {
+      revalidateOnFocus: false,
+    }
+  );
 }

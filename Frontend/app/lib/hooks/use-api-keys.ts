@@ -2,7 +2,7 @@
  * Hooks for API key management (Developer Portal)
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import useSWR, { mutate } from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface ApiKey {
@@ -30,9 +30,12 @@ export interface CreateApiKeyRequest {
 /**
  * Create a new API key
  */
-async function createApiKey(data: CreateApiKeyRequest): Promise<ApiKeyWithSecret> {
+export async function createApiKey(data: CreateApiKeyRequest): Promise<ApiKeyWithSecret> {
   const response = await apiClient.post<ApiEnvelope<ApiKeyWithSecret>>('/api-keys', data);
-  return unwrap(response.data);
+  const result = unwrap(response.data);
+  // Revalidate after mutation
+  mutate(`/api-keys?owner_wallet=${data.ownerWallet}`);
+  return result;
 }
 
 /**
@@ -48,46 +51,23 @@ async function fetchApiKeys(ownerWallet: string): Promise<ApiKey[]> {
 /**
  * Revoke an API key
  */
-async function revokeApiKey(keyId: string): Promise<{ revoked: boolean; keyId: string }> {
+export async function revokeApiKey(keyId: string, ownerWallet: string): Promise<{ revoked: boolean; keyId: string }> {
   const response = await apiClient.delete<ApiEnvelope<{ revoked: boolean; keyId: string }>>(`/api-keys/${keyId}`);
-  return unwrap(response.data);
-}
-
-/**
- * Hook to create an API key
- */
-export function useCreateApiKey() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: createApiKey,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['apiKeys', data.ownerWallet] });
-    },
-  });
+  const result = unwrap(response.data);
+  // Revalidate after mutation
+  mutate(`/api-keys?owner_wallet=${ownerWallet}`);
+  return result;
 }
 
 /**
  * Hook to list API keys for a wallet
  */
-export function useApiKeys(ownerWallet: string | null | undefined): UseQueryResult<ApiKey[], Error> {
-  return useQuery({
-    queryKey: ['apiKeys', ownerWallet],
-    queryFn: () => fetchApiKeys(ownerWallet!),
-    enabled: !!ownerWallet,
-  });
-}
-
-/**
- * Hook to revoke an API key
- */
-export function useRevokeApiKey() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: revokeApiKey,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
-    },
-  });
+export function useApiKeys(ownerWallet: string | null | undefined) {
+  return useSWR(
+    ownerWallet ? `/api-keys?owner_wallet=${ownerWallet}` : null,
+    () => fetchApiKeys(ownerWallet!),
+    {
+      revalidateOnFocus: false,
+    }
+  );
 }

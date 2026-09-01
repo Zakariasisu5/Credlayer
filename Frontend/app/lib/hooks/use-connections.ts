@@ -2,7 +2,7 @@
  * Hook for fetching trust connections
  */
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import useSWR from 'swr';
 import { apiClient, unwrap, type ApiEnvelope } from '../api-client';
 
 export interface Connection {
@@ -34,11 +34,13 @@ async function fetchConnections(wallet: string): Promise<ConnectionsResponse> {
 /**
  * Hook to get connections for a wallet
  */
-export function useConnections(wallet: string | null | undefined): UseQueryResult<ConnectionsResponse, Error> {
-  return useQuery({
-    queryKey: ['connections', wallet],
-    queryFn: () => fetchConnections(wallet!),
-    enabled: !!wallet,
-    staleTime: 60000, // 1 minute
-  });
+export function useConnections(wallet: string | null | undefined) {
+  return useSWR(
+    wallet ? `/connections/${wallet}` : null,
+    () => fetchConnections(wallet!),
+    {
+      refreshInterval: 60000, // 1 minute
+      revalidateOnFocus: false,
+    }
+  );
 }
