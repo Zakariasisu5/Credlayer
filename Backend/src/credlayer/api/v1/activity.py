@@ -37,7 +37,7 @@ class ActivityDB(Base):
     title = Column(String(256), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(32), nullable=False)
-    metadata = Column(JSONB, nullable=True)
+    activity_metadata = Column(JSONB, nullable=True)
     error_details = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 

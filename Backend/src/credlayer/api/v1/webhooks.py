@@ -36,7 +36,7 @@ class WebhookDB(Base):
     event_types = Column(ARRAY(String), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
     secret = Column(String(128), nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    webhook_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 

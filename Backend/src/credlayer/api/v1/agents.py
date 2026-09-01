@@ -37,7 +37,7 @@ class AgentDB(Base):
     description = Column(Text, nullable=True)
     permissions = Column(JSONB, nullable=False)
     status = Column(String(32), nullable=False, default="active")
-    metadata = Column(JSONB, nullable=True)
+    agent_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 

@@ -37,7 +37,7 @@ class CredentialDB(Base):
     verification_status = Column(String(32), nullable=False, default="pending")
     verified_at = Column(DateTime(timezone=True), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    credential_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 

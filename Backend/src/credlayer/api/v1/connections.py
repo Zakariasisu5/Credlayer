@@ -36,7 +36,7 @@ class ConnectionDB(Base):
     connection_type = Column(String(32), nullable=False)
     trust_weight = Column(Float, nullable=False, default=0.5)
     status = Column(String(32), nullable=False, default="active")
-    metadata = Column(JSONB, nullable=True)
+    connection_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 
