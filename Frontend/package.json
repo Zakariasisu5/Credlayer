@@ -33,6 +33,7 @@
     "@credlayer/sdk": "file:./lib/credlayer-sdk",
     "@solana-program/memo": "^0.12.0",
     "@solana-program/token": "^0.15.0",
+    "@solana/addresses": "^8.2.0",
     "@solana/kit": "^7.1.1",
     "@solana/kit-plugin-rpc": "^0.15.0",
     "@solana/kit-plugin-wallet": "^0.14.0",

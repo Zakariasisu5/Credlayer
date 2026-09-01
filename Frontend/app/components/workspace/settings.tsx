@@ -242,3 +242,12 @@ export function SettingsPage() {
   );
 }
 
+
+/*
+@solana/accounts
+ @solana/codecs 
+ @solana/errors 
+ @solana/transactions 
+ @solana/signers 
+ @solana/instructions
+ */
