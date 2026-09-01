@@ -1,0 +1,166 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    
+    @keyframes progressBar {
+      0% { width: 0; }
+      100% { width: 680px; }
+    }
+    
+    .terminal-bg {
+      fill: #0d1117;
+    }
+    
+    .terminal-header {
+      fill: #161b22;
+    }
+    
+    .terminal-text {
+      fill: #c9d1d9;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    .prompt {
+      fill: #58a6ff;
+      font-weight: bold;
+    }
+    
+    .success {
+      fill: #3fb950;
+    }
+    
+    .warning {
+      fill: #d29922;
+    }
+    
+    .error {
+      fill: #f85149;
+    }
+    
+    .highlight {
+      fill: #79c0ff;
+    }
+    
+    .cursor {
+      fill: #58a6ff;
+      animation: blink 1s infinite;
+    }
+    
+    .line1 { animation: fadeIn 0.5s ease-in 0.5s both; }
+    .line2 { animation: fadeIn 0.5s ease-in 1s both; }
+    .line3 { animation: fadeIn 0.5s ease-in 1.5s both; }
+    .line4 { animation: slideUp 0.5s ease-out 2s both; }
+    .line5 { animation: slideUp 0.5s ease-out 2.2s both; }
+    .line6 { animation: slideUp 0.5s ease-out 2.4s both; }
+    .line7 { animation: slideUp 0.5s ease-out 2.6s both; }
+    .line8 { animation: slideUp 0.5s ease-out 2.8s both; }
+    .line9 { animation: slideUp 0.5s ease-out 3s both; }
+    .line10 { animation: fadeIn 0.5s ease-in 3.5s both; }
+    .line11 { animation: fadeIn 0.5s ease-in 4s both; }
+    .line12 { animation: fadeIn 0.5s ease-in 4.5s both; }
+    .score-bar { animation: progressBar 2s ease-out 5s both; }
+    .status { animation: pulse 2s ease-in-out 6s infinite; }
+  </style>
+  
+  <!-- Terminal Window Background -->
+  <rect class="terminal-bg" width="800" height="600" rx="8"/>
+  
+  <!-- Terminal Header -->
+  <rect class="terminal-header" width="800" height="35" rx="8"/>
+  <circle cx="20" cy="17.5" r="6" fill="#ff5f57"/>
+  <circle cx="40" cy="17.5" r="6" fill="#febc2e"/>
+  <circle cx="60" cy="17.5" r="6" fill="#28c840"/>
+  <text x="400" y="23" class="terminal-text" text-anchor="middle" font-size="12">credlayer@mainnet ~ % init</text>
+  
+  <!-- Terminal Content -->
+  <g transform="translate(20, 60)">
+    <!-- Command Prompt -->
+    <text y="20" class="prompt line1">$</text>
+    <text x="20" y="20" class="terminal-text line1">credlayer init --analyze-wallet</text>
+    <rect x="295" y="8" width="10" height="16" class="cursor line1"/>
+    
+    <!-- Blank line -->
+    <text y="45" class="terminal-text line2"> </text>
+    
+    <!-- Initialization message -->
+    <text y="70" class="warning line3">⚡ Initializing CredLayer Intelligence Layer...</text>
+    
+    <!-- Progress bar background -->
+    <rect x="40" y="85" width="680" height="20" fill="#21262d" rx="3" class="line4"/>
+    <!-- Progress bar fill -->
+    <rect x="40" y="85" width="0" height="20" fill="#58a6ff" rx="3" class="score-bar"/>
+    <text x="380" y="100" class="terminal-text line4" text-anchor="middle" font-size="12">100%</text>
+    
+    <!-- System checks -->
+    <text y="135" class="success line5">✓ Blockchain RPC Connection      → SYNCED    </text>
+    <text x="450" y="135" class="highlight line5"> (Solana Mainnet-Beta)</text>
+    
+    <text y="160" class="success line6">✓ Wallet Behavior Analysis       → ACTIVE    </text>
+    <text x="450" y="160" class="highlight line6"> (ML Model v2.1)</text>
+    
+    <text y="185" class="success line7">✓ On-Chain Pattern Recognition   → RUNNING   </text>
+    <text x="450" y="185" class="highlight line7"> (3.2M wallets)</text>
+    
+    <text y="210" class="success line8">✓ Risk Detection Engine          → ONLINE    </text>
+    <text x="450" y="210" class="highlight line8"> (Real-time)</text>
+    
+    <text y="235" class="success line9">✓ AI Reputation Scoring          → DEPLOYED  </text>
+    <text x="450" y="235" class="highlight line9"> (Neural scoring)</text>
+    
+    <!-- Separator -->
+    <line x1="0" y1="255" x2="760" y2="255" stroke="#30363d" stroke-width="1" class="line10"/>
+    
+    <!-- Analysis Results -->
+    <text y="285" class="warning line11">📊 WALLET INTELLIGENCE REPORT</text>
+    
+    <text y="315" class="terminal-text line12">  Address: </text>
+    <text x="110" y="315" class="highlight line12">7xKXt...4kL9p</text>
+    
+    <!-- Score visualization -->
+    <text y="345" class="terminal-text line12">  Reputation Score: </text>
+    <text x="180" y="345" class="success line12" font-weight="bold" font-size="18">842/1000</text>
+    <text x="270" y="345" class="success line12"> ⭐ EXCELLENT</text>
+    
+    <!-- Score bar -->
+    <rect x="40" y="360" width="400" height="15" fill="#21262d" rx="3" class="line12"/>
+    <rect x="40" y="360" width="337" height="15" fill="#3fb950" rx="3" class="line12"/>
+    
+    <!-- Metrics -->
+    <text y="400" class="terminal-text line12">  📈 Risk Assessment:  </text>
+    <text x="200" y="400" class="success line12">🟢 LOW RISK</text>
+    
+    <text y="425" class="terminal-text line12">  🔍 Confidence:       </text>
+    <text x="200" y="425" class="highlight line12">91% (High Certainty)</text>
+    
+    <text y="450" class="terminal-text line12">  ⚡ Analysis Speed:    </text>
+    <text x="200" y="450" class="highlight line12">1.2s</text>
+    
+    <text y="475" class="terminal-text line12">  🎯 Data Points:      </text>
+    <text x="200" y="475" class="highlight line12">847 signals processed</text>
+    
+    <!-- Status footer -->
+    <line x1="0" y1="495" x2="760" y2="495" stroke="#30363d" stroke-width="1" class="line12"/>
+    
+    <text y="520" class="success status">🌐 CredLayer Intelligence Layer: STATUS → ONLINE</text>
+    <text y="545" class="terminal-text status" font-style="italic">"Not just blockchain data. Blockchain intelligence."</text>
+  </g>
+</svg>
