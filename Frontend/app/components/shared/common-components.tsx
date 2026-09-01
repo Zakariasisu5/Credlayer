@@ -58,8 +58,12 @@ export function Stat({
       <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
-      <p className="mt-4 text-3xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-2 text-xs text-muted-foreground">{note}</p>
+      <p className="mt-4 text-3xl font-semibold tracking-tight" suppressHydrationWarning>
+        {value}
+      </p>
+      <p className="mt-2 text-xs text-muted-foreground" suppressHydrationWarning>
+        {note}
+      </p>
     </StyledCard>
   );
 }
