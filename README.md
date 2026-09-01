@@ -1,46 +1,9 @@
 # CredLayer
 
-# CredLayer
-
 <p align="center">
   <img src="credlayer-terminal-demo.svg" alt="CredLayer Terminal Demo" width="100%" />
 </p>
 
----
-
-## 🚀 **Project Status**
-
-### **✅ Fully Integrated Full-Stack Application**
-
-**Backend API (FastAPI)**
-- ✅ 9 Complete Endpoints (scores, credentials, connections, agents, activity, settings, api-keys, webhooks, request-logs)
-- ✅ 7 Database Migrations (PostgreSQL/SQLite ready)
-- ✅ Structured logging with error handling
-- ✅ CORS configured for frontend
-- ✅ Envelope response pattern
-- ✅ Running on `http://localhost:8000/api/v1`
-
-**Frontend (Next.js 16 + React 19)**
-- ✅ Complete UI with 11 pages wired to real data
-- ✅ 9 SWR data hooks (no placeholders)
-- ✅ Workspace: Dashboard, Profile, Analysis, Credentials, Activity, Agents, Settings
-- ✅ Developer Portal: API Keys, Request Logs, Documentation, SDK
-- ✅ Solana wallet integration
-- ✅ Real-time data fetching with loading/error states
-
-**Blockchain (Solana)**
-- ✅ Sign Attestation System (SAS) integration
-- ✅ On-chain credential verification
-- ✅ SDK for attestation management
-- ✅ Relayer for gasless transactions
-
-**Status**: Production-ready MVP with full backend-frontend integration
-
----
-
-<p align="center">
-  <img src="demo.gif" alt="CredLayer Demo" width="100%" />
-</p>
 
 ## Decentralized Reputation Infrastructure for Web3
 
@@ -908,32 +871,3 @@ Trust the behavior. Verify the reputation. Secure the interaction.
 Built for a more trustworthy Web3.
 
 </div>
-```For the terminal animation
-
-Put the animation here:
-
-credlayer/
-└── assets/
-    ├── credlayer-logo.png
-    └── credlayer-terminal.gif
-
-The animation should look like a real CredLayer terminal boot sequence, for example:
-
-$ credlayer init
-
-Initializing CredLayer...
-
-[✓] Blockchain connection
-[✓] Wallet analysis engine
-[✓] AI reputation engine
-[✓] Risk detection
-[✓] Verification layer
-
-Analyzing wallet...
-
-> Reputation Score: 842/1000
-> Risk Level: LOW
-> Confidence: 91%
-
-CredLayer Intelligence Layer
-STATUS: ONLINE

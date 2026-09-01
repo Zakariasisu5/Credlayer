@@ -1,10 +1,10 @@
 import Link from "next/link";
-import type { ReactNode, MouseEventHandler } from "react";
+import type { ReactNode, MouseEventHandler, ButtonHTMLAttributes } from "react";
 
 type ButtonVariant = "primary" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 
-interface ButtonProps {
+interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> {
   children: ReactNode;
   href?: string;
   variant?: ButtonVariant;
@@ -32,8 +32,11 @@ export function Button({
   size = "md",
   onClick,
   className = "",
+  disabled,
+  type = "button",
+  ...rest
 }: ButtonProps) {
-  const baseClasses = `inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
+  const baseClasses = `inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
   if (href) {
     return (
@@ -44,7 +47,13 @@ export function Button({
   }
 
   return (
-    <button onClick={onClick} className={baseClasses}>
+    <button 
+      onClick={onClick} 
+      className={baseClasses}
+      disabled={disabled}
+      type={type}
+      {...rest}
+    >
       {children}
     </button>
   );
