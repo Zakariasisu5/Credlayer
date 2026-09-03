@@ -6,9 +6,12 @@ import { SecurityVisualization } from "./security-visualization";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-transparent min-h-[90vh] flex items-center">
+    <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+      {/* Solid Black Background */}
+      <div className="absolute inset-0 z-0 bg-black" />
+
       {/* Content */}
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-5 py-20 lg:px-8 w-full">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-5 py-20 lg:px-8 w-full">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
           {/* Left: Text Content */}
           <div className="space-y-8 text-left animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -63,9 +66,7 @@ export function HeroSection() {
 
           {/* Right: Security Visualization */}
           <div className="flex items-center justify-center animate-in fade-in slide-in-from-right-8 duration-1000 delay-300">
-            <div className="w-full max-w-[500px]">
-              <SecurityVisualization />
-            </div>
+            <SecurityVisualization />
           </div>
         </div>
       </div>
