@@ -2,7 +2,7 @@
 
 import { ArrowRight, Sparkles, Activity as ActivityIcon, X } from "lucide-react";
 import { Shell } from "../layout/app-shell";
-import { Button } from "../ui";
+import { Button, PermissionsInput } from "../ui";
 import { Empty, StyledCard } from "../shared/common-components";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
@@ -144,20 +144,11 @@ export function AgentsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Permissions (JSON)</label>
-                    <textarea
-                      value={JSON.stringify(formData.permissions, null, 2)}
-                      onChange={(e) => {
-                        try {
-                          const parsed = JSON.parse(e.target.value);
-                          setFormData({ ...formData, permissions: parsed });
-                        } catch {
-                          // Keep typing, don't update until valid JSON
-                        }
-                      }}
-                      placeholder='{"read": true, "write": false}'
-                      rows={4}
-                      className="w-full px-3 py-2 rounded border border-border bg-background text-foreground font-mono text-xs"
+                    <PermissionsInput
+                      value={formData.permissions || {}}
+                      onChange={(permissions) => setFormData({ ...formData, permissions })}
+                      label="Permissions"
+                      description="Optional"
                     />
                   </div>
                   <div className="flex gap-3">

@@ -3,6 +3,7 @@
 import { Code2 } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Empty, Stat, StyledCard } from "../shared/common-components";
+import { SkeletonStat, SkeletonList } from "../ui";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
 import { useRequestLogs, getRequestStatus } from "../../lib/hooks";
@@ -51,34 +52,41 @@ export function DeveloperDashboardPage() {
     <Shell title="Developer dashboard" eyebrow="Developer console" developer>
       <div className="mx-auto max-w-7xl px-5 py-8 lg:px-10">
         <div className="grid gap-5 md:grid-cols-4">
-          <Stat 
-            label="Total Requests" 
-            value={isLoading ? "..." : totalRequests > 0 ? totalRequests.toString() : "—"}
-            note={totalRequests > 0 ? "All API calls" : "No requests yet"}
-          />
-          <Stat 
-            label="Successful" 
-            value={isLoading ? "..." : successRequests > 0 ? successRequests.toString() : "—"}
-            note={successRequests > 0 ? "2xx responses" : "None"}
-          />
-          <Stat 
-            label="Errors" 
-            value={isLoading ? "..." : errorRequests > 0 ? errorRequests.toString() : "—"}
-            note={errorRequests > 0 ? "4xx/5xx responses" : "None"}
-          />
-          <Stat 
-            label="Unauthorized/Rate Limited" 
-            value={isLoading ? "..." : (unauthorizedRequests + rateLimitedRequests) > 0 ? (unauthorizedRequests + rateLimitedRequests).toString() : "—"}
-            note={(unauthorizedRequests + rateLimitedRequests) > 0 ? `${unauthorizedRequests} 401, ${rateLimitedRequests} 429` : "None"}
-          />
+          {isLoading ? (
+            <>
+              <SkeletonStat />
+              <SkeletonStat />
+              <SkeletonStat />
+              <SkeletonStat />
+            </>
+          ) : (
+            <>
+              <Stat 
+                label="Total Requests" 
+                value={totalRequests > 0 ? totalRequests.toString() : "—"}
+                note={totalRequests > 0 ? "All API calls" : "No requests yet"}
+              />
+              <Stat 
+                label="Successful" 
+                value={successRequests > 0 ? successRequests.toString() : "—"}
+                note={successRequests > 0 ? "2xx responses" : "None"}
+              />
+              <Stat 
+                label="Errors" 
+                value={errorRequests > 0 ? errorRequests.toString() : "—"}
+                note={errorRequests > 0 ? "4xx/5xx responses" : "None"}
+              />
+              <Stat 
+                label="Unauthorized/Rate Limited" 
+                value={(unauthorizedRequests + rateLimitedRequests) > 0 ? (unauthorizedRequests + rateLimitedRequests).toString() : "—"}
+                note={(unauthorizedRequests + rateLimitedRequests) > 0 ? `${unauthorizedRequests} 401, ${rateLimitedRequests} 429` : "None"}
+              />
+            </>
+          )}
         </div>
         <div className="mt-5">
           {isLoading ? (
-            <StyledCard>
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                Loading request logs...
-              </div>
-            </StyledCard>
+            <SkeletonList count={5} />
           ) : !requestLogs || requestLogs.length === 0 ? (
             <Empty
               icon={Code2}

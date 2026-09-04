@@ -1,8 +1,9 @@
 "use client";
 
-import { Activity as ActivityIcon } from "lucide-react";
+import { Activity as ActivityIcon, Radio, Award, Link, Star, Settings, FileText } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Empty, Stat, StyledCard } from "../shared/common-components";
+import { SkeletonStat, SkeletonList } from "../ui";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
 import { useActivity } from "../../lib/hooks";
@@ -40,14 +41,15 @@ export function ActivityPage() {
   };
 
   const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      signal: '📡',
-      credential: '🎫',
-      connection: '🔗',
-      score: '⭐',
-      system: '⚙️',
+    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+      signal: Radio,
+      credential: Award,
+      connection: Link,
+      score: Star,
+      system: Settings,
     };
-    return icons[category] || '📋';
+    const IconComponent = iconMap[category] || FileText;
+    return <IconComponent className="size-4 text-primary" />;
   };
 
   return (
@@ -57,21 +59,31 @@ export function ActivityPage() {
           A transparent record of protocol events.
         </p>
         <div className="grid gap-5 md:grid-cols-3">
-          <Stat 
-            label="Total Events" 
-            value={isLoading ? "..." : totalEvents > 0 ? totalEvents.toString() : "—"}
-            note={walletAddress ? (totalEvents > 0 ? "All activity" : "No events yet") : "Connect wallet"}
-          />
-          <Stat 
-            label="Successful" 
-            value={isLoading ? "..." : successEvents > 0 ? successEvents.toString() : "—"}
-            note={walletAddress ? (successEvents > 0 ? "Completed events" : "None completed") : "Connect wallet"}
-          />
-          <Stat 
-            label="Failed/Pending" 
-            value={isLoading ? "..." : (failedEvents + pendingEvents) > 0 ? (failedEvents + pendingEvents).toString() : "—"}
-            note={walletAddress ? (failedEvents > 0 ? `${failedEvents} failed, ${pendingEvents} pending` : "None failed") : "Connect wallet"}
-          />
+          {isLoading ? (
+            <>
+              <SkeletonStat />
+              <SkeletonStat />
+              <SkeletonStat />
+            </>
+          ) : (
+            <>
+              <Stat 
+                label="Total Events" 
+                value={totalEvents > 0 ? totalEvents.toString() : "—"}
+                note={walletAddress ? (totalEvents > 0 ? "All activity" : "No events yet") : "Connect wallet"}
+              />
+              <Stat 
+                label="Successful" 
+                value={successEvents > 0 ? successEvents.toString() : "—"}
+                note={walletAddress ? (successEvents > 0 ? "Completed events" : "None completed") : "Connect wallet"}
+              />
+              <Stat 
+                label="Failed/Pending" 
+                value={(failedEvents + pendingEvents) > 0 ? (failedEvents + pendingEvents).toString() : "—"}
+                note={walletAddress ? (failedEvents > 0 ? `${failedEvents} failed, ${pendingEvents} pending` : "None failed") : "Connect wallet"}
+              />
+            </>
+          )}
         </div>
         <div className="mt-5">
           {!walletAddress ? (
@@ -81,7 +93,7 @@ export function ActivityPage() {
               description="Connect your wallet to view your activity feed and protocol events."
             />
           ) : isLoading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Loading activity...</div>
+            <SkeletonList count={5} />
           ) : !activity || activity.length === 0 ? (
             <Empty
               icon={ActivityIcon}
@@ -100,7 +112,7 @@ export function ActivityPage() {
                     <div className={`mt-1 size-2 rounded-full ${getStatusColor(event.status)}`} />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{getCategoryIcon(event.eventCategory)}</span>
+                        {getCategoryIcon(event.eventCategory)}
                         <h4 className="font-semibold text-sm">{event.title}</h4>
                         <span className={`text-xs px-2 py-0.5 rounded ${
                           event.status === 'success' ? 'bg-green-500/10 text-green-500' :

@@ -2,6 +2,7 @@
 
 import { Shell } from "../layout/app-shell";
 import { StyledCard } from "../shared/common-components";
+import { SkeletonCard } from "../ui";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
 import { useSettings, updateSettings, type UpdateSettingsRequest } from "../../lib/hooks";
@@ -106,11 +107,11 @@ export function SettingsPage() {
         </p>
 
         {isLoading ? (
-          <StyledCard>
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              Loading settings...
-            </div>
-          </StyledCard>
+          <div className="space-y-5">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : (
           <div className="space-y-5">
             {/* Privacy Settings */}

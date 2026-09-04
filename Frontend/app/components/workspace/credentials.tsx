@@ -3,6 +3,7 @@
 import { ShieldCheck, RefreshCw } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Empty, Stat, StyledCard } from "../shared/common-components";
+import { SkeletonStat, SkeletonList } from "../ui";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
 import { useCredentials, reverifyCredential } from "../../lib/hooks";
@@ -64,21 +65,31 @@ export function CredentialsPage() {
           Portable proof you can share with consent.
         </p>
         <div className="grid gap-5 md:grid-cols-3">
-          <Stat 
-            label="Total Credentials" 
-            value={isLoading ? "..." : credentialCount > 0 ? credentialCount.toString() : "—"}
-            note={walletAddress ? (credentialCount > 0 ? "Issued credentials" : "No credentials yet") : "Connect wallet"}
-          />
-          <Stat 
-            label="Verified" 
-            value={isLoading ? "..." : verifiedCount > 0 ? verifiedCount.toString() : "—"}
-            note={walletAddress ? (verifiedCount > 0 ? "Successfully verified" : "None verified") : "Connect wallet"}
-          />
-          <Stat 
-            label="Pending" 
-            value={isLoading ? "..." : pendingCount > 0 ? pendingCount.toString() : "—"}
-            note={walletAddress ? (pendingCount > 0 ? "Awaiting verification" : "None pending") : "Connect wallet"}
-          />
+          {isLoading ? (
+            <>
+              <SkeletonStat />
+              <SkeletonStat />
+              <SkeletonStat />
+            </>
+          ) : (
+            <>
+              <Stat 
+                label="Total Credentials" 
+                value={credentialCount > 0 ? credentialCount.toString() : "—"}
+                note={walletAddress ? (credentialCount > 0 ? "Issued credentials" : "No credentials yet") : "Connect wallet"}
+              />
+              <Stat 
+                label="Verified" 
+                value={verifiedCount > 0 ? verifiedCount.toString() : "—"}
+                note={walletAddress ? (verifiedCount > 0 ? "Successfully verified" : "None verified") : "Connect wallet"}
+              />
+              <Stat 
+                label="Pending" 
+                value={pendingCount > 0 ? pendingCount.toString() : "—"}
+                note={walletAddress ? (pendingCount > 0 ? "Awaiting verification" : "None pending") : "Connect wallet"}
+              />
+            </>
+          )}
         </div>
         <div className="mt-5">
           {!walletAddress ? (
@@ -88,7 +99,7 @@ export function CredentialsPage() {
               description="Connect your wallet to view and manage your credentials."
             />
           ) : isLoading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Loading credentials...</div>
+            <SkeletonList count={3} />
           ) : !credentials || credentials.length === 0 ? (
             <Empty
               icon={ShieldCheck}

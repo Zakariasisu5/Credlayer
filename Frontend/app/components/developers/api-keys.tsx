@@ -1,8 +1,8 @@
 "use client";
 
-import { KeyRound, Copy, Trash2, Eye, EyeOff, X } from "lucide-react";
+import { KeyRound, Copy, Trash2, X } from "lucide-react";
 import { Shell } from "../layout/app-shell";
-import { Button } from "../ui";
+import { Button, ConfirmDialog, PermissionsInput, SkeletonCard, SkeletonList } from "../ui";
 import { Empty, StyledCard } from "../shared/common-components";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
@@ -20,7 +20,7 @@ export function ApiKeysPage() {
   const [creating, setCreating] = useState(false);
   const [newKeyData, setNewKeyData] = useState<{ key: string; name: string } | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [revokeDialog, setRevokeDialog] = useState<{ keyId: string; keyName: string } | null>(null);
 
   const [formData, setFormData] = useState<CreateApiKeyRequest>({
     ownerWallet: walletAddress || '',
@@ -56,10 +56,7 @@ export function ApiKeysPage() {
 
   const handleRevoke = async (keyId: string, keyName: string) => {
     if (!walletAddress) return;
-    if (!confirm(`Are you sure you want to revoke "${keyName}"? This action cannot be undone.`)) {
-      return;
-    }
-
+    
     setRevokingId(keyId);
     try {
       await revokeApiKey(keyId, walletAddress);
@@ -76,18 +73,6 @@ export function ApiKeysPage() {
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copied to clipboard`);
-  };
-
-  const toggleKeyVisibility = (keyId: string) => {
-    setVisibleKeys(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(keyId)) {
-        newSet.delete(keyId);
-      } else {
-        newSet.add(keyId);
-      }
-      return newSet;
-    });
   };
 
   if (!walletAddress) {
@@ -107,6 +92,22 @@ export function ApiKeysPage() {
   return (
     <Shell title="API keys" eyebrow="Developer console" developer>
       <div className="mx-auto max-w-6xl px-5 py-8 lg:px-10">
+        {/* Revoke Confirmation Dialog */}
+        <ConfirmDialog
+          open={!!revokeDialog}
+          onOpenChange={(open) => !open && setRevokeDialog(null)}
+          title="Revoke API Key"
+          description={`Are you sure you want to revoke "${revokeDialog?.keyName}"? This action cannot be undone and will immediately invalidate all requests using this key.`}
+          confirmLabel="Revoke Key"
+          cancelLabel="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            if (revokeDialog) {
+              handleRevoke(revokeDialog.keyId, revokeDialog.keyName);
+            }
+          }}
+        />
+
         {/* New Key Display (One-time show) */}
         {newKeyData && (
           <StyledCard className="mb-5 border-green-500/50 bg-green-500/5">
@@ -177,20 +178,11 @@ export function ApiKeysPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Permissions (JSON, Optional)</label>
-                  <textarea
-                    value={JSON.stringify(formData.permissions, null, 2)}
-                    onChange={(e) => {
-                      try {
-                        const parsed = JSON.parse(e.target.value);
-                        setFormData({ ...formData, permissions: parsed });
-                      } catch {
-                        // Keep typing
-                      }
-                    }}
-                    placeholder='{"scope": "read:write"}'
-                    rows={3}
-                    className="w-full px-3 py-2 rounded border border-border bg-background text-foreground font-mono text-xs"
+                  <PermissionsInput
+                    value={formData.permissions || {}}
+                    onChange={(permissions) => setFormData({ ...formData, permissions })}
+                    label="Permissions"
+                    description="Optional"
                   />
                 </div>
                 <div className="flex gap-3">
@@ -208,9 +200,7 @@ export function ApiKeysPage() {
           {/* Keys List */}
           <div className="mt-6">
             {isLoading ? (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                Loading API keys...
-              </div>
+              <SkeletonList count={3} />
             ) : !apiKeys || apiKeys.length === 0 ? (
               <Empty
                 icon={KeyRound}
@@ -235,15 +225,9 @@ export function ApiKeysPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mb-2">
-                        <code className="text-sm font-mono">
-                          {visibleKeys.has(key.id) ? `${key.keyPrefix}••••••••••••••••` : `${key.keyPrefix}••••••••••••••••`}
+                        <code className="text-sm font-mono text-muted-foreground">
+                          {key.keyPrefix}••••••••••••••••
                         </code>
-                        <button
-                          onClick={() => toggleKeyVisibility(key.id)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          {visibleKeys.has(key.id) ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                        </button>
                       </div>
                       <div className="flex gap-4 text-xs text-muted-foreground">
                         <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
@@ -267,7 +251,7 @@ export function ApiKeysPage() {
                     </div>
                     {key.isActive && (
                       <button
-                        onClick={() => handleRevoke(key.id, key.name)}
+                        onClick={() => setRevokeDialog({ keyId: key.id, keyName: key.name })}
                         disabled={revokingId === key.id}
                         className="text-red-500 hover:text-red-600 disabled:opacity-50"
                       >
