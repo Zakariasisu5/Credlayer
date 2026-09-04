@@ -17,9 +17,9 @@ export default function AboutPage() {
     },
     {
       icon: Zap,
-      title: "Speed & Reliability",
+      title: "Innovation & Quality",
       description:
-        "Real-time analysis with sub-second response times and 99.9% uptime for mission-critical applications.",
+        "Developing cutting-edge AI models and blockchain infrastructure with a focus on accuracy and reliability.",
     },
     {
       icon: Users,
@@ -30,24 +30,24 @@ export default function AboutPage() {
   ];
 
   const stats = [
-    { value: "10M+", label: "Wallets Analyzed" },
-    { value: "50+", label: "Protocols Integrated" },
-    { value: "99.9%", label: "Uptime SLA" },
-    { value: "<100ms", label: "API Response Time" },
+    { value: "MVP", label: "Development Stage" },
+    { value: "GNN", label: "Model Trained" },
+    { value: "Open", label: "Building in Public" },
+    { value: "Soon", label: "Early Access" },
   ];
 
   const team = [
     {
-      role: "Leadership",
-      description: "Experienced founders from top Web3 protocols and AI research labs",
-    },
-    {
-      role: "Engineering",
-      description: "World-class engineers building scalable infrastructure for Web3",
+      role: "Development",
+      description: "Building the future of Web3 reputation intelligence from the ground up",
     },
     {
       role: "Research",
-      description: "PhD-level researchers advancing on-chain intelligence and ML models",
+      description: "Advancing on-chain intelligence through Graph Neural Networks and ML",
+    },
+    {
+      role: "Community",
+      description: "Growing an open ecosystem of contributors and early adopters",
     },
   ];
 
@@ -148,9 +148,9 @@ export default function AboutPage() {
           {/* CTA */}
           <div className="text-center">
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold mb-4">Join Us in Building the Future</h2>
+              <h2 className="text-2xl font-bold mb-4">Join Our Early Community</h2>
               <p className="text-gray-400 mb-6">
-                We're always looking for talented individuals to join our mission.
+                We're looking for early adopters and contributors to help shape the future of Web3 reputation.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
@@ -167,6 +167,16 @@ export default function AboutPage() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Back Navigation */}
+          <div className="mt-12 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </section>

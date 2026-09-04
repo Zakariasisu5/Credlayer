@@ -16,7 +16,7 @@ const CORE_SERVICES = [
     title: "BLOCKCHAIN CREDENTIALS",
     description:
       "Issue and verify tamper-proof credentials on-chain with cryptographic proof and instant validation.",
-    href: "/developers",
+    href: "/app",
   },
   {
     icon: Zap,
@@ -30,21 +30,21 @@ const CORE_SERVICES = [
     title: "FRAUD DETECTION",
     description:
       "Real-time anomaly detection and behavioral analysis to prevent fraudulent activities before they happen.",
-    href: "/protocol",
+    href: "/app",
   },
   {
     icon: Layers,
     title: "MULTI-CHAIN",
     description:
       "Cross-chain reputation aggregation supporting Solana, Ethereum, and emerging blockchain networks.",
-    href: "/developers",
+    href: "/app",
   },
   {
     icon: TrendingUp,
     title: "ANALYTICS",
     description:
       "Deep insights and metrics dashboards for tracking reputation trends and verification patterns.",
-    href: "/explorer",
+    href: "/app",
   },
 ];
 
@@ -95,7 +95,7 @@ export function ServicesSection() {
           <div className="inline-flex flex-col sm:flex-row items-center gap-2 text-xs sm:text-sm text-gray-400">
             <span>Looking for custom solutions?</span>
             <a 
-              href="/developers" 
+              href="/contact" 
               className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 transition-colors"
             >
               Talk to our team

@@ -1,68 +1,31 @@
 "use client";
 
-import { Users, Shield, Zap, Globe } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
-import { FaMicrosoft, FaAws } from "react-icons/fa";
-import { SiInfosys, SiTcs } from "react-icons/si";
-import { BsBuilding } from "react-icons/bs";
+import { Code, Rocket, Database, GitBranch, ExternalLink } from "lucide-react";
 
-const STATS = [
+const MILESTONES = [
   { 
-    label: "Verified Wallets",
-    value: "50K+",
-    icon: Users,
-    color: "text-cyan-400"
+    label: "Architecture",
+    value: "Complete",
+    icon: Code,
+    description: "Full-stack system designed"
   },
   { 
-    label: "Credentials Issued",
-    value: "250K+",
-    icon: Shield,
-    color: "text-blue-400"
+    label: "GNN Model",
+    value: "Trained",
+    icon: Database,
+    description: "Graph Neural Network ready"
   },
   { 
-    label: "API Requests/Day",
-    value: "5M+",
-    icon: Zap,
-    color: "text-purple-400"
+    label: "MVP Status",
+    value: "Active Dev",
+    icon: Rocket,
+    description: "Building in public"
   },
   { 
-    label: "Enterprise Clients",
-    value: "100+",
-    icon: Globe,
-    color: "text-green-400"
-  },
-];
-
-const CLIENTS = [
-  { 
-    name: "AWS", 
-    icon: FaAws,
-    color: "text-orange-500"
-  },
-  { 
-    name: "Microsoft", 
-    icon: FaMicrosoft,
-    color: "text-blue-500"
-  },
-  { 
-    name: "Google", 
-    icon: FcGoogle,
-    color: ""
-  },
-  { 
-    name: "Infosys", 
-    icon: SiInfosys,
-    color: "text-blue-600"
-  },
-  { 
-    name: "TCS", 
-    icon: SiTcs,
-    color: "text-purple-600"
-  },
-  { 
-    name: "Deloitte", 
-    icon: BsBuilding,
-    color: "text-green-500"
+    label: "Open Source",
+    value: "Coming Soon",
+    icon: GitBranch,
+    description: "Community-driven"
   },
 ];
 
@@ -73,67 +36,35 @@ export function ClientsSection() {
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-full max-w-4xl rounded-full bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 blur-3xl" />
       
       <div className="relative">
-        {/* Section Header - Mobile optimized */}
+        {/* Section Header */}
         <div className="mb-8 sm:mb-16 text-center px-2 sm:px-0">
           <div className="inline-block mb-3 sm:mb-4">
             <div className="relative">
               <h2 className="text-xs font-mono uppercase tracking-[0.25em] sm:tracking-[0.35em] text-cyan-400 mb-2 flex items-center gap-2 justify-center">
                 <div className="w-6 sm:w-8 h-px bg-gradient-to-r from-transparent to-cyan-400" />
-                TRUSTED BY THOUSANDS
+                BUILDING IN PUBLIC
                 <div className="w-6 sm:w-8 h-px bg-gradient-to-l from-transparent to-cyan-400" />
               </h2>
             </div>
           </div>
           <h3 className="text-xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 px-4 sm:px-0">
-            Powering The Future of Web3 Trust
+            What We&apos;ve Built So Far
           </h3>
           <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto px-4 sm:px-0">
-            Join the growing ecosystem of enterprises building on CredLayer&apos;s verification infrastructure
+            We&apos;re developing AI-powered reputation intelligence for Web3. Here&apos;s our current progress.
           </p>
         </div>
 
-        {/* Key Clients - Mobile optimized */}
-        <div className="mb-12 sm:mb-20">
-          <div className="mb-6 sm:mb-8 text-center">
-            <h4 className="text-xs sm:text-sm font-semibold text-cyan-400 uppercase tracking-wider">Key Clients</h4>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-8 lg:gap-6 xl:gap-8 items-center justify-items-center max-w-6xl mx-auto px-2 sm:px-0">
-            {CLIENTS.map((client, index) => {
-              const Icon = client.icon;
-              return (
-                <div
-                  key={client.name}
-                  className="group relative w-full flex flex-col items-center justify-center opacity-0 animate-fadeIn"
-                  style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
-                >
-                  {/* Hover glow effect */}
-                  <div className="absolute inset-0 rounded-lg bg-cyan-400/0 blur-xl opacity-0 transition-all duration-300 group-hover:bg-cyan-400/20 group-hover:opacity-100" />
-                  
-                  {/* Icon Container - Mobile optimized */}
-                  <div className="relative flex flex-col items-center justify-center h-16 sm:h-24 w-full px-2 sm:px-4 py-2 sm:py-4 transition-all duration-300 group-hover:scale-110">
-                    <Icon 
-                      className={`w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${client.color || 'text-cyan-400'} opacity-70 group-hover:opacity-100 transition-opacity duration-300`}
-                    />
-                    <span className="mt-1 sm:mt-2 text-[10px] sm:text-xs font-medium text-gray-400 group-hover:text-cyan-400 transition-colors duration-300">
-                      {client.name}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Stats Grid - Mobile optimized */}
+        {/* Development Milestones Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto mb-12 sm:mb-20">
-          {STATS.map((stat, index) => {
-            const Icon = stat.icon;
+          {MILESTONES.map((milestone, index) => {
+            const Icon = milestone.icon;
             return (
               <div
-                key={stat.label}
+                key={milestone.label}
                 className="group relative opacity-0 animate-fadeInUp"
                 style={{ 
-                  animationDelay: `${index * 100 + 600}ms`,
+                  animationDelay: `${index * 100}ms`,
                   animationFillMode: 'forwards'
                 }}
               >
@@ -143,17 +74,22 @@ export function ClientsSection() {
                 <div className="relative h-full rounded-xl border border-cyan-500/20 bg-[#0a1628]/60 backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 group-hover:border-cyan-400/40 group-hover:-translate-y-1">
                   {/* Icon */}
                   <div className="mb-3 sm:mb-4 inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-cyan-500/30 bg-transparent">
-                    <Icon className={`size-5 sm:size-6 ${stat.color}`} />
+                    <Icon className="size-5 sm:size-6 text-cyan-400" />
                   </div>
                   
                   {/* Value */}
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">
-                    {stat.value}
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1 sm:mb-2">
+                    {milestone.value}
                   </div>
                   
                   {/* Label */}
-                  <div className="text-xs sm:text-sm text-gray-400 font-medium">
-                    {stat.label}
+                  <div className="text-xs sm:text-sm text-gray-400 font-medium mb-1">
+                    {milestone.label}
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="text-xs text-gray-500">
+                    {milestone.description}
                   </div>
                 </div>
               </div>
@@ -161,50 +97,66 @@ export function ClientsSection() {
           })}
         </div>
 
-        {/* Social Proof Section - Mobile optimized */}
+        {/* Technical Details Section */}
         <div className="mt-8">
           <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-[#0a1628]/80 to-[#061426]/60 backdrop-blur-sm p-6 sm:p-12">
             <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
               <div>
                 <h4 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4">
-                  Ready to Build Trust at Scale?
+                  Early Access Available
                 </h4>
                 <p className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">
-                  Join leading Web3 companies using CredLayer to verify identities, issue credentials, and build reputation systems.
+                  We&apos;re in active development and looking for early adopters to help shape the future of Web3 reputation systems.
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                   <a 
                     href="/app"
                     className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-sm sm:text-base font-medium transition-colors duration-300"
                   >
-                    Start Free Trial
+                    Try the Demo
                   </a>
                   <a 
                     href="/developers"
                     className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 text-sm sm:text-base font-medium transition-colors duration-300"
                   >
-                    View Documentation
+                    View Docs
                   </a>
                 </div>
               </div>
               <div className="space-y-3 sm:space-y-4">
-                {[
-                  { label: "24/7 Support", value: "Enterprise SLA" },
-                  { label: "Uptime Guarantee", value: "99.9%" },
-                  { label: "Response Time", value: "<100ms" },
-                ].map((item, i) => (
-                  <div 
-                    key={item.label}
-                    className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-cyan-500/20 bg-[#0a1628]/40 opacity-0 animate-fadeInLeft"
-                    style={{ 
-                      animationDelay: `${i * 100 + 1200}ms`,
-                      animationFillMode: 'forwards'
-                    }}
-                  >
-                    <span className="text-xs sm:text-sm text-gray-400">{item.label}</span>
-                    <span className="text-xs sm:text-sm font-semibold text-cyan-400">{item.value}</span>
-                  </div>
-                ))}
+                <a
+                  href="https://huggingface.co/credlayer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-cyan-500/20 bg-[#0a1628]/40 hover:border-cyan-400/40 transition-colors opacity-0 animate-fadeInLeft group"
+                  style={{ 
+                    animationDelay: '200ms',
+                    animationFillMode: 'forwards'
+                  }}
+                >
+                  <span className="text-xs sm:text-sm text-gray-400">GNN Model on Hugging Face</span>
+                  <ExternalLink className="size-4 text-cyan-400 group-hover:translate-x-1 transition-transform" />
+                </a>
+                <div 
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-cyan-500/20 bg-[#0a1628]/40 opacity-0 animate-fadeInLeft"
+                  style={{ 
+                    animationDelay: '300ms',
+                    animationFillMode: 'forwards'
+                  }}
+                >
+                  <span className="text-xs sm:text-sm text-gray-400">Status</span>
+                  <span className="text-xs sm:text-sm font-semibold text-cyan-400">MVP Development</span>
+                </div>
+                <div 
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-cyan-500/20 bg-[#0a1628]/40 opacity-0 animate-fadeInLeft"
+                  style={{ 
+                    animationDelay: '400ms',
+                    animationFillMode: 'forwards'
+                  }}
+                >
+                  <span className="text-xs sm:text-sm text-gray-400">License</span>
+                  <span className="text-xs sm:text-sm font-semibold text-cyan-400">Open Source Soon</span>
+                </div>
               </div>
             </div>
           </div>

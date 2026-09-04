@@ -209,6 +209,16 @@ export default function BlogPage() {
               </form>
             </div>
           </div>
+
+          {/* Back Navigation */}
+          <div className="mt-12 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              ← Back to Home
+            </Link>
+          </div>
         </div>
       </section>
     </main>

@@ -18,11 +18,11 @@ interface NavItem {
 
 const navigationItems: NavItem[] = [
   { href: "/", label: "Home", icon: FaHome, color: "#3b82f6" },
-  { href: "/protocol", label: "Services", icon: FaServicestack, color: "#10b981" },
-  { href: "/explorer", label: "Case Studies", icon: FaBriefcase, color: "#8b5cf6" },
-  { href: "/developers", label: "About", icon: FaInfoCircle, color: "#06b6d4" },
-  { href: "/dashboard-preview", label: "Blog", icon: FaBlog, color: "#f59e0b" },
-  { href: "/app", label: "Contact", icon: FaEnvelope, color: "#ec4899" },
+  { href: "/services", label: "Services", icon: FaServicestack, color: "#10b981" },
+  { href: "/case-studies", label: "Case Studies", icon: FaBriefcase, color: "#8b5cf6" },
+  { href: "/about", label: "About", icon: FaInfoCircle, color: "#06b6d4" },
+  { href: "/blog", label: "Blog", icon: FaBlog, color: "#f59e0b" },
+  { href: "/contact", label: "Contact", icon: FaEnvelope, color: "#ec4899" },
 ];
 
 export function Header() {

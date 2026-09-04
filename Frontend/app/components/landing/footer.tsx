@@ -7,22 +7,18 @@ import { HiMail } from "react-icons/hi";
 
 const footerLinks = {
   product: [
-    { label: "Features", href: "/protocol" },
-    { label: "Security", href: "/protocol" },
-    { label: "Pricing", href: "/developers" },
+    { label: "Features", href: "/services" },
+    { label: "Security", href: "/services" },
     { label: "API", href: "/developers" },
   ],
   company: [
-    { label: "About", href: "/developers" },
-    { label: "Blog", href: "/dashboard-preview" },
-    { label: "Careers", href: "/app" },
-    { label: "Contact", href: "/app" },
+    { label: "About", href: "/about" },
+    { label: "Blog", href: "/blog" },
+    { label: "Contact", href: "/contact" },
   ],
   resources: [
     { label: "Documentation", href: "/developers" },
-    { label: "Case Studies", href: "/explorer" },
-    { label: "Support", href: "/app" },
-    { label: "Status", href: "/app" },
+    { label: "Case Studies", href: "/case-studies" },
   ],
 };
 
@@ -110,10 +106,10 @@ export function Footer() {
             © {new Date().getFullYear()} CredLayer. All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            <Link href="#" className="text-xs sm:text-sm text-gray-400 hover:text-cyan-400 transition-colors whitespace-nowrap">
+            <Link href="/privacy" className="text-xs sm:text-sm text-gray-400 hover:text-cyan-400 transition-colors whitespace-nowrap">
               Privacy Policy
             </Link>
-            <Link href="#" className="text-xs sm:text-sm text-gray-400 hover:text-cyan-400 transition-colors whitespace-nowrap">
+            <Link href="/terms" className="text-xs sm:text-sm text-gray-400 hover:text-cyan-400 transition-colors whitespace-nowrap">
               Terms of Service
             </Link>
           </div>

@@ -10,64 +10,24 @@ export const metadata: Metadata = {
 export default function CaseStudiesPage() {
   const caseStudies = [
     {
-      title: "DeFi Protocol Reduces Risk by 87%",
-      category: "DeFi",
-      client: "Leading DEX Platform",
+      title: "Coming Soon: Real-World Implementations",
+      category: "Development",
+      client: "Early Access Program",
       challenge:
-        "High-risk wallet interactions were causing significant losses and reputation damage.",
+        "We're actively developing CredLayer and will share real case studies as our partners implement the platform.",
       solution:
-        "Implemented CredLayer's real-time risk assessment to screen all wallet connections before transaction execution.",
+        "Currently in MVP stage with architecture complete and GNN model trained. Early adopters are helping shape our implementation approach.",
       results: [
-        "87% reduction in fraudulent transactions",
-        "99.9% reduction in user complaints",
-        "$2.3M in prevented losses over 6 months",
-        "42% increase in user trust scores",
+        "Full-stack architecture designed and tested",
+        "Graph Neural Network model trained and ready",
+        "API infrastructure in active development",
+        "Open source release planned for community contribution",
       ],
       metrics: {
-        improvement: "87%",
-        label: "Risk Reduction",
+        improvement: "MVP",
+        label: "Development Stage",
       },
       icon: Shield,
-    },
-    {
-      title: "NFT Marketplace Enhances Trust",
-      category: "NFT",
-      client: "Top 10 NFT Marketplace",
-      challenge:
-        "Wash trading and bot activity were undermining marketplace integrity and user confidence.",
-      solution:
-        "Integrated CredLayer's agent reputation system to identify and flag suspicious wallet behavior.",
-      results: [
-        "94% accurate bot detection rate",
-        "56% decrease in wash trading activity",
-        "3x increase in verified seller badges",
-        "28% growth in monthly active users",
-      ],
-      metrics: {
-        improvement: "94%",
-        label: "Bot Detection",
-      },
-      icon: Users,
-    },
-    {
-      title: "DAO Treasury Management Success",
-      category: "DAO",
-      client: "Multi-Million Dollar DAO",
-      challenge:
-        "Treasury management required better risk assessment for protocol and wallet interactions.",
-      solution:
-        "Deployed CredLayer's protocol intelligence and predictive analytics for treasury decisions.",
-      results: [
-        "100% on-chain transparency maintained",
-        "35% improvement in investment returns",
-        "$5M treasury protected from risky protocols",
-        "Zero security incidents in 12 months",
-      ],
-      metrics: {
-        improvement: "35%",
-        label: "ROI Increase",
-      },
-      icon: TrendingUp,
     },
   ];
 
@@ -78,14 +38,13 @@ export default function CaseStudiesPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6">
-              Success Stories from{" "}
+              Building{" "}
               <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Web3 Leaders
+                in Public
               </span>
             </h1>
             <p className="text-lg text-gray-400">
-              Discover how leading protocols and platforms are using CredLayer to build trust
-              and reduce risk.
+              We're developing CredLayer in the open. Real case studies will be shared as partners adopt the platform.
             </p>
           </div>
 
@@ -162,10 +121,10 @@ export default function CaseStudiesPage() {
           <div className="mt-16 text-center">
             <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg p-8 max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold mb-4">
-                Ready to become our next success story?
+                Interested in early access?
               </h2>
               <p className="text-gray-400 mb-6">
-                Join leading Web3 protocols in building trust and reducing risk with CredLayer.
+                Join our early adopter program and help shape the future of Web3 reputation systems.
               </p>
               <Link
                 href="/contact"
@@ -175,6 +134,16 @@ export default function CaseStudiesPage() {
                 <ExternalLink className="ml-2 w-4 h-4" />
               </Link>
             </div>
+          </div>
+
+          {/* Back Navigation */}
+          <div className="mt-12 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </section>

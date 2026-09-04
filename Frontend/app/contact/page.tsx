@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Mail, MessageSquare, Phone, MapPin, Send } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Contact - CredLayer",
@@ -247,6 +248,16 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Back Navigation */}
+          <div className="mt-12 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </section>
