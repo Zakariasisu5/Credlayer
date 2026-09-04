@@ -1,5 +1,5 @@
-import { CredLayerApp } from "./components/credlayer-app";
+import { LandingPageV2 } from "./components/landing/landing-page-v2";
 
 export default function Home() {
-  return <CredLayerApp />;
+  return <LandingPageV2 />;
 }
