@@ -33,33 +33,33 @@ const socialLinks = [
     name: "X (Twitter)",
     href: "https://x.com/BitTrustProtoco",
     icon: FaXTwitter,
-    color: "hover:text-cyan-400"
+    color: "hover:text-primary"
   },
   {
     name: "Email",
     href: "mailto:Zakariasisu5@gmail.com",
     icon: HiMail,
-    color: "hover:text-cyan-400"
+    color: "hover:text-primary"
   },
 ];
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-cyan-500/10 bg-gradient-to-b from-transparent to-[#030c18]/50 mt-20 sm:mt-32">
+    <footer className="relative border-t border-border bg-card/30 mt-24">
       {/* Glow effect */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       
-      <div className="mx-auto max-w-7xl px-4 sm:px-5 py-12 sm:py-16 lg:px-8 lg:py-20">
-        <div className="grid gap-8 sm:gap-12 md:grid-cols-2 lg:grid-cols-5">
+      <div className="mx-auto max-w-7xl px-5 py-12 lg:px-10 lg:py-16">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Brand />
-            <p className="mt-4 sm:mt-6 max-w-md text-xs sm:text-sm leading-relaxed text-gray-400">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
               Building the future of digital trust and verification with advanced blockchain technology.
             </p>
             
             {/* Social Links */}
-            <div className="mt-6 sm:mt-8 flex gap-3 sm:gap-4">
+            <div className="mt-6 flex gap-3">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (
@@ -68,7 +68,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-cyan-500/20 text-gray-400 transition-all hover:border-cyan-400/50 ${social.color} hover:bg-cyan-500/5 active:scale-95`}
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted-foreground transition-all hover:border-primary/40 ${social.color} hover:bg-accent`}
                     aria-label={social.name}
                   >
                     <Icon className="w-5 h-5" />
@@ -81,15 +81,15 @@ export function Footer() {
           {/* Links Columns */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white mb-3 sm:mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">
                 {category}
               </h3>
-              <ul className="space-y-2 sm:space-y-3">
+              <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-gray-400 transition-colors hover:text-cyan-400 active:text-cyan-300"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
                     >
                       {link.label}
                     </Link>
@@ -101,15 +101,15 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-cyan-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <p className="text-xs sm:text-sm text-gray-400">
+        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} CredLayer. All rights reserved.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            <Link href="/privacy" className="text-xs sm:text-sm text-gray-400 hover:text-cyan-400 transition-colors whitespace-nowrap">
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="text-xs sm:text-sm text-gray-400 hover:text-cyan-400 transition-colors whitespace-nowrap">
+            <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
               Terms of Service
             </Link>
           </div>

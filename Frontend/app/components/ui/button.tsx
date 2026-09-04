@@ -14,7 +14,7 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'siz
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+  primary: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-button",
   outline: "border border-border bg-card/70 text-foreground hover:border-primary/60",
   ghost: "text-muted-foreground hover:bg-accent hover:text-foreground",
 };

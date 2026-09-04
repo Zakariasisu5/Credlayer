@@ -10,11 +10,10 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <ThemeProvider 
       attribute="class" 
-      defaultTheme="dark" 
-      enableSystem={false}
+      defaultTheme="system" 
+      enableSystem
       disableTransitionOnChange
       storageKey="credlayer-theme"
-      enableColorScheme={false}
     >
       <ClusterProvider>
         <AppClientProvider>{children}</AppClientProvider>

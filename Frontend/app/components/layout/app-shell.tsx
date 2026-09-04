@@ -21,7 +21,7 @@ import { FaHome, FaServicestack, FaBriefcase, FaInfoCircle, FaBlog, FaEnvelope }
 import type { IconType } from "react-icons";
 import { WalletButton } from "../wallet-button";
 import { Header, Brand } from "../layout";
-import { Button } from "../ui";
+import { Button, ThemeToggle } from "../ui";
 
 export const appNav: { href: string; label: string; icon: IconType; color: string }[] = [
   { href: "/app", label: "Dashboard", icon: MdSpaceDashboard, color: "#8b5cf6" }, // Purple
@@ -124,7 +124,12 @@ function AppSidebar({ developer = false }: { developer?: boolean }) {
 }
 
 function WalletControl() {
-  return <WalletButton />;
+  return (
+    <div className="flex items-center gap-3">
+      <ThemeToggle />
+      <WalletButton />
+    </div>
+  );
 }
 
 export function Shell({ 
@@ -244,6 +249,11 @@ export function Shell({
                   </Link>
                 </div>
               )}
+              
+              {/* Theme Toggle in Mobile Menu */}
+              <div className="mt-6 flex justify-center">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>

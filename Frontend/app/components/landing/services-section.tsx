@@ -2,6 +2,7 @@
 
 import { Target, Layers, TrendingUp, Shield, Zap, Database } from "lucide-react";
 import { ServiceCard } from "./service-card";
+import { ScrollReveal, StaggerContainer, StaggerItem } from "../ui/scroll-reveal";
 
 const CORE_SERVICES = [
   {
@@ -50,58 +51,55 @@ const CORE_SERVICES = [
 
 export function ServicesSection() {
   return (
-    <section className="relative mx-auto max-w-7xl px-4 sm:px-5 py-12 sm:py-20 lg:px-8 lg:py-32 border-t border-cyan-500/10">
+    <section className="relative mx-auto max-w-7xl px-5 py-16 lg:px-10 lg:py-24 border-t border-border">
       {/* Decorative elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 sm:h-20 bg-gradient-to-b from-cyan-500/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-16 bg-gradient-to-b from-primary/50 to-transparent" />
       
       <div className="relative">
-        {/* Section Header - Mobile optimized */}
-        <div className="mb-8 sm:mb-16 text-center px-2 sm:px-0">
-          <div className="inline-block mb-3 sm:mb-4">
-            <div className="relative">
-              <h2 className="text-xs font-mono uppercase tracking-[0.25em] sm:tracking-[0.35em] text-cyan-400 mb-2 flex items-center gap-2 justify-center">
-                <div className="w-6 sm:w-8 h-px bg-gradient-to-r from-transparent to-cyan-400" />
+        {/* Section Header */}
+        <ScrollReveal direction="up">
+          <div className="mb-12 text-center">
+            <div className="inline-block mb-3">
+              <h2 className="font-mono text-[10px] uppercase tracking-widest text-primary mb-2 flex items-center gap-2 justify-center">
+                <div className="w-8 h-px bg-gradient-to-r from-transparent to-primary" />
                 CORE SERVICES
-                <div className="w-6 sm:w-8 h-px bg-gradient-to-l from-transparent to-cyan-400" />
+                <div className="w-8 h-px bg-gradient-to-l from-transparent to-primary" />
               </h2>
             </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+              Enterprise Trust Infrastructure
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+              Comprehensive verification solutions powered by AI and blockchain technology
+            </p>
           </div>
-          <h3 className="text-xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 px-4 sm:px-0">
-            Enterprise Trust Infrastructure
-          </h3>
-          <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto px-4 sm:px-0">
-            Comprehensive verification solutions powered by AI and blockchain technology
-          </p>
-        </div>
+        </ScrollReveal>
 
-        {/* Service Cards Grid - Mobile optimized */}
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {CORE_SERVICES.map((service, index) => (
-            <div
-              key={service.title}
-              className="opacity-0 animate-fadeInUp"
-              style={{ 
-                animationDelay: `${index * 100}ms`,
-                animationFillMode: 'forwards'
-              }}
-            >
-              <ServiceCard {...service} />
+        {/* Service Cards Grid */}
+        <StaggerContainer staggerDelay={0.1}>
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {CORE_SERVICES.map((service) => (
+              <StaggerItem key={service.title}>
+                <ServiceCard {...service} />
+              </StaggerItem>
+            ))}
+          </div>
+        </StaggerContainer>
+
+        {/* Bottom CTA */}
+        <ScrollReveal direction="up" delay={0.3}>
+          <div className="mt-12 text-center">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-2 text-sm text-muted-foreground">
+              <span>Looking for custom solutions?</span>
+              <a 
+                href="/contact" 
+                className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+              >
+                Talk to our team
+              </a>
             </div>
-          ))}
-        </div>
-
-        {/* Bottom CTA - Mobile optimized */}
-        <div className="mt-8 sm:mt-16 text-center px-4 sm:px-0">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-2 text-xs sm:text-sm text-gray-400">
-            <span>Looking for custom solutions?</span>
-            <a 
-              href="/contact" 
-              className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 transition-colors"
-            >
-              Talk to our team
-            </a>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

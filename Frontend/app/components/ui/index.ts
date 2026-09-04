@@ -4,3 +4,4 @@ export { Card } from "./card";
 export { Dialog, ConfirmDialog } from "./dialog";
 export { PermissionsInput } from "./permissions-input";
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonStat, SkeletonList } from "./skeleton";
+export { ThemeToggle } from "./theme-toggle";

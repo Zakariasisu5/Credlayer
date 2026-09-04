@@ -8,6 +8,7 @@ import { FaHome, FaServicestack, FaBriefcase, FaInfoCircle, FaBlog, FaEnvelope }
 import type { IconType } from "react-icons";
 import { Brand } from "./brand";
 import { Button } from "../ui/button";
+import { ThemeToggle } from "../ui/theme-toggle";
 
 interface NavItem {
   href: string;
@@ -41,7 +42,7 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#061426]/95 backdrop-blur-xl border-b border-cyan-500/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border shadow-lg">
       <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-8">
         {/* Logo - Always Visible */}
         <div className="relative z-50 shrink-0">
@@ -56,29 +57,27 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative flex items-center gap-2 text-sm font-medium text-gray-300 transition-colors hover:text-cyan-400 group whitespace-nowrap"
+                className="relative flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary group whitespace-nowrap"
               >
                 <Icon className="size-4" style={{ color: item.color }} />
                 {item.label}
-                <span className="absolute -bottom-1 left-0 h-px w-0 bg-linear-to-r from-cyan-400 to-blue-400 transition-all duration-300 group-hover:w-full" />
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-gradient-to-r from-primary to-primary/80 transition-all duration-300 group-hover:w-full" />
               </Link>
             );
           })}
         </nav>
 
-        {/* Desktop CTA - Hidden on Mobile */}
-        <div className="hidden lg:flex shrink-0">
-          <Button 
-            href="/app" 
-            className="bg-cyan-500 hover:bg-cyan-600 text-white whitespace-nowrap"
-          >
+        {/* Desktop CTA + Theme Toggle - Hidden on Mobile */}
+        <div className="hidden lg:flex items-center gap-4 shrink-0">
+          <ThemeToggle />
+          <Button href="/app">
             Get Secure
           </Button>
         </div>
 
         {/* Mobile Menu Toggle - Visible on Mobile Only */}
         <button
-          className="relative z-50 flex items-center justify-center w-10 h-10 rounded-lg text-gray-300 transition-colors hover:text-cyan-400 hover:bg-cyan-500/10 lg:hidden"
+          className="relative z-50 flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground transition-colors hover:text-primary hover:bg-accent lg:hidden"
           onClick={toggleMenu}
           aria-label="Toggle navigation"
           aria-expanded={isMenuOpen}
@@ -103,7 +102,7 @@ export function Header() {
         
         {/* Menu Panel */}
         <div 
-          className={`absolute top-16 sm:top-20 left-0 right-0 bg-[#061426]/98 backdrop-blur-xl border-b border-cyan-500/10 shadow-xl transition-transform duration-300 ease-in-out ${
+          className={`absolute top-16 sm:top-20 left-0 right-0 bg-card/98 backdrop-blur-xl border-b border-border shadow-xl transition-transform duration-300 ease-in-out ${
             isMenuOpen ? "translate-y-0" : "-translate-y-full"
           }`}
         >
@@ -115,7 +114,7 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   onClick={closeMenu}
-                  className="flex items-center gap-3 rounded-lg px-4 py-4 text-base font-medium text-gray-300 transition-all hover:bg-cyan-500/10 hover:text-cyan-400 border-b border-cyan-500/10 last:border-b-0"
+                  className="flex items-center gap-3 rounded-lg px-4 py-4 text-base font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground border-b border-border last:border-b-0"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <Icon className="size-5" style={{ color: item.color }} />
@@ -124,11 +123,17 @@ export function Header() {
               );
             })}
             
+            {/* Theme Toggle in Mobile Menu */}
+            <div className="mt-4 px-4 flex justify-center">
+              <ThemeToggle />
+            </div>
+            
             {/* Mobile CTA Button */}
             <div className="mt-6 px-4">
               <Button 
                 href="/app" 
-                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-4"
+                className="w-full"
+                size="lg"
                 onClick={closeMenu}
               >
                 Get Secure

@@ -1,185 +1,172 @@
-import { Metadata } from "next";
-import { Target, Eye, Zap, Shield, Users, TrendingUp } from "lucide-react";
+"use client";
+
+import { Target, Eye, Zap, Shield, Users } from "lucide-react";
+import { Header } from "../components/layout/header";
+import { Button } from "../components/ui/button";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "About - CredLayer",
-  description: "Learn about CredLayer's mission to build trust in Web3",
-};
+const values = [
+  {
+    icon: Shield,
+    title: "Trust & Transparency",
+    description:
+      "We believe in building verifiable reputation systems that are transparent and auditable on-chain.",
+  },
+  {
+    icon: Zap,
+    title: "Innovation & Quality",
+    description:
+      "Developing cutting-edge AI models and blockchain infrastructure with a focus on accuracy and reliability.",
+  },
+  {
+    icon: Users,
+    title: "User-Centric Design",
+    description:
+      "Our tools are built for developers and end-users, making Web3 safer and more accessible for everyone.",
+  },
+];
+
+const stats = [
+  { value: "MVP", label: "Development Stage" },
+  { value: "GNN", label: "Model Trained" },
+  { value: "Open", label: "Building in Public" },
+  { value: "Soon", label: "Early Access" },
+];
+
+const team = [
+  {
+    role: "Development",
+    description: "Building the future of Web3 reputation intelligence from the ground up",
+  },
+  {
+    role: "Research",
+    description: "Advancing on-chain intelligence through Graph Neural Networks and ML",
+  },
+  {
+    role: "Community",
+    description: "Growing an open ecosystem of contributors and early adopters",
+  },
+];
 
 export default function AboutPage() {
-  const values = [
-    {
-      icon: Shield,
-      title: "Trust & Transparency",
-      description:
-        "We believe in building verifiable reputation systems that are transparent and auditable on-chain.",
-    },
-    {
-      icon: Zap,
-      title: "Innovation & Quality",
-      description:
-        "Developing cutting-edge AI models and blockchain infrastructure with a focus on accuracy and reliability.",
-    },
-    {
-      icon: Users,
-      title: "User-Centric Design",
-      description:
-        "Our tools are built for developers and end-users, making Web3 safer and more accessible for everyone.",
-    },
-  ];
-
-  const stats = [
-    { value: "MVP", label: "Development Stage" },
-    { value: "GNN", label: "Model Trained" },
-    { value: "Open", label: "Building in Public" },
-    { value: "Soon", label: "Early Access" },
-  ];
-
-  const team = [
-    {
-      role: "Development",
-      description: "Building the future of Web3 reputation intelligence from the ground up",
-    },
-    {
-      role: "Research",
-      description: "Advancing on-chain intelligence through Graph Neural Networks and ML",
-    },
-    {
-      role: "Community",
-      description: "Growing an open ecosystem of contributors and early adopters",
-    },
-  ];
-
   return (
-    <main className="min-h-screen bg-black text-white">
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6">
-              Building{" "}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Trust in Web3
-              </span>
+    <>
+      <Header />
+      <main className="relative overflow-hidden bg-background min-h-screen pt-20">
+        <div className="max-w-7xl mx-auto px-5 py-16 lg:px-10 lg:py-24">
+          {/* Page Header */}
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
+              Building Trust in Web3
             </h1>
-            <p className="text-lg text-gray-400">
-              CredLayer is on a mission to make Web3 safer and more transparent through
-              AI-powered reputation and risk intelligence.
+            <p className="text-lg text-muted-foreground">
+              CredLayer is on a mission to make Web3 safer and more transparent through AI-powered reputation and risk intelligence
             </p>
           </div>
 
           {/* Mission & Vision */}
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-500/10 rounded-lg mb-4">
-                <Target className="w-6 h-6 text-cyan-400" />
-              </div>
-              <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
-              <p className="text-gray-400">
-                To provide the most accurate and comprehensive reputation and risk intelligence
-                for Web3, enabling protocols, users, and autonomous agents to transact with
-                confidence. We're building the trust infrastructure that Web3 deserves.
-              </p>
-            </div>
-
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-500/10 rounded-lg mb-4">
-                <Eye className="w-6 h-6 text-cyan-400" />
-              </div>
-              <h2 className="text-2xl font-bold mb-4">Our Vision</h2>
-              <p className="text-gray-400">
-                A Web3 ecosystem where trust is verifiable, reputation is portable, and risk is
-                transparent. We envision a future where every wallet, protocol, and agent has a
-                verifiable reputation that follows them across the entire blockchain ecosystem.
-              </p>
-            </div>
+      <div className="grid md:grid-cols-2 gap-6 mb-16">
+        <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-card">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg border border-primary/30 mb-4">
+            <Target className="w-6 h-6 text-primary" />
           </div>
-
-          {/* Values */}
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-8">Our Values</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {values.map((value) => {
-                const Icon = value.icon;
-                return (
-                  <div key={value.title} className="text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 rounded-lg mb-4">
-                      <Icon className="w-8 h-8 text-cyan-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3">{value.title}</h3>
-                    <p className="text-gray-400">{value.description}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg p-8 mb-16">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Team */}
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-8">Our Team</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {team.map((item) => (
-                <div
-                  key={item.role}
-                  className="bg-gray-900/50 border border-gray-800 rounded-lg p-6"
-                >
-                  <h3 className="text-xl font-semibold mb-3 text-cyan-400">{item.role}</h3>
-                  <p className="text-gray-400">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="text-center">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold mb-4">Join Our Early Community</h2>
-              <p className="text-gray-400 mb-6">
-                We're looking for early adopters and contributors to help shape the future of Web3 reputation.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors"
-                >
-                  Get in Touch
-                </Link>
-                <Link
-                  href="/app"
-                  className="inline-flex items-center justify-center px-6 py-3 border-2 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 font-semibold rounded-lg transition-colors"
-                >
-                  Try CredLayer
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Back Navigation */}
-          <div className="mt-12 text-center">
-            <Link
-              href="/"
-              className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors"
-            >
-              ← Back to Home
-            </Link>
-          </div>
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Our Mission</h2>
+          <p className="text-muted-foreground">
+            To provide the most accurate and comprehensive reputation and risk intelligence
+            for Web3, enabling protocols, users, and autonomous agents to transact with
+            confidence. We're building the trust infrastructure that Web3 deserves.
+          </p>
         </div>
-      </section>
-    </main>
+
+        <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-card">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg border border-primary/30 mb-4">
+            <Eye className="w-6 h-6 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Our Vision</h2>
+          <p className="text-muted-foreground">
+            A Web3 ecosystem where trust is verifiable, reputation is portable, and risk is
+            transparent. We envision a future where every wallet, protocol, and agent has a
+            verifiable reputation that follows them across the entire blockchain ecosystem.
+          </p>
+        </div>
+      </div>
+
+      {/* Values */}
+      <div className="mb-16">
+        <h2 className="text-3xl font-bold text-center mb-8 text-foreground">Our Values</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {values.map((value) => {
+            const Icon = value.icon;
+            return (
+              <div key={value.title} className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-lg border border-primary/30 mb-4">
+                  <Icon className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-foreground">{value.title}</h3>
+                <p className="text-muted-foreground">{value.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-8 mb-16 shadow-card">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {stats.map((stat) => (
+            <div key={stat.label} className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
+                {stat.value}
+              </div>
+              <div className="text-sm text-muted-foreground">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Team */}
+      <div className="mb-16">
+        <h2 className="text-3xl font-bold text-center mb-8 text-foreground">Our Team</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {team.map((item) => (
+            <div
+              key={item.role}
+              className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-6 shadow-card"
+            >
+              <h3 className="text-xl font-semibold mb-3 text-primary">{item.role}</h3>
+              <p className="text-muted-foreground">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-card max-w-2xl mx-auto text-center">
+        <h2 className="text-2xl font-bold mb-3 text-foreground">Join Our Early Community</h2>
+        <p className="text-muted-foreground mb-6">
+          We're looking for early adopters and contributors to help shape the future of Web3 reputation.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button href="/contact">
+            Get in Touch
+          </Button>
+          <Button href="/app" variant="outline">
+            Try CredLayer
+          </Button>
+        </div>
+      </div>
+
+      {/* Back Navigation */}
+      <div className="mt-16 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center text-primary hover:text-primary/80 transition-colors text-sm font-medium"
+        >
+          ← Back to Home
+        </Link>
+      </div>
+    </div>
+  </main>
+</>
   );
 }

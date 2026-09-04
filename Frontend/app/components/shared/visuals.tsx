@@ -10,8 +10,8 @@ export function NetworkVisual({ dashboard = false }: { dashboard?: boolean }) {
     : [[16,28],[32,48],[52,20],[70,38],[86,22],[25,78],[50,68],[76,76],[90,56]];
   
   return (
-    <div className={`group relative overflow-hidden rounded-2xl border border-primary/30 bg-[#061426] ${dashboard ? "min-h-[280px]" : "min-h-[390px]"}`}>
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.08)_1px,transparent_1px)] bg-[size:36px_36px]" />
+    <div className={`group relative overflow-hidden rounded-2xl border border-primary/30 bg-card ${dashboard ? "min-h-[280px]" : "min-h-[390px]"}`}>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(var(--primary),0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(var(--primary),0.08)_1px,transparent_1px)] bg-[size:36px_36px]" />
       <div className="absolute left-1/2 top-[42%] size-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/20 opacity-70 animate-[ping_4s_ease-in-out_infinite]" />
       <div className="absolute left-1/2 top-[42%] size-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/10 opacity-50 animate-[ping_5s_ease-in-out_1s_infinite]" />
       <div className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-primary/40 bg-transparent p-3 shadow-[0_0_34px_rgba(32,214,208,0.24)] transition duration-500 group-hover:scale-110">
@@ -74,8 +74,8 @@ export function SecurityLogoVisual() {
   const particles = Array.from({ length: 12 });
   
   return (
-    <div className="relative isolate flex min-h-[430px] items-center justify-center overflow-hidden bg-[#020915] px-4 py-10 sm:min-h-[560px] sm:px-8">
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(34,211,238,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.12)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:radial-gradient(circle_at_center,black,transparent_72%)]" />
+    <div className="relative isolate flex min-h-[430px] items-center justify-center overflow-hidden bg-background px-4 py-10 sm:min-h-[560px] sm:px-8">
+      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(var(--primary),0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(var(--primary),0.12)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:radial-gradient(circle_at_center,black,transparent_72%)]" />
       <div className="absolute size-72 rounded-full bg-primary/20 blur-3xl sm:size-96" />
       <div className="absolute size-[78%] rounded-full border border-primary/20 [animation:spin_26s_linear_infinite]" />
       <div className="absolute size-[62%] rounded-full border border-cyan-300/20 border-dashed [animation:spin_18s_linear_infinite_reverse]" />
