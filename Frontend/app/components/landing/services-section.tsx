@@ -51,7 +51,7 @@ const CORE_SERVICES = [
 
 export function ServicesSection() {
   return (
-    <section className="relative mx-auto max-w-7xl px-5 py-16 lg:px-10 lg:py-24 border-t border-border">
+    <section className="relative mx-auto max-w-7xl px-5 py-16 lg:px-10 lg:py-24 border-t border-border bg-background">
       {/* Decorative elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-16 bg-gradient-to-b from-primary/50 to-transparent" />
       
@@ -89,11 +89,11 @@ export function ServicesSection() {
         {/* Bottom CTA */}
         <ScrollReveal direction="up" delay={0.3}>
           <div className="mt-12 text-center">
-            <div className="inline-flex flex-col sm:flex-row items-center gap-2 text-sm text-muted-foreground">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-2 text-sm text-gray-400">
               <span>Looking for custom solutions?</span>
               <a 
                 href="/contact" 
-                className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+                className="text-[#06b6d4] hover:text-[#0891b2] underline underline-offset-4 transition-colors"
               >
                 Talk to our team
               </a>

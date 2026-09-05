@@ -28,7 +28,7 @@ const PILLARS = [
         description: "Instant reputation analysis for any wallet address with sub-second response times and 99.9% uptime reliability",
         href: "/app/analysis",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
       {
         icon: FaBrain,
@@ -36,7 +36,7 @@ const PILLARS = [
         description: "Advanced AI-powered detection of behavioral anomalies, suspicious activity patterns, and potential fraud indicators",
         href: "/app/analysis",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
       {
         icon: FaChartBar,
@@ -44,7 +44,7 @@ const PILLARS = [
         description: "Comprehensive risk profiling with predictive alerts, threat intelligence, and actionable insights for decision-making",
         href: "/app/analysis",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
     ],
   },
@@ -66,7 +66,7 @@ const PILLARS = [
         description: "Verifiable credentials with zero-knowledge proofs ensuring maximum privacy while maintaining full verifiability",
         href: "/app/credentials",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
       {
         icon: FaGlobe,
@@ -74,7 +74,7 @@ const PILLARS = [
         description: "Credentials that work seamlessly across Solana, Ethereum, Polygon, and emerging blockchain networks",
         href: "/app/credentials",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
       {
         icon: FaDatabase,
@@ -82,7 +82,7 @@ const PILLARS = [
         description: "Real-time credential verification with blockchain consensus and permanent on-chain proof of authenticity",
         href: "/app/credentials",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
     ],
   },
@@ -104,7 +104,7 @@ const PILLARS = [
         description: "Clean, well-documented API endpoints with complete OpenAPI specification and interactive API explorer",
         href: "/developers/docs",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
       {
         icon: FaCode,
@@ -112,7 +112,7 @@ const PILLARS = [
         description: "First-class TypeScript, Python, and Rust SDK support with full type safety and comprehensive examples",
         href: "/developers/sdk",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
       {
         icon: FaCodeBranch,
@@ -120,7 +120,7 @@ const PILLARS = [
         description: "Real-time event notifications for state changes, credential updates, and reputation score modifications",
         href: "/developers/docs",
         color: "#C13A24",
-        colorDark: "#8FD3FF",
+        colorDark: "#06b6d4",
       },
     ],
   },
@@ -135,7 +135,7 @@ export function PillarSections() {
         return (
           <section
             key={pillar.id}
-            className="relative py-12 lg:py-16 border-t border-border"
+            className="relative py-12 lg:py-16 border-t border-border bg-background"
           >
             <div className="mx-auto max-w-7xl px-5 lg:px-10">
               <div
@@ -159,12 +159,18 @@ export function PillarSections() {
 
                       {/* CTA Buttons */}
                       <div className="flex flex-wrap gap-2 pt-2">
-                        <Button href={pillar.cta.primary.href} size="sm">
+                        <Link
+                          href={pillar.cta.primary.href}
+                          className="inline-flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full transition-colors text-sm"
+                        >
                           {pillar.cta.primary.text}
-                        </Button>
-                        <Button href={pillar.cta.secondary.href} variant="outline" size="sm">
+                        </Link>
+                        <Link
+                          href={pillar.cta.secondary.href}
+                          className="inline-flex items-center justify-center px-4 py-2 border-2 border-primary text-primary hover:bg-primary/10 font-semibold rounded-full transition-colors text-sm"
+                        >
                           {pillar.cta.secondary.text}
-                        </Button>
+                        </Link>
                       </div>
                     </div>
                   </ScrollReveal>
@@ -222,7 +228,7 @@ export function PillarSections() {
                   delay={0.2}
                   className={isReversed ? "lg:col-start-1" : ""}
                 >
-                  <div className="relative h-[300px] lg:h-[350px] rounded-xl border border-border overflow-hidden shadow-card">
+                  <div className="relative h-[300px] lg:h-[350px] rounded-xl border border-white/10 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                     <Image
                       src={pillar.image}
                       alt={pillar.headline}

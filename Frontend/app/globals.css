@@ -1,9 +1,56 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
+
+/* SYSTEM THEME (DEFAULT) - Near-black with cyan accents */
+:root {
+  /* Backgrounds */
+  --background: #000000; /* Near-black */
+  --card: #0a0a0a; /* Slightly lighter for cards */
+  --popover: #0a0a0a;
+  --accent: #1a1a1a; /* Subtle lighter accent */
+  --secondary: #06b6d4; /* Cyan for secondary elements */
+  --cream: #000000;
+  
+  /* Text colors */
+  --foreground: #FFFFFF; /* White for headings */
+  --card-foreground: #FFFFFF;
+  --popover-foreground: #FFFFFF;
+  --muted-foreground: #9ca3af; /* Gray-400 for body text */
+  --accent-foreground: #FFFFFF;
+  --secondary-foreground: #000000; /* Black text on cyan buttons */
+  
+  /* Primary accent - Cyan/Teal */
+  --primary: #06b6d4;
+  --primary-foreground: #000000; /* Black text on cyan */
+  --destructive: #ef4444;
+  --destructive-foreground: #FFFFFF;
+  --ring: #06b6d4;
+  
+  /* Borders and inputs */
+  --border: rgba(255, 255, 255, 0.1); /* Subtle white borders */
+  --border-low: rgba(255, 255, 255, 0.05);
+  --input: #0a0a0a;
+  --muted: #1a1a1a;
+  
+  /* Border radius */
+  --radius: 0.5rem; /* 8px */
+  --card-radius: 0.75rem; /* 12px */
+  --button-radius: 9999px; /* Fully rounded pills */
+  
+  /* Shadows - subtle */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-button: 0 2px 12px rgba(6, 182, 212, 0.3);
+  
+  /* Fonts */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-inter), system-ui, sans-serif;
+}
 
 /* LIGHT THEME - Warm, rounded, soft shadows */
-:root {
+.light {
   /* Backgrounds */
   --background: #EDE9E0; /* Warm cream */
   --card: #FFFFFF; /* Pure white cards */
@@ -41,52 +88,47 @@
   /* Shadows - soft and subtle */
   --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
   --shadow-button: 0 2px 12px rgba(0, 0, 0, 0.1);
-  
-  /* Fonts */
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-inter), system-ui, sans-serif; /* Rounded geometric sans */
 }
 
 /* DARK THEME - Graphic, bordered, hard shadows */
 .dark {
-  /* Backgrounds */
-  --background: #16295C; /* Deep navy */
-  --card: #16295C; /* Same as background, differentiation via borders */
-  --popover: #16295C;
-  --accent: #1A3366; /* Slightly lighter navy */
-  --secondary: #8FD3FF; /* Light blue for secondary elements */
-  --cream: #16295C;
+  /* Backgrounds - Deep dark like System theme */
+  --background: #0a0a0a; /* Deep dark, matching System */
+  --card: #0a0a0a; /* Same as background, differentiation via borders */
+  --popover: #0a0a0a;
+  --accent: #1a1a1a; /* Slightly lighter dark */
+  --secondary: #06b6d4; /* Cyan for secondary elements */
+  --cream: #0a0a0a;
   
   /* Text colors */
   --foreground: #FFFFFF; /* White for headings */
   --card-foreground: #FFFFFF;
   --popover-foreground: #FFFFFF;
-  --muted-foreground: #B8D4E8; /* Light gray for body text */
+  --muted-foreground: #9ca3af; /* Gray for body text */
   --accent-foreground: #FFFFFF;
-  --secondary-foreground: #16295C; /* Dark navy text on light blue */
+  --secondary-foreground: #000000; /* Dark text on cyan */
   
-  /* Primary accent - Light blue */
-  --primary: #8FD3FF;
-  --primary-foreground: #16295C; /* Dark navy text on light blue */
-  --destructive: #FF6B6B;
+  /* Primary accent - Cyan */
+  --primary: #06b6d4;
+  --primary-foreground: #000000; /* Dark text on cyan */
+  --destructive: #ef4444;
   --destructive-foreground: #FFFFFF;
-  --ring: #8FD3FF;
+  --ring: #06b6d4;
   
-  /* Borders and inputs - prominent white borders */
-  --border: rgba(255, 255, 255, 0.25); /* More visible white borders */
-  --border-low: rgba(255, 255, 255, 0.15);
-  --input: #16295C;
-  --muted: #1A3366;
+  /* Borders and inputs - prominent borders */
+  --border: rgba(255, 255, 255, 0.15); /* More visible borders */
+  --border-low: rgba(255, 255, 255, 0.08);
+  --input: #0a0a0a;
+  --muted: #1a1a1a;
   
   /* Border radius - less rounded for dark theme */
   --radius: 0.5rem; /* 8px */
   --card-radius: 0.75rem; /* 12px */
   --button-radius: 0.5rem;
   
-  /* Shadows - hard offset shadows, not soft blur */
-  --shadow-card: 6px 6px 0 rgba(255, 255, 255, 0.15);
-  --shadow-button: 4px 4px 0 rgba(255, 255, 255, 0.2);
+  /* Shadows - subtle dark shadows */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-button: 0 2px 12px rgba(6, 182, 212, 0.3);
 }
 
 @theme inline {

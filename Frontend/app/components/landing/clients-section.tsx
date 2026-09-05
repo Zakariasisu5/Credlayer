@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Code, Rocket, Database, GitBranch, ExternalLink } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -32,7 +33,7 @@ const MILESTONES = [
 
 export function ClientsSection() {
   return (
-    <section className="relative mx-auto max-w-7xl px-5 py-16 lg:px-10 lg:py-24 border-t border-border">
+    <section className="relative mx-auto max-w-7xl px-5 py-16 lg:px-10 lg:py-24 border-t border-border bg-background">
       {/* Background effects - subtle */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-full max-w-4xl rounded-full bg-primary/5 blur-3xl" />
       
@@ -43,7 +44,7 @@ export function ClientsSection() {
             <h2 className="font-mono text-[10px] uppercase tracking-widest text-primary mb-2 flex items-center gap-2 justify-center">
               <div className="w-8 h-px bg-gradient-to-r from-transparent to-primary" />
               BUILDING IN PUBLIC
-              <div className="w-8 h-px bg-gradient-to-l from-transparent to-primary" />
+              <div className="w-8 h-px bg-gradient-to-l from-transparent to-[#06b6d4]" />
             </h2>
           </div>
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
@@ -67,7 +68,7 @@ export function ClientsSection() {
                   animationFillMode: 'forwards'
                 }}
               >
-                <div className="relative h-full rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 shadow-card transition-all duration-300 hover:border-primary/40 hover:-translate-y-1">
+                <div className="relative h-full rounded-xl border border-border bg-card backdrop-blur-sm p-5 shadow-card transition-all duration-300 hover:border-primary/40 hover:-translate-y-1">
                   {/* Icon */}
                   <div className="mb-3 inline-flex items-center justify-center w-12 h-12 rounded-lg border border-primary/30 bg-transparent">
                     <Icon className="size-6 text-primary" />
@@ -84,7 +85,7 @@ export function ClientsSection() {
                   </div>
                   
                   {/* Description */}
-                  <div className="text-xs text-muted-foreground/80">
+                  <div className="text-xs text-muted-foreground/70">
                     {milestone.description}
                   </div>
                 </div>
@@ -95,7 +96,7 @@ export function ClientsSection() {
 
         {/* Technical Details Section */}
         <div className="mt-8">
-          <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-card">
+          <div className="rounded-xl border border-border bg-card backdrop-blur-sm p-8 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <h4 className="text-2xl font-bold text-foreground mb-3">
@@ -105,12 +106,18 @@ export function ClientsSection() {
                   We&apos;re in active development and looking for early adopters to help shape the future of Web3 reputation systems.
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-                  <Button href="/app">
+                  <Link
+                    href="/app"
+                    className="inline-flex items-center justify-center px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full transition-colors text-sm"
+                  >
                     Try the Demo
-                  </Button>
-                  <Button href="/developers" variant="outline">
+                  </Link>
+                  <Link
+                    href="/developers"
+                    className="inline-flex items-center justify-center px-6 py-2.5 border-2 border-[#06b6d4] text-primary hover:bg-[#06b6d4]/10 font-semibold rounded-full transition-colors text-sm"
+                  >
                     View Docs
-                  </Button>
+                  </Link>
                 </div>
               </div>
               <div className="space-y-3">
@@ -118,7 +125,7 @@ export function ClientsSection() {
                   href="https://huggingface.co/credlayer"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/40 hover:border-primary/40 transition-colors opacity-0 animate-fadeInLeft group"
+                  className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/40 hover:border-[#06b6d4]/40 transition-colors opacity-0 animate-fadeInLeft group"
                   style={{ 
                     animationDelay: '200ms',
                     animationFillMode: 'forwards'

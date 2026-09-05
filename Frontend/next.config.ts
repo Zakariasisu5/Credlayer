@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["ws"],
   transpilePackages: ["@credlayer/sdk", "sas-lib"],
+  // Suppress next-themes script warning in console
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
   turbopack: {
     resolveAlias: {
       fs: { browser: "./empty-module.js" },
@@ -51,6 +57,11 @@ const nextConfig: NextConfig = {
     }
     
     return config;
+  },
+  // Filter out next-themes script warning from React
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
   },
 };
 

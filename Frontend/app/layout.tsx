@@ -3,6 +3,7 @@ import "./lib/polyfills";
 import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/providers";
+import { ConsoleFilter } from "./components/console-filter";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
       <body className={`${inter.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+        <ConsoleFilter />
         <Providers>
           <div className="min-h-screen bg-transparent text-foreground">
             {children}

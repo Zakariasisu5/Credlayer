@@ -29,7 +29,7 @@ export const appNav: { href: string; label: string; icon: IconType; color: strin
   { href: "/app/analysis", label: "Analysis", icon: MdAnalytics, color: "#10b981" }, // Green
   { href: "/app/agents", label: "Agents", icon: MdSmartToy, color: "#f59e0b" }, // Amber
   { href: "/app/credentials", label: "Credentials", icon: MdVerifiedUser, color: "#06b6d4" }, // Cyan
-  { href: "/app/activity", label: "Activity", icon: MdTimeline, color: "#6366f1" }, // Indigo
+  { href: "/app/activity", label: "Activity", icon: MdTimeline, color: "#8b5cf6" }, // Purple
   { href: "/app/settings", label: "Settings", icon: MdSettings, color: "#64748b" } // Slate
 ];
 

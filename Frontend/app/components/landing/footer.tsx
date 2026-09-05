@@ -27,25 +27,22 @@ const socialLinks = [
     name: "LinkedIn",
     href: "https://www.linkedin.com/company/credlayer/",
     icon: FaLinkedin,
-    color: "hover:text-blue-500"
   },
   {
     name: "X (Twitter)",
     href: "https://x.com/BitTrustProtoco",
     icon: FaXTwitter,
-    color: "hover:text-primary"
   },
   {
     name: "Email",
     href: "mailto:Zakariasisu5@gmail.com",
     icon: HiMail,
-    color: "hover:text-primary"
   },
 ];
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-border bg-card/30 mt-24">
+    <footer className="relative border-t border-border bg-background mt-24">
       {/* Glow effect */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       
@@ -68,7 +65,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted-foreground transition-all hover:border-primary/40 ${social.color} hover:bg-accent`}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted-foreground transition-all hover:border-primary/40 hover:text-primary hover:bg-primary/5"
                     aria-label={social.name}
                   >
                     <Icon className="w-5 h-5" />

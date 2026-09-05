@@ -160,7 +160,7 @@ export function TrustScoreLiveDemo() {
                 <button
                     onClick={handleMintMockScore}
                     disabled={loading || !walletAddress || !hasMounted}
-                    className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition"
+                    className="flex-1 py-2 px-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition"
                 >
                     {loading ? "Processing..." : "1. Issue Attestation (Relayer)"}
                 </button>
@@ -182,7 +182,7 @@ export function TrustScoreLiveDemo() {
                             href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-400 underline"
+                            className="text-cyan-400 underline"
                         >
                             View on Solana Explorer ↗
                         </a>

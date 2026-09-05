@@ -19,8 +19,8 @@ export function ServiceCard({
 }: ServiceCardProps) {
   return (
     <Link href={href} className="group relative block h-full min-h-[200px]">
-      {/* Card using shared design tokens */}
-      <div className="relative h-full rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 shadow-card transition-all duration-300 hover:border-primary/40 hover:-translate-y-1">
+      {/* Card using theme variables */}
+      <div className="relative h-full rounded-xl border border-border bg-card backdrop-blur-sm p-5 shadow-card transition-all duration-300 hover:border-primary/40 hover:-translate-y-1">
         {/* Icon Container */}
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-primary/30 bg-transparent transition-all duration-300 group-hover:border-primary/50">
           <Icon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />

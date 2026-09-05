@@ -15,11 +15,18 @@ export function ThemeToggle() {
 
   if (!mounted) {
     // Return a placeholder with the same dimensions to prevent layout shift
+    // Show system as default during hydration
     return (
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
-        <button className="h-8 w-8 rounded-md" aria-label="Loading theme toggle" />
-        <button className="h-8 w-8 rounded-md" aria-label="Loading theme toggle" />
-        <button className="h-8 w-8 rounded-md" aria-label="Loading theme toggle" />
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
+        <button className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground" aria-label="Light mode" disabled>
+          <Sun className="h-4 w-4" />
+        </button>
+        <button className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground" aria-label="Dark mode" disabled>
+          <Moon className="h-4 w-4" />
+        </button>
+        <button className="h-8 w-8 rounded-md flex items-center justify-center bg-primary text-primary-foreground" aria-label="System mode" disabled>
+          <Monitor className="h-4 w-4" />
+        </button>
       </div>
     );
   }
