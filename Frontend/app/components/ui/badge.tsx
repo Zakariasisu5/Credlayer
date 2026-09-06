@@ -11,7 +11,7 @@ interface BadgeProps {
 export function Badge({ children, tone = "default", className = "" }: BadgeProps) {
   const toneStyles = {
     green: "border-primary/30 bg-primary/10 text-primary",
-    amber: "border-amber-400/30 bg-amber-300/10 text-amber-200",
+    amber: "border-amber-500/30 bg-amber-400/10 text-amber-600 dark:text-amber-400",
     default: "border-border bg-card text-muted-foreground",
   };
 
@@ -21,6 +21,9 @@ export function Badge({ children, tone = "default", className = "" }: BadgeProps
     >
       {tone === "green" && (
         <span className="size-1.5 rounded-full bg-primary" />
+      )}
+      {tone === "amber" && (
+        <span className="size-1.5 rounded-full bg-amber-500" />
       )}
       {children}
     </span>

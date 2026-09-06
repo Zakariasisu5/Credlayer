@@ -67,12 +67,12 @@
   --accent-foreground: #141210;
   --secondary-foreground: #FFFFFF; /* White text on black buttons */
   
-  /* Primary accent - Brick red */
-  --primary: #C13A24;
+  /* Primary accent - Cyan (matching dark theme) */
+  --primary: #06b6d4; /* Cyan */
   --primary-foreground: #FFFFFF;
   --destructive: #C13A24;
   --destructive-foreground: #FFFFFF;
-  --ring: #C13A24;
+  --ring: #06b6d4;
   
   /* Borders and inputs */
   --border: rgba(20, 18, 16, 0.1); /* Very subtle borders */

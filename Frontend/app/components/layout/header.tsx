@@ -42,53 +42,54 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
-      <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-8">
-        {/* Logo - Always Visible */}
-        <div className="relative z-50 shrink-0">
-          <Brand />
-        </div>
+    <header className="fixed top-0 left-0 right-0 z-50">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+        {/* Nav card with rounded corners and subtle background */}
+        <div className="relative rounded-2xl bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg">
+          <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            {/* Logo - Far Left */}
+            <div className="relative z-50 shrink-0">
+              <Brand />
+            </div>
 
-        {/* Desktop Navigation - Hidden on Mobile */}
-        <nav className="hidden items-center gap-6 lg:gap-8 lg:flex">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            return (
+            {/* Desktop Navigation - Center/Left-of-Center */}
+            <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+              {navigationItems.slice(0, 4).map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent whitespace-nowrap"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Desktop Auth Actions - Far Right */}
+            <div className="hidden lg:flex items-center gap-3 shrink-0">
+              <ThemeToggle />
               <Link
-                key={item.href}
-                href={item.href}
-                className="relative flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground group whitespace-nowrap"
+                href="/app"
+                className="inline-flex items-center justify-center px-5 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full transition-all text-sm shadow-sm"
               >
-                <Icon className="size-4" style={{ color: item.color }} />
-                {item.label}
+                Get Secure
               </Link>
-            );
-          })}
-        </nav>
+            </div>
 
-        {/* Desktop CTA + Theme Toggle - Hidden on Mobile */}
-        <div className="hidden lg:flex items-center gap-4 shrink-0">
-          <ThemeToggle />
-          <Link
-            href="/app"
-            className="inline-flex items-center justify-center px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full transition-colors text-sm"
-          >
-            Get Secure
-          </Link>
+            {/* Mobile Menu Toggle */}
+            <button
+              className="relative z-50 flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-accent lg:hidden"
+              onClick={toggleMenu}
+              aria-label="Toggle navigation"
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
-
-        {/* Mobile Menu Toggle - Visible on Mobile Only */}
-        <button
-          className="relative z-50 flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-accent lg:hidden"
-          onClick={toggleMenu}
-          aria-label="Toggle navigation"
-          aria-expanded={isMenuOpen}
-        >
-          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
-      {/* Mobile Navigation Menu - Full Screen Overlay */}
+      {/* Mobile Navigation Menu */}
       <div
         className={`fixed inset-0 z-40 lg:hidden transition-all duration-300 ease-in-out ${
           isMenuOpen 
@@ -104,11 +105,11 @@ export function Header() {
         
         {/* Menu Panel */}
         <div 
-          className={`absolute top-16 sm:top-20 left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border transition-transform duration-300 ease-in-out ${
-            isMenuOpen ? "translate-y-0" : "-translate-y-full"
+          className={`absolute top-24 left-4 right-4 rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl transition-all duration-300 ease-in-out ${
+            isMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
           }`}
         >
-          <nav className="flex flex-col px-4 py-6 max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <nav className="flex flex-col p-2 max-h-[calc(100vh-8rem)] overflow-y-auto">
             {navigationItems.map((item, index) => {
               const Icon = item.icon;
               return (
@@ -116,7 +117,7 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   onClick={closeMenu}
-                  className="flex items-center gap-3 rounded-lg px-4 py-4 text-base font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground border-b border-border last:border-b-0"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <Icon className="size-5" style={{ color: item.color }} />
@@ -125,13 +126,11 @@ export function Header() {
               );
             })}
             
-            {/* Theme Toggle in Mobile Menu */}
-            <div className="mt-4 px-4 flex justify-center">
-              <ThemeToggle />
-            </div>
-            
-            {/* Mobile CTA Button */}
-            <div className="mt-6 px-4">
+            {/* Mobile Actions */}
+            <div className="mt-4 pt-4 px-2 border-t border-border space-y-3">
+              <div className="flex justify-center">
+                <ThemeToggle />
+              </div>
               <Link
                 href="/app"
                 onClick={closeMenu}
