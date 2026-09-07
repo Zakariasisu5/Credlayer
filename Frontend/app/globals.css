@@ -3,15 +3,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant light (&:where(.light, .light *));
 
-/* SYSTEM THEME (DEFAULT) - Near-black with cyan accents */
+/* SYSTEM THEME (DEFAULT) - Deep dark with cyan accents (Dark Mode) */
 :root {
   /* Backgrounds */
-  --background: #000000; /* Near-black */
+  --background: #0a0a0a; /* Deep dark */
   --card: #0a0a0a; /* Slightly lighter for cards */
   --popover: #0a0a0a;
   --accent: #1a1a1a; /* Subtle lighter accent */
   --secondary: #06b6d4; /* Cyan for secondary elements */
-  --cream: #000000;
+  --cream: #0a0a0a;
   
   /* Text colors */
   --foreground: #FFFFFF; /* White for headings */
@@ -90,10 +90,10 @@
   --shadow-button: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* DARK THEME - Graphic, bordered, hard shadows */
+/* DARK THEME - Same as System (Deep dark with cyan accents) */
 .dark {
   /* Backgrounds - Deep dark like System theme */
-  --background: #0a0a0a; /* Deep dark, matching System */
+  --background: #0a0a0a; /* Deep dark */
   --card: #0a0a0a; /* Same as background, differentiation via borders */
   --popover: #0a0a0a;
   --accent: #1a1a1a; /* Slightly lighter dark */
