@@ -122,7 +122,7 @@ export function ClientsSection() {
               </div>
               <div className="space-y-3">
                 <a
-                  href="https://huggingface.co/credlayer"
+                  href="https://huggingface.co/ritesh-das/credlayer-solana-fraud-gnn"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/40 hover:border-[#06b6d4]/40 transition-colors opacity-0 animate-fadeInLeft group"
