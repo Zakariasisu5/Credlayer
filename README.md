@@ -838,19 +838,59 @@ That behavioral intelligence can become the foundation for better decisions acro
 
 ---
 
+🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js** 18+ (for Frontend and Blockchain SDK)
+- **Python** 3.12+ with [uv](https://docs.astral.sh/uv/) (for Backend)
+- **Supabase Account** (for PostgreSQL database)
+
+### Quick Setup
+
+1. **Clone the Repository**
+```bash
+git clone <repository-url>
+cd credlayer
+```
+
+2. **Setup Backend with Supabase**
+   
+   Follow the detailed guide: [`Backend/SUPABASE_SETUP.md`](./Backend/SUPABASE_SETUP.md)
+   
+   Quick steps:
+   - Create a [Supabase](https://supabase.com) project
+   - Get your PostgreSQL connection string
+   - Configure `Backend/.env` with your credentials
+   - Run migrations: `cd Backend && uv run alembic upgrade head`
+   - Start backend: `uv run uvicorn credlayer.main:app --port 8000 --reload`
+
+3. **Setup Frontend**
+```bash
+cd Frontend
+npm install
+# Configure Frontend/.env.local with your settings
+npm run dev
+```
+
+4. **Setup Blockchain SDK** (Optional)
+```bash
+cd blockchain/sdk
+npm install
+npm run build
+```
+
+### Testing Your Setup
+
+- **Backend Health**: http://localhost:8000/health
+- **Frontend**: http://localhost:3000
+- **API Docs**: http://localhost:8000/docs
+
+---
+
 🤝 Contributing
 
 We welcome developers, researchers, designers, and Web3 builders interested in trust infrastructure.
-
-If you want to contribute:
-
-git clone <repository-url>
-
-cd credlayer
-
-npm install
-
-npm run dev
 
 Check the project issues and documentation before starting major changes.
 

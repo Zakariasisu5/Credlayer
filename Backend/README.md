@@ -12,9 +12,24 @@ See `docs/backend-ai-specification.md` at the repo root for the full specificati
 Requires [uv](https://docs.astral.sh/uv/):
 ```bash
 cd Backend
-cp .env.example .env
 uv sync
 ```
+
+### Database Setup
+
+#### Option A: Supabase PostgreSQL (Recommended)
+Follow the detailed guide: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Get your connection string and API keys
+3. Configure `.env` with your Supabase credentials
+4. Run migrations: `uv run alembic upgrade head`
+
+#### Option B: Local PostgreSQL with Docker
+```bash
+docker compose up postgres redis -d
+```
+Then use the default `.env.example` configuration.
 
 ### Run the Backend Gateway (Port 8000)
 ```bash
