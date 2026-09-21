@@ -1,0 +1,17 @@
+# Ignore virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+
+# Ignore local config
+.env
+*.db
+*.sqlite
+
+# Ignore uv files
+uv.lock
