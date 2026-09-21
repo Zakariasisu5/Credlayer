@@ -12,9 +12,10 @@ import { AlertCircle } from "lucide-react";
 let credlayer: any = null;
 try {
     credlayer = new CredLayerClient(
+        process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
         "https://api.devnet.solana.com",
-        "AaNQ6yYSMD7PihrTXF65RwxPMyu2UJ9agtiutqrWh6bw",
-        "GF4CFVovfTb8dHwHHc7rxVMNChc65HQPBfxoYoi4roHd"
+        "CbqejxfaSkP8VypE1CSr39U1UJNjzFWcVM9NMJvGxqqn",
+        "3djJWtGKBXvM8P9WbsX1RFe3dnMkMj5DxQYWPcptC7rs"
     );
 } catch (err) {
     console.error("Failed to initialize CredLayerClient:", err);

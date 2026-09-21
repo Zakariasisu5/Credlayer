@@ -54,8 +54,13 @@ async function main() {
     console.log(`2. Encoding New AI Score: ${newTrustScore} (${newRiskLevel} Risk)`);
     const scoreBuffer = Buffer.alloc(2);
     scoreBuffer.writeUInt16LE(newTrustScore, 0);
-    const riskBuffer = Buffer.from(newRiskLevel, 'utf-8');
-    const newDataPayload = Buffer.concat([scoreBuffer, riskBuffer]);
+    
+    // Borsh string encoding requires a 4-byte length prefix
+    const riskBytes = Buffer.from(newRiskLevel, 'utf-8');
+    const lengthBuffer = Buffer.alloc(4);
+    lengthBuffer.writeUInt32LE(riskBytes.length, 0);
+    
+    const newDataPayload = Buffer.concat([scoreBuffer, lengthBuffer, riskBytes]);
 
     console.log("3. Building Update Transaction...");
     const updateIxV2 = getCreateAttestationInstruction({

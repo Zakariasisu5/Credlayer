@@ -115,8 +115,13 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
         // 2. Encode score payload (u16 trust_score + UTF-8 risk_level string)
         const scoreBuffer = Buffer.alloc(2);
         scoreBuffer.writeUInt16LE(trustScore, 0);
-        const riskBuffer = Buffer.from(riskLevel, 'utf-8');
-        const dataPayload = Buffer.concat([scoreBuffer, riskBuffer]);
+        
+        // Borsh string encoding requires a 4-byte length prefix
+        const riskBytes = Buffer.from(riskLevel, 'utf-8');
+        const lengthBuffer = Buffer.alloc(4);
+        lengthBuffer.writeUInt32LE(riskBytes.length, 0);
+        
+        const dataPayload = Buffer.concat([scoreBuffer, lengthBuffer, riskBytes]);
 
         // 3. Build Instruction
         const v2Ix = getCreateAttestationInstruction({
