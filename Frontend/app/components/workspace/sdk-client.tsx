@@ -68,7 +68,7 @@ export function TrustScoreLiveDemo() {
             setStatus("1. Querying AI Engine & Minting...");
 
             const response = await apiClient.get(`/scores/${walletAddress}`);
-            const scoreData = unwrap(response.data);
+            const scoreData = unwrap(response.data) as { trustScore: number; riskLevel: string; isValid: boolean };
 
             setStatus(`✅ Success! AI Trust Score (${scoreData.trustScore}) minted on Devnet.`);
         } catch (err: any) {
