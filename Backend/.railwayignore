@@ -13,10 +13,14 @@ __pycache__/
 *.db
 *.sqlite
 
-# Ignore uv files - force Railway to use pip
+# Ignore ALL uv-related files - force Railway to use pip only
 uv.lock
 uv.lock.bak
 pyproject.toml.bak
+.python-version
+.python-version.bak
+.mise.toml
+.mise.toml.bak
 *.pth
 
 # Ignore Docker files - use nixpacks instead
