@@ -89,7 +89,7 @@ export function DashboardPage() {
                   <p className="mt-1 text-xs text-muted-foreground">Total verification events</p>
                 </div>
                 <span className="text-2xl font-bold text-primary">
-                  {scoreLoading ? "..." : trustScore?.signals.filter(s => s.verified).length ?? "—"}
+                  {scoreLoading ? "..." : trustScore?.signals?.filter(s => s.verified).length ?? "—"}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-4">

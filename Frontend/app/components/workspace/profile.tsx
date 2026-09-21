@@ -18,7 +18,7 @@ export function ProfilePage() {
   const { data: connections, isLoading: connectionsLoading } = useConnections(walletAddress);
 
   // Calculate stats
-  const verifiedSignals = trustScore?.signals.filter(s => s.verified).length ?? 0;
+  const verifiedSignals = trustScore?.signals?.filter(s => s.verified).length ?? 0;
   const connectionCount = connections?.totalCount ?? 0;
   const credentialCount = credentials?.length ?? 0;
   const verifiedCredentials = credentials?.filter(c => c.verificationStatus === 'verified').length ?? 0;

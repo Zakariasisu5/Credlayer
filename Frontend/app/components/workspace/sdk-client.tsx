@@ -144,7 +144,7 @@ export function TrustScoreLiveDemo() {
             {/* Error Alert */}
             {error && (
                 <div className="flex items-start gap-3 p-4 bg-red-950/50 border border-red-800/50 rounded-lg">
-                    <AlertCircle className="size-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="size-5 text-red-400 shrink-0 mt-0.5" />
                     <div className="flex-1">
                         <p className="text-sm font-medium text-red-200">Error</p>
                         <p className="text-xs text-red-300 mt-1">{error}</p>

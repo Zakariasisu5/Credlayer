@@ -7,6 +7,7 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends
+from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +38,7 @@ class ActivityDB(Base):
     title = Column(String(256), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(32), nullable=False)
-    activity_metadata = Column(JSONB, nullable=True)
+    activity_metadata = Column("metadata", JSONB, nullable=True)
     error_details = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 
@@ -60,7 +61,7 @@ class ActivityEvent(CamelModel):
     title: str
     description: str | None = None
     status: EventStatus
-    metadata: dict | None = None
+    metadata: dict | None = Field(default=None, validation_alias="activity_metadata")
     error_details: dict | None = None
     created_at: datetime
 

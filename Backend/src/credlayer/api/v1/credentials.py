@@ -7,6 +7,7 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +38,7 @@ class CredentialDB(Base):
     verification_status = Column(String(32), nullable=False, default="pending")
     verified_at = Column(DateTime(timezone=True), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
-    credential_metadata = Column(JSONB, nullable=True)
+    credential_metadata = Column("metadata", JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 
@@ -59,7 +60,7 @@ class Credential(CamelModel):
     verification_status: VerificationStatus
     verified_at: datetime | None = None
     expires_at: datetime | None = None
-    metadata: dict | None = None
+    metadata: dict | None = Field(default=None, validation_alias="credential_metadata")
     created_at: datetime
     updated_at: datetime
 

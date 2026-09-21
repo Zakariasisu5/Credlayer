@@ -7,6 +7,7 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends
+from pydantic import Field
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,7 +37,7 @@ class ConnectionDB(Base):
     connection_type = Column(String(32), nullable=False)
     trust_weight = Column(Float, nullable=False, default=0.5)
     status = Column(String(32), nullable=False, default="active")
-    connection_metadata = Column(JSONB, nullable=True)
+    connection_metadata = Column("metadata", JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 
@@ -58,7 +59,7 @@ class Connection(CamelModel):
     connection_type: ConnectionType
     trust_weight: float
     status: ConnectionStatus
-    metadata: dict | None = None
+    metadata: dict | None = Field(default=None, validation_alias="connection_metadata")
     created_at: datetime
     updated_at: datetime
 
