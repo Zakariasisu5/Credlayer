@@ -31,6 +31,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://credlayer:credlayer@postgres:5432/credlayer
       REDIS_URL: redis://redis:6379/0
+      PORT: "8000"
     ports:
       - "8000:8000"
     depends_on:

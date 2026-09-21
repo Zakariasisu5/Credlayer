@@ -1,6 +1,8 @@
 [build]
-builder = "nixpacks"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 restartPolicyType = "on-failure"
 restartPolicyMaxRetries = 10
+startCommand = "/app/.venv/bin/uvicorn credlayer.main:app --host 0.0.0.0 --port $PORT"
