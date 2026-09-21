@@ -1,6 +1,7 @@
+import json
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +12,27 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     api_v1_prefix: str = "/api/v1"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://localhost:3000"])
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "https://credlayer1.vercel.app",
+        ]
+    )
+    cors_origin_regex: str = r"https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1):\d+"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        text = value.strip()
+        if not text:
+            return []
+        if text.startswith("["):
+            return json.loads(text)
+        return [part.strip() for part in text.split(",") if part.strip()]
 
     database_url: str = "postgresql+asyncpg://credlayer:credlayer@localhost:5432/credlayer"
     redis_url: str = "redis://localhost:6379/0"

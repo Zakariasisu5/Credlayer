@@ -4,8 +4,8 @@
 
 import axios, { AxiosInstance } from 'axios';
 
-// API base URL - configurable via environment variable
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// Same-origin `/api/v1` is proxied to the backend (see next.config.ts).
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
 
 /**
  * Create axios instance with default config

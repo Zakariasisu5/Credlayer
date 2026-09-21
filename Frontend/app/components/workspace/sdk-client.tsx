@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { CredLayerClient } from "@credlayer/sdk";
-import axios from "axios";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
+import { apiClient, unwrap } from "../../lib/api-client";
 import { AlertCircle } from "lucide-react";
 
 // Initialize the SDK (Devnet by default)
@@ -67,17 +67,13 @@ export function TrustScoreLiveDemo() {
             setError(null);
             setStatus("1. Querying AI Engine & Minting...");
 
-            // We send a GET request to the Python API Gateway with the wallet in the URL
-            const API_URL = `http://localhost:8000/api/v1/scores/${walletAddress}`;
-            const response = await axios.get(API_URL);
-
-            // FastAPI returns our response inside a nested 'data' object
-            const scoreData = response.data.data;
+            const response = await apiClient.get(`/scores/${walletAddress}`);
+            const scoreData = unwrap(response.data);
 
             setStatus(`✅ Success! AI Trust Score (${scoreData.trustScore}) minted on Devnet.`);
         } catch (err: any) {
             console.error("Gateway Error:", err);
-            const errorMsg = err?.response?.statusText || err?.message || "Could not connect to API Gateway on Port 8000";
+            const errorMsg = err?.response?.statusText || err?.message || "Could not reach the CredLayer API";
             setError(errorMsg);
             setStatus(`Error: ${errorMsg}`);
         } finally {

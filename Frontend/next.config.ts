@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
 
+const backendOrigin = (
+  process.env.BACKEND_URL ||
+  "https://ideal-unity-production-3165.up.railway.app"
+).replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendOrigin}/api/v1/:path*`,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
