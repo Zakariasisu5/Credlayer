@@ -18,3 +18,9 @@ uv.lock
 uv.lock.bak
 pyproject.toml.bak
 *.pth
+
+# Ignore Docker files - use nixpacks instead
+Dockerfile
+Dockerfile.bak
+docker-compose.yml
+.dockerignore
