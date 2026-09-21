@@ -2,11 +2,5 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python -m uvicorn credlayer.main:app --host 0.0.0.0 --port $PORT"
 restartPolicyType = "on-failure"
 restartPolicyMaxRetries = 10
-
-[env]
-ENVIRONMENT = "production"
-PYTHONUNBUFFERED = "1"
-PYTHONPATH = "/app/src"

@@ -13,5 +13,8 @@ __pycache__/
 *.db
 *.sqlite
 
-# Ignore uv files
+# Ignore uv files - force Railway to use pip
 uv.lock
+uv.lock.bak
+pyproject.toml.bak
+*.pth
