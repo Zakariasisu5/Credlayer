@@ -35,7 +35,7 @@ class Settings(BaseSettings):
         return [part.strip() for part in text.split(",") if part.strip()]
 
     database_url: str = "postgresql+asyncpg://credlayer:credlayer@localhost:5432/credlayer"
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str | None = None  # Optional: if not set, Redis features will be disabled
 
     # Standalone ML microservice connection (explicit IPv4 loopback)
     ml_service_url: str = "http://127.0.0.1:8001"

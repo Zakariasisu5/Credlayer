@@ -25,6 +25,7 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY src ./src
 COPY alembic.ini ./
 COPY migrations ./migrations
+COPY scripts ./scripts
 
 RUN useradd --create-home --uid 1000 credlayer && \
     chown -R credlayer:credlayer /app
@@ -32,4 +33,6 @@ USER credlayer
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "exec uvicorn credlayer.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run safe migration script and start server
+# If migrations fail, the container won't start
+CMD ["sh", "-c", "set -e && echo 'Running database migrations...' && python scripts/safe_migrate.py && echo 'Migrations completed successfully' && exec uvicorn credlayer.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -34,8 +34,14 @@ async def readyz(response: Response) -> dict[str, object]:
 
     try:
         redis = get_redis()
-        await redis.ping()
-        checks["redis"] = "ok"
+        if redis is not None:
+            await redis.ping()
+            checks["redis"] = "ok"
+        else:
+            checks["redis"] = "not_configured"
+    except RuntimeError:
+        # Redis not configured - this is acceptable
+        checks["redis"] = "not_configured"
     except Exception as exc:  # noqa: BLE001
         logger.warning("readyz_redis_failed", error=str(exc))
         checks["redis"] = "unavailable"
