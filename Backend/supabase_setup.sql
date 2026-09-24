@@ -1,12 +1,8 @@
--- CredLayer Database Setup SQL
--- Run this in Supabase SQL Editor to create all tables with the correct schema
--- This matches the Alembic migrations in Backend/migrations/versions/
+-- =============================================================================
+-- CredLayer Database Setup — verified against actual route/model source
+-- Run this in Supabase SQL Editor
+-- =============================================================================
 
--- =============================================================================
--- ⚠️  OPTION 1: RESET DATABASE (if tables already exist with wrong schema)
--- =============================================================================
--- Uncomment these lines to drop everything and start fresh:
-/*
 DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO postgres;
@@ -14,19 +10,14 @@ GRANT ALL ON SCHEMA public TO public;
 GRANT ALL ON SCHEMA public TO anon;
 GRANT ALL ON SCHEMA public TO authenticated;
 GRANT ALL ON SCHEMA public TO service_role;
-*/
 
--- =============================================================================
--- Extensions
--- =============================================================================
--- Enable UUID extension (if not already enabled)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
--- 001: Credentials Table
+-- credentials.py -> CredentialDB
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS credentials (
+CREATE TABLE credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_address VARCHAR(64) NOT NULL,
     credential_type VARCHAR(64) NOT NULL,
@@ -38,14 +29,12 @@ CREATE TABLE IF NOT EXISTS credentials (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS ix_wallet_address ON credentials(wallet_address);
-CREATE INDEX IF NOT EXISTS ix_verification_status ON credentials(verification_status);
+CREATE INDEX ix_credentials_wallet_address ON credentials(wallet_address);
 
 -- =============================================================================
--- 002: Connections Table
+-- connections.py -> ConnectionDB
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS connections (
+CREATE TABLE connections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_wallet VARCHAR(64) NOT NULL,
     to_wallet VARCHAR(64) NOT NULL,
@@ -56,49 +45,46 @@ CREATE TABLE IF NOT EXISTS connections (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS ix_from_wallet ON connections(from_wallet);
-CREATE INDEX IF NOT EXISTS ix_to_wallet ON connections(to_wallet);
-CREATE UNIQUE INDEX IF NOT EXISTS ix_connection_pair ON connections(from_wallet, to_wallet);
+CREATE INDEX ix_connections_from_wallet ON connections(from_wallet);
+CREATE INDEX ix_connections_to_wallet ON connections(to_wallet);
 
 -- =============================================================================
--- 003: Agents Tables
+-- agents.py -> AgentDB, AgentActivityDB
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS agents (
+CREATE TABLE agents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agent_id VARCHAR(128) NOT NULL UNIQUE,
     owner_wallet VARCHAR(64) NOT NULL,
     name VARCHAR(256) NOT NULL,
     description TEXT,
-    permissions JSONB,
+    permissions JSONB NOT NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'active',
     agent_metadata JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE INDEX ix_agents_agent_id ON agents(agent_id);
+CREATE INDEX ix_agents_owner_wallet ON agents(owner_wallet);
 
-CREATE INDEX IF NOT EXISTS ix_agent_id ON agents(agent_id);
-CREATE INDEX IF NOT EXISTS ix_owner_wallet_agents ON agents(owner_wallet);
-
-CREATE TABLE IF NOT EXISTS agent_executions (
+CREATE TABLE agent_activity (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    execution_type VARCHAR(64) NOT NULL,
-    input_data JSONB,
-    output_data JSONB,
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    agent_id VARCHAR(128) NOT NULL,
+    activity_type VARCHAR(64) NOT NULL,
+    endpoint VARCHAR(256) NOT NULL,
+    method VARCHAR(16) NOT NULL,
+    status_code INTEGER NOT NULL,
+    request_data JSONB,
+    response_data JSONB,
     error_message TEXT,
-    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    completed_at TIMESTAMPTZ
+    duration_ms INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS ix_agent_id_exec ON agent_executions(agent_id);
-CREATE INDEX IF NOT EXISTS ix_started_at_exec ON agent_executions(started_at);
+CREATE INDEX ix_agent_activity_agent_id ON agent_activity(agent_id);
 
 -- =============================================================================
--- 004: Activity Table
+-- activity.py -> ActivityDB
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS activity (
+CREATE TABLE activity (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_address VARCHAR(64) NOT NULL,
     event_type VARCHAR(64) NOT NULL,
@@ -110,143 +96,41 @@ CREATE TABLE IF NOT EXISTS activity (
     error_details JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS ix_wallet_address_activity ON activity(wallet_address);
-CREATE INDEX IF NOT EXISTS ix_event_type ON activity(event_type);
-CREATE INDEX IF NOT EXISTS ix_created_at_activity ON activity(created_at);
+CREATE INDEX ix_activity_wallet_address ON activity(wallet_address);
 
 -- =============================================================================
--- 005: Settings Table
+-- settings.py -> SettingsDB
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_address VARCHAR(64) NOT NULL UNIQUE,
-    notifications_enabled BOOLEAN NOT NULL DEFAULT true,
-    theme VARCHAR(32) NOT NULL DEFAULT 'light',
-    language VARCHAR(16) NOT NULL DEFAULT 'en',
-    settings_metadata JSONB,
+    preferences JSONB NOT NULL,
+    notifications JSONB NOT NULL,
+    privacy JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS ix_wallet_address_settings ON settings(wallet_address);
+CREATE INDEX ix_settings_wallet_address ON settings(wallet_address);
 
 -- =============================================================================
--- 006: API Keys Table
+-- api_keys.py -> ApiKeyDB  (note: model has NO updated_at column)
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS api_keys (
+CREATE TABLE api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_wallet VARCHAR(64) NOT NULL,
     key_hash VARCHAR(128) NOT NULL UNIQUE,
     key_prefix VARCHAR(16) NOT NULL,
+    owner_wallet VARCHAR(64) NOT NULL,
     name VARCHAR(256) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
     permissions JSONB,
-    is_active BOOLEAN NOT NULL DEFAULT true,
     last_used_at TIMESTAMPTZ,
-    expires_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS ix_key_hash ON api_keys(key_hash);
-CREATE INDEX IF NOT EXISTS ix_owner_wallet_api_keys ON api_keys(owner_wallet);
-
--- =============================================================================
--- 007: Webhooks and Request Logs Tables
--- =============================================================================
-CREATE TABLE IF NOT EXISTS webhooks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_wallet VARCHAR(64) NOT NULL,
-    url VARCHAR(512) NOT NULL,
-    event_types TEXT[] NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    secret VARCHAR(128),
-    metadata JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    expires_at TIMESTAMPTZ
 );
+CREATE INDEX ix_api_keys_key_hash ON api_keys(key_hash);
+CREATE INDEX ix_api_keys_owner_wallet ON api_keys(owner_wallet);
 
-CREATE INDEX IF NOT EXISTS ix_owner_wallet_webhooks ON webhooks(owner_wallet);
-
-CREATE TABLE IF NOT EXISTS request_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    api_key_id UUID,
-    owner_wallet VARCHAR(64) NOT NULL,
-    method VARCHAR(16) NOT NULL,
-    endpoint VARCHAR(512) NOT NULL,
-    status_code INTEGER NOT NULL,
-    request_headers JSONB,
-    request_body JSONB,
-    response_body JSONB,
-    error_message TEXT,
-    duration_ms INTEGER,
-    ip_address VARCHAR(64),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS ix_api_key_id_logs ON request_logs(api_key_id);
-CREATE INDEX IF NOT EXISTS ix_owner_wallet_logs ON request_logs(owner_wallet);
-CREATE INDEX IF NOT EXISTS ix_created_at_logs ON request_logs(created_at);
-
--- =============================================================================
--- Alembic Version Tracking
--- =============================================================================
-CREATE TABLE IF NOT EXISTS alembic_version (
-    version_num VARCHAR(32) NOT NULL PRIMARY KEY
-);
-
--- Set the current migration version
-INSERT INTO alembic_version (version_num) VALUES ('007_webhooks_logs')
-ON CONFLICT (version_num) DO NOTHING;
-
--- =============================================================================
--- Success Message
--- =============================================================================
 DO $$
 BEGIN
-    RAISE NOTICE '✅ CredLayer database setup complete!';
-    RAISE NOTICE '';
-    RAISE NOTICE '📊 Tables created:';
-    RAISE NOTICE '  - credentials (wallet attestations and verifications)';
-    RAISE NOTICE '  - connections (trust graph connections)';
-    RAISE NOTICE '  - agents (AI agents)';
-    RAISE NOTICE '  - agent_executions (agent run history)';
-    RAISE NOTICE '  - activity (event audit log)';
-    RAISE NOTICE '  - settings (user preferences)';
-    RAISE NOTICE '  - api_keys (developer API keys)';
-    RAISE NOTICE '  - webhooks (webhook subscriptions)';
-    RAISE NOTICE '  - request_logs (API request logs)';
-    RAISE NOTICE '  - alembic_version (migration tracking)';
-    RAISE NOTICE '';
-    RAISE NOTICE '🔐 All tables match migration version: 007_webhooks_logs';
-    RAISE NOTICE '';
-    RAISE NOTICE '🚀 Next steps:';
-    RAISE NOTICE '1. Verify in Supabase Table Editor that all tables exist';
-    RAISE NOTICE '2. Redeploy your Railway backend service';
-    RAISE NOTICE '3. Check Railway logs for "Migrations completed successfully"';
-    RAISE NOTICE '4. Test API: curl https://your-app.railway.app/readyz';
-    RAISE NOTICE '';
-    RAISE NOTICE '💡 Important column names to verify:';
-    RAISE NOTICE '  - credentials.wallet_address (NOT holder_wallet)';
-    RAISE NOTICE '  - activity.event_type (NOT activity_type)';
-    RAISE NOTICE '  - agents.agent_id (NOT wallet_address as primary identifier)';
-    RAISE NOTICE '  - request_logs.owner_wallet (NOT api_key_id only)';
-END $$;
-
--- Grant permissions (optional, adjust based on your RLS policies)
--- ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE webhooks ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE request_logs ENABLE ROW LEVEL SECURITY;
-
--- Success message
-DO $$
-BEGIN
-    RAISE NOTICE '✅ CredLayer database setup complete!';
-    RAISE NOTICE '📊 Tables created: api_keys, webhooks, request_logs, credentials, connections, agents, activity, settings';
-    RAISE NOTICE '🔐 Project ID: mgwoicaatrqzvawgydrm';
-    RAISE NOTICE '🌍 Region: eu-west-1';
-    RAISE NOTICE '';
-    RAISE NOTICE '🚀 Next steps:';
-    RAISE NOTICE '1. Start your backend: cd Backend && uv run uvicorn credlayer.main:app --port 8000 --reload';
-    RAISE NOTICE '2. Start your frontend: cd Frontend && npm run dev';
-    RAISE NOTICE '3. Visit: http://localhost:3000';
+    RAISE NOTICE '✅ CredLayer schema created from verified route models.';
 END $$;
