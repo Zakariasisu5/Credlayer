@@ -33,6 +33,5 @@ USER credlayer
 
 EXPOSE 8000
 
-# Run safe migration script and start server
-# If migrations fail, the container won't start
-CMD ["sh", "-c", "set -e && echo 'Running database migrations...' && python scripts/safe_migrate.py && echo 'Migrations completed successfully' && exec uvicorn credlayer.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run migrations and start server
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn credlayer.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
