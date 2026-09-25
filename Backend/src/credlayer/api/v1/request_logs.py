@@ -7,29 +7,24 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import Column, DateTime, Integer, String, Text, select
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from credlayer.api.deps import get_db_session
 from credlayer.api.envelope import Envelope, ok
+from credlayer.db.base import Base
 from credlayer.schemas.common import CamelModel
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/developer", tags=["developer"])
-
-
-# ---------------------------------------------------------------------------
-# Database models
-# ---------------------------------------------------------------------------
-from sqlalchemy import Column, String, Integer, Text, DateTime
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
-from credlayer.db.base import Base
+stats_router = APIRouter(prefix="/request-logs", tags=["request-logs"])
 
 
 class RequestLogDB(Base):
     __tablename__ = "request_logs"
-    
+
     id = Column(PGUUID, primary_key=True, server_default="gen_random_uuid()")
     api_key_id = Column(PGUUID, nullable=True, index=True)
     owner_wallet = Column(String(64), nullable=False, index=True)
@@ -45,16 +40,12 @@ class RequestLogDB(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default="now()")
 
 
-# ---------------------------------------------------------------------------
-# Response schemas
-# ---------------------------------------------------------------------------
-
 RequestStatus = Literal["success", "error", "unauthorized", "rate_limited", "invalid"]
 
 
 class RequestLog(CamelModel):
     """Single API request log entry with real error responses."""
-    
+
     id: UUID
     api_key_id: UUID | None = None
     owner_wallet: str
@@ -68,7 +59,7 @@ class RequestLog(CamelModel):
     duration_ms: int | None = None
     ip_address: str | None = None
     created_at: datetime
-    
+
     @property
     def status(self) -> RequestStatus:
         """Derive status from status_code."""
@@ -84,9 +75,41 @@ class RequestLog(CamelModel):
             return "success"
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
+class RequestLogStats(CamelModel):
+    """Aggregate request counts for the developer dashboard."""
+
+    total_requests: int
+    successful: int
+    errors: int
+    unauthorized: int
+    rate_limited: int
+
+
+@stats_router.get(
+    "/stats/{owner_wallet}",
+    response_model=Envelope[RequestLogStats],
+    summary="Get request log stats",
+    description="Aggregate request counts for the developer dashboard",
+)
+async def get_request_log_stats(
+    owner_wallet: str,
+    db: AsyncSession = Depends(get_db_session),
+) -> Envelope[RequestLogStats]:
+    result = await db.execute(
+        select(RequestLogDB.status_code).where(RequestLogDB.owner_wallet == owner_wallet)
+    )
+    codes = [row[0] for row in result.all()]
+
+    return ok(
+        RequestLogStats(
+            total_requests=len(codes),
+            successful=sum(1 for code in codes if 200 <= code < 300),
+            errors=sum(1 for code in codes if code >= 400),
+            unauthorized=sum(1 for code in codes if code in (401, 403)),
+            rate_limited=sum(1 for code in codes if code == 429),
+        )
+    )
+
 
 @router.get(
     "/requests",
@@ -100,9 +123,9 @@ async def get_request_logs(
     db: AsyncSession = Depends(get_db_session),
 ) -> Envelope[list[RequestLog]]:
     """Get API request logs with real error responses."""
-    
+
     logger.info("get_request_logs", owner=owner_wallet, limit=limit)
-    
+
     result = await db.execute(
         select(RequestLogDB)
         .where(RequestLogDB.owner_wallet == owner_wallet)
@@ -110,5 +133,5 @@ async def get_request_logs(
         .limit(limit)
     )
     logs = result.scalars().all()
-    
+
     return ok([RequestLog.model_validate(log, from_attributes=True) for log in logs])
