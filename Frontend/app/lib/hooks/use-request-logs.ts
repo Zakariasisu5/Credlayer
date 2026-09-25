@@ -23,9 +23,14 @@ export interface RequestLog {
   createdAt: string;
 }
 
-/**
- * Fetch request logs for a wallet
- */
+export interface RequestLogStats {
+  totalRequests: number;
+  successful: number;
+  errors: number;
+  unauthorized: number;
+  rateLimited: number;
+}
+
 async function fetchRequestLogs(ownerWallet: string, limit = 100): Promise<RequestLog[]> {
   const response = await apiClient.get<ApiEnvelope<RequestLog[]>>('/developer/requests', {
     params: { owner_wallet: ownerWallet, limit },
@@ -33,26 +38,36 @@ async function fetchRequestLogs(ownerWallet: string, limit = 100): Promise<Reque
   return unwrap(response.data);
 }
 
-/**
- * Hook to get request logs for a wallet
- */
-export function useRequestLogs(
-  ownerWallet: string | null | undefined,
-  limit = 100
-) {
+async function fetchRequestLogStats(ownerWallet: string): Promise<RequestLogStats> {
+  const response = await apiClient.get<ApiEnvelope<RequestLogStats>>(
+    `/request-logs/stats/${encodeURIComponent(ownerWallet)}`,
+  );
+  return unwrap(response.data);
+}
+
+export function useRequestLogs(ownerWallet: string | null | undefined, limit = 100) {
   return useSWR(
     ownerWallet ? `/developer/requests?owner_wallet=${ownerWallet}&limit=${limit}` : null,
     () => fetchRequestLogs(ownerWallet!, limit),
     {
-      refreshInterval: 10000, // 10 seconds
+      refreshInterval: 10000,
       revalidateOnFocus: true,
-    }
+    },
   );
 }
 
-/**
- * Derive status from status code
- */
+export function useRequestLogStats(ownerWallet: string | null | undefined) {
+  const key = ownerWallet
+    ? `/request-logs/stats/${encodeURIComponent(ownerWallet)}`
+    : null;
+
+  return useSWR(key, () => fetchRequestLogStats(ownerWallet!), {
+    refreshInterval: 15000,
+    revalidateOnFocus: true,
+    keepPreviousData: true,
+  });
+}
+
 export function getRequestStatus(statusCode: number): RequestStatus {
   if (statusCode === 401 || statusCode === 403) {
     return 'unauthorized';
