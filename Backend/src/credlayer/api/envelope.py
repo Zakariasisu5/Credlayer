@@ -16,6 +16,7 @@ class Envelope(BaseModel, Generic[T]):
     success: bool = True
     data: T
     message: str | None = None
+    meta: dict | None = None
     timestamp: str
 
 
@@ -39,8 +40,8 @@ class ErrorEnvelope(BaseModel):
     timestamp: str
 
 
-def ok(data: T, message: str | None = None) -> Envelope[T]:
-    return Envelope(data=data, message=message, timestamp=_now_iso())
+def ok(data: T, message: str | None = None, meta: dict | None = None) -> Envelope[T]:
+    return Envelope(data=data, message=message, meta=meta, timestamp=_now_iso())
 
 
 def paginated(items: list[T], pagination: Pagination) -> PagedEnvelope[T]:

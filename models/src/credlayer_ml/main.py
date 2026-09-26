@@ -14,6 +14,9 @@ from pydantic.alias_generators import to_camel
 from credlayer_ml.config import ServerSettings
 from credlayer_ml.inference import get_scorer
 
+from credlayer_ml.data.live_rpc import fetch_live_context
+from credlayer_ml.data.live_features import build_live_graph
+
 T = TypeVar("T")
 
 
@@ -89,7 +92,7 @@ def create_app() -> FastAPI:
     )
     async def score_wallet(address: str) -> Envelope[WalletScore]:
         scorer = get_scorer()
-        result = scorer.score_address(address)
+        result = await scorer.score_address(address)
         return ok(WalletScore(**result))
 
     @app.post(
@@ -100,7 +103,7 @@ def create_app() -> FastAPI:
     )
     async def score_batch(body: BatchScoreRequest) -> Envelope[list[WalletScore]]:
         scorer = get_scorer()
-        results = scorer.score_batch(body.addresses)
+        results = await scorer.score_batch(body.addresses)
         return ok([WalletScore(**r) for r in results])
 
     return app
