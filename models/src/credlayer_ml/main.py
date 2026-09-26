@@ -109,10 +109,11 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == "__main__":
+    import os
     settings = ServerSettings()
     uvicorn.run(
         "credlayer_ml.main:app",
-        host=settings.host,
-        port=settings.port,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8001)),
         reload=True
     )
