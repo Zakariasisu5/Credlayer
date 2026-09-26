@@ -70,13 +70,31 @@ export function TrustScoreLiveDemo() {
 
             const response = await apiClient.get(`/scores/${walletAddress}`);
             const scoreData = unwrap(response.data) as { trustScore: number; riskLevel: string; isValid: boolean };
+            
+            // Extract txHash if the backend was able to mint via the relayer
+            const txHash = (response.data as any)?.meta?.txHash;
+
+            setScoreData({
+                trustScore: scoreData.trustScore,
+                riskLevel: scoreData.riskLevel,
+                isValid: true // Just minted, so it's valid
+            });
+            
+            if (txHash) {
+                setTxHash(txHash);
+            }
 
             setStatus(`✅ Success! AI Trust Score (${scoreData.trustScore}) minted on Devnet.`);
         } catch (err: any) {
             console.error("Gateway Error:", err);
-            const errorMsg = err?.response?.statusText || err?.message || "Could not reach the CredLayer API";
+            const errorMsg = err?.response?.data?.error?.message || err?.response?.statusText || err?.message || "Could not reach the CredLayer API";
             setError(errorMsg);
-            setStatus(`Error: ${errorMsg}`);
+            
+            if (err?.response?.status === 503) {
+                setStatus("ML Engine Syncing / Unavailable");
+            } else {
+                setStatus("Attestation Failed");
+            }
         } finally {
             setLoading(false);
         }
