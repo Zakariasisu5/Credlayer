@@ -28,7 +28,16 @@ export function TrustScoreLiveDemo() {
     const [hasMounted, setHasMounted] = useState(false);
     const client = useAppClient();
     const connectedWallet = useConnectedWallet(client);
-    const walletAddress = connectedWallet?.account.address;
+    const [inputAddress, setInputAddress] = useState<string>("");
+
+    // Auto-fill when a wallet is connected
+    useEffect(() => {
+        if (connectedWallet?.account.address) {
+            setInputAddress(connectedWallet.account.address);
+        }
+    }, [connectedWallet?.account.address]);
+    
+    const walletAddress = inputAddress;
 
     const [scoreData, setScoreData] = useState<{
         trustScore: number;
@@ -51,7 +60,7 @@ export function TrustScoreLiveDemo() {
             setScoreData(null);
             setTxHash(null);
             setError(null);
-            setStatus(walletAddress ? "Ready" : "Please connect your wallet");
+            setStatus(walletAddress ? "Ready" : "Please enter a wallet address");
         }
     }, [walletAddress, hasMounted]);
 
@@ -108,7 +117,7 @@ export function TrustScoreLiveDemo() {
         }
 
         if (!walletAddress) {
-            setStatus("Please connect your wallet first");
+            setStatus("Please enter a wallet address");
             return;
         }
 
@@ -140,23 +149,21 @@ export function TrustScoreLiveDemo() {
 
             <div>
                 <label className="block text-xs uppercase tracking-wider text-neutral-400 mb-1">
-                    Connected Wallet Address
+                    Wallet Address to Test
                 </label>
-                <div className="w-full px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-lg text-sm font-mono text-neutral-200">
-                    {!hasMounted ? (
-                        <span className="text-neutral-500">Loading...</span>
-                    ) : walletAddress ? (
-                        <span className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-green-500" />
-                            {walletAddress}
-                        </span>
-                    ) : (
-                        <span className="text-neutral-500 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-red-500" />
-                            No wallet connected
-                        </span>
-                    )}
-                </div>
+                {!hasMounted ? (
+                    <div className="w-full px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-lg text-sm font-mono text-neutral-500">
+                        Loading...
+                    </div>
+                ) : (
+                    <input
+                        type="text"
+                        value={inputAddress}
+                        onChange={(e) => setInputAddress(e.target.value)}
+                        placeholder="Enter base58 wallet address..."
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-lg text-sm font-mono text-neutral-200 focus:outline-none focus:border-cyan-500 transition-colors"
+                    />
+                )}
             </div>
 
             {/* Error Alert */}
