@@ -142,11 +142,11 @@ The scripts will output the PDA addresses - copy them to your relayer `.env` fil
 
 ## Frontend Integration
 
-The relayer works seamlessly with the CredLayer frontend. When you click "Issue Attestation" in the dashboard:
+The relayer is called server-to-server by the CredLayer backend. When a wallet requests a reputation credential:
 
-1. Frontend sends wallet address to relayer
-2. Relayer generates mock trust score (600-850)
-3. Relayer creates on-chain attestation
-4. Frontend displays transaction hash and Solana Explorer link
+1. The backend obtains a score from the configured ML service.
+2. The backend sends the wallet and score to the relayer.
+3. The relayer reuses an existing valid attestation or creates and confirms one.
+4. The backend verifies the on-chain account before returning a result.
 
-Make sure the frontend's `NEXT_PUBLIC_RELAYER_URL` matches this service's URL (default: `http://localhost:3001/api/v1/attestations/issue`).
+Configure `RELAYER_SERVICE_URL` on the backend. The frontend must not call the relayer directly.

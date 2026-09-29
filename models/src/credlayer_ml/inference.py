@@ -1,6 +1,6 @@
 """Production inference module for the standalone CredLayer ML service.
 """
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import structlog
 import torch
@@ -8,6 +8,8 @@ import asyncio
 
 from credlayer_ml.config import PipelineConfig, get_default_config
 from credlayer_ml.data.graph_builder import load_graph
+from credlayer_ml.data.live_features import build_live_graph
+from credlayer_ml.data.live_rpc import fetch_live_context
 from credlayer_ml.models.fraud_gnn import FraudGNN
 
 try:
@@ -17,24 +19,6 @@ except ImportError:
     HAS_EXPLAINER = False
 
 logger = structlog.get_logger(__name__)
-
-async def fetch_live_context(address: str) -> dict:
-    """Dynamically fetch on-chain data and calculate score for unseen addresses."""
-    logger.info("Fetching live context for unseen address", address=address)
-    # Simulate async network call to Solana RPC / indexer
-    await asyncio.sleep(0.5)
-    return {
-        "address": address,
-        "trust_score": 600, # dynamic score
-        "risk_level": "medium",
-        "trust_level": "medium",
-        "confidence": 0.5,
-        "fraud_probability": 0.2,
-        "network": "solana",
-        "explanation": "Score generated via live contextual analysis."
-    }
-
-
 
 class FraudScorer:
     """Inference scorer for predicting fraud probability of wallet addresses."""
@@ -73,15 +57,21 @@ class FraudScorer:
                 logger.warning("Graph does not have 'address' attribute. Address lookup will fallback to default.")
             
             logger.info("Loading model for inference...")
-            self.model = FraudGNN(self.config.model).to(self.device)
-            if self.config.paths.best_model_path.exists():
-                self.model.load_state_dict(
-                    torch.load(self.config.paths.best_model_path, map_location=self.device, weights_only=True)
+            if not self.config.paths.best_model_path.exists():
+                logger.error(
+                    "Trained model checkpoint not found.",
+                    path=str(self.config.paths.best_model_path),
                 )
-                logger.info("Trained model checkpoint loaded successfully.")
-            else:
-                logger.warning("No model checkpoint found. Inference will use untrained weights.")
-                
+                self._is_loaded = True
+                return
+
+            model = FraudGNN(self.config.model).to(self.device)
+            model.load_state_dict(
+                torch.load(self.config.paths.best_model_path, map_location=self.device, weights_only=True)
+            )
+            self.model = model
+            logger.info("Trained model checkpoint loaded successfully.")
+
             self.model.eval()
             
             if HAS_EXPLAINER:
@@ -114,30 +104,30 @@ class FraudScorer:
         """Score a single wallet address."""
         self._load()
         
-        # If graph or model is not compiled/loaded yet
-        if self.graph is None or not self.node_to_idx:
-            return {
-                "address": address,
-                "trust_score": 500,
-                "risk_level": "medium",
-                "trust_level": "low",
-                "confidence": 0.0,
-                "fraud_probability": 0.5,
-                "network": "solana",
-                "explanation": "GNN graph and model not compiled yet. Run training pipeline to generate predictions."
-            }
+        if self.graph is None or self.model is None:
+            raise RuntimeError("Trained scoring artifacts are unavailable.")
 
+        inference_graph = self.graph
         node_idx = self.node_to_idx.get(address)
-        
         if node_idx is None:
-            return await fetch_live_context(address)
+            context = await fetch_live_context(address)
+            inference_graph = build_live_graph(context).to(self.device)
+            node_idx = 0
             
         with torch.no_grad():
             if hasattr(self.model, 'predict_proba'):
-                probs = self.model.predict_proba(self.graph.x, self.graph.edge_index, self.graph.edge_attr)
+                probs = self.model.predict_proba(
+                    inference_graph.x,
+                    inference_graph.edge_index,
+                    inference_graph.edge_attr,
+                )
                 p_fraud = probs[node_idx, 1].item()
             else:
-                logits = self.model(self.graph.x, self.graph.edge_index, self.graph.edge_attr)
+                logits = self.model(
+                    inference_graph.x,
+                    inference_graph.edge_index,
+                    inference_graph.edge_attr,
+                )
                 probs = torch.softmax(logits[node_idx], dim=-1)
                 p_fraud = probs[1].item()
             
@@ -161,7 +151,7 @@ class FraudScorer:
             "trust_score": trust_score,
             "risk_level": risk_level,
             "trust_level": trust_level,
-            "confidence": 0.9,
+            "confidence": max(p_fraud, 1 - p_fraud),
             "fraud_probability": float(p_fraud),
             "network": "solana",
             "explanation": explanation

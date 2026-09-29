@@ -24,6 +24,32 @@ const connection = new Connection(
     process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
     'confirmed'
 );
+const SAS_PROGRAM_ID = new PublicKey('22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG');
+
+function decodeTrustAttestation(
+    accountData: Buffer,
+    targetWallet: PublicKey,
+    credentialPda: PublicKey,
+    schemaPda: PublicKey,
+) {
+    const dataLengthOffset = 97;
+    const payloadOffset = dataLengthOffset + 4;
+    if (accountData.length < payloadOffset + 6 || accountData.readUInt8(0) !== 0) return null;
+    if (!new PublicKey(accountData.subarray(1, 33)).equals(targetWallet)) return null;
+    if (!new PublicKey(accountData.subarray(33, 65)).equals(credentialPda)) return null;
+    if (!new PublicKey(accountData.subarray(65, 97)).equals(schemaPda)) return null;
+
+    const encodedDataLength = accountData.readUInt32LE(dataLengthOffset);
+    if (encodedDataLength < 6 || payloadOffset + encodedDataLength > accountData.length) return null;
+    const scorePayload = accountData.subarray(payloadOffset, payloadOffset + encodedDataLength);
+    const trustScore = scorePayload.readUInt16LE(0);
+    const riskLength = scorePayload.readUInt32LE(2);
+    if (trustScore > 1000 || riskLength !== scorePayload.length - 6) return null;
+
+    const riskLevel = scorePayload.toString('utf8', 6);
+    if (!['LOW', 'MEDIUM', 'HIGH', 'MINIMAL'].includes(riskLevel)) return null;
+    return { trustScore, riskLevel };
+}
 
 // Helper function to convert v2-style instructions to v1 TransactionInstruction
 function toV1Instruction(ix: any): TransactionInstruction {
@@ -43,8 +69,44 @@ app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', service: 'credlayer-relayer' });
 });
 
+app.get('/api/v1/attestations/:targetWallet', async (req: Request, res: Response) => {
+    try {
+        const targetWallet = new PublicKey(req.params.targetWallet);
+        const credentialPdaStr = process.env.CREDENTIAL_PDA;
+        const schemaPdaStr = process.env.SCHEMA_PDA;
+        if (!credentialPdaStr || !schemaPdaStr) {
+            return res.status(503).json({ success: false });
+        }
+
+        const [attestationPdaStr] = await deriveAttestationPda({
+            credential: credentialPdaStr as any,
+            schema: schemaPdaStr as any,
+            nonce: targetWallet.toBase58() as any,
+        });
+        const accountInfo = await connection.getAccountInfo(new PublicKey(attestationPdaStr));
+        const attestation = accountInfo?.owner.equals(SAS_PROGRAM_ID)
+            ? decodeTrustAttestation(
+                accountInfo.data,
+                targetWallet,
+                new PublicKey(credentialPdaStr),
+                new PublicKey(schemaPdaStr),
+            )
+            : null;
+
+        return res.json({
+            success: true,
+            data: { verified: attestation !== null, attestation },
+        });
+    } catch (error) {
+        console.error('[Relayer Verification Error]:', error);
+        return res.status(400).json({ success: false });
+    }
+});
+
 // Endpoint called by the Python FastAPI backend
 app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
+    let attestationPda: PublicKey | undefined;
+    let targetWalletKey: PublicKey | undefined;
     try {
         const { targetWallet, trustScore, riskLevel } = req.body;
 
@@ -54,11 +116,48 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
             });
         }
 
-        const issuerKey = process.env.ISSUER_PRIVATE_KEY;
+        if (!Number.isInteger(trustScore) || trustScore < 0 || trustScore > 1000) {
+            return res.status(400).json({ success: false, error: "Invalid trust score" });
+        }
+
+        if (!["LOW", "MEDIUM", "HIGH", "MINIMAL"].includes(String(riskLevel).toUpperCase())) {
+            return res.status(400).json({ success: false, error: "Invalid risk level" });
+        }
+        const normalizedRiskLevel = String(riskLevel).toUpperCase();
+
         const credentialPdaStr = process.env.CREDENTIAL_PDA;
         const schemaPdaStr = process.env.SCHEMA_PDA;
 
-        if (!issuerKey || !credentialPdaStr || !schemaPdaStr) {
+        if (!credentialPdaStr || !schemaPdaStr) {
+            return res.status(500).json({
+                error: "Relayer environment variables are unconfigured. Check your .env file."
+            });
+        }
+
+        const wallet = new PublicKey(targetWallet);
+        targetWalletKey = wallet;
+        const credentialPda = new PublicKey(credentialPdaStr);
+        const schemaPda = new PublicKey(schemaPdaStr);
+        const [attestationPdaStr] = await deriveAttestationPda({
+            credential: credentialPda.toBase58() as any,
+            schema: schemaPda.toBase58() as any,
+            nonce: wallet.toBase58() as any,
+        });
+        attestationPda = new PublicKey(attestationPdaStr);
+
+        const existingAccount = await connection.getAccountInfo(attestationPda);
+        if (existingAccount) {
+            const existingAttestation = existingAccount.owner.equals(SAS_PROGRAM_ID)
+                ? decodeTrustAttestation(existingAccount.data, wallet, credentialPda, schemaPda)
+                : null;
+            if (existingAttestation) {
+                return res.json({ success: true, alreadyExists: true });
+            }
+            return res.status(409).json({ success: false, error: "Existing account is not a valid attestation" });
+        }
+
+        const issuerKey = process.env.ISSUER_PRIVATE_KEY;
+        if (!issuerKey) {
             return res.status(500).json({
                 error: "Relayer environment variables are unconfigured. Check your .env file."
             });
@@ -97,27 +196,16 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
             });
         }
 
-        const credentialPda = new PublicKey(credentialPdaStr);
-        const schemaPda = new PublicKey(schemaPdaStr);
-
         console.log(`[Relayer] Processing score issuance for wallet: ${targetWallet}`);
         console.log(`[Relayer] Using issuer: ${issuer.publicKey.toBase58()}`);
 
         // 1. Derive Attestation PDA
-        const [attestationPdaStr] = await deriveAttestationPda({
-            credential: credentialPda.toBase58() as any,
-            schema: schemaPda.toBase58() as any,
-            nonce: targetWallet as any,
-        });
-
-        const attestationPda = new PublicKey(attestationPdaStr);
-
         // 2. Encode score payload (u16 trust_score + UTF-8 risk_level string)
         const scoreBuffer = Buffer.alloc(2);
         scoreBuffer.writeUInt16LE(trustScore, 0);
         
         // Borsh string encoding requires a 4-byte length prefix
-        const riskBytes = Buffer.from(riskLevel, 'utf-8');
+        const riskBytes = Buffer.from(normalizedRiskLevel, 'utf-8');
         const lengthBuffer = Buffer.alloc(4);
         lengthBuffer.writeUInt32LE(riskBytes.length, 0);
         
@@ -140,20 +228,43 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
 
         // 4. Send and Confirm Transaction
         const txId = await connection.sendTransaction(tx, [issuer]);
+        const confirmation = await connection.confirmTransaction(txId, 'confirmed');
+        if (confirmation.value.err) {
+            throw new Error('Attestation transaction was not confirmed');
+        }
 
         console.log(`[Relayer] Success! Tx Hash: ${txId}`);
 
         return res.json({
             success: true,
+            alreadyExists: false,
             txHash: txId,
             attestationPda: attestationPda.toBase58(),
             wallet: targetWallet,
             trustScore,
-            riskLevel,
+            riskLevel: normalizedRiskLevel,
         });
 
     } catch (error: any) {
         console.error("[Relayer Error]:", error);
+        if (attestationPda) {
+            try {
+                const accountInfo = await connection.getAccountInfo(attestationPda);
+                const existingAttestation = accountInfo?.owner.equals(SAS_PROGRAM_ID)
+                    ? decodeTrustAttestation(
+                        accountInfo.data,
+                        targetWalletKey!,
+                        new PublicKey(process.env.CREDENTIAL_PDA!),
+                        new PublicKey(process.env.SCHEMA_PDA!),
+                    )
+                    : null;
+                if (existingAttestation) {
+                    return res.json({ success: true, alreadyExists: true });
+                }
+            } catch (verificationError) {
+                console.error("[Relayer Idempotency Check Error]:", verificationError);
+            }
+        }
         return res.status(500).json({
             success: false,
             error: error.message || "Failed to process on-chain attestation"

@@ -73,11 +73,11 @@ uv run uvicorn credlayer.main:app --port 8000 --reload
 
 ## 2. Microservice Integration (`models/` Service)
 
-The Backend acts as an API gateway for the standalone ML service (`models/` running on Port 8001).
+The Backend acts as an API gateway for the standalone ML service (`models/`).
 
-Configured via `ML_SERVICE_URL` in `.env`:
+Configure `ML_SERVICE_URL` to the deployed ML service URL in production. For local development only, set it to `http://127.0.0.1:8001`.
 ```env
-ML_SERVICE_URL=http://127.0.0.1:8001
+ML_SERVICE_URL=https://<deployed-ml-service-host>
 ```
 
 *Make sure the `models/` service is running in a separate terminal:*
@@ -349,7 +349,8 @@ ENVIRONMENT=development|production
 REDIS_URL=redis://localhost:6379/0
 
 # ML Service
-ML_SERVICE_URL=http://127.0.0.1:8001
+# Local development only; production must use the deployed ML service URL.
+ML_SERVICE_URL=https://<deployed-ml-service-host>
 
 # API Configuration
 API_V1_PREFIX=/api/v1

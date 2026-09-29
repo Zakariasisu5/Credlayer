@@ -1,254 +1,363 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { CredLayerClient } from "@credlayer/sdk";
+import { useEffect, useRef, useState } from "react";
+import { Check, Circle, LoaderCircle, ShieldCheck } from "lucide-react";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useAppClient } from "../../lib/client-provider";
-import { apiClient, unwrap } from "../../lib/api-client";
-import { AlertCircle } from "lucide-react";
+import { apiClient } from "../../lib/api-client";
 
-// Initialize the SDK (Devnet by default)
-// Pass the PDAs directly to the constructor to avoid initialization errors
-let credlayer: any = null;
-try {
-    credlayer = new CredLayerClient(
-        process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
-        "https://api.devnet.solana.com",
-        "CbqejxfaSkP8VypE1CSr39U1UJNjzFWcVM9NMJvGxqqn",
-        "3djJWtGKBXvM8P9WbsX1RFe3dnMkMj5DxQYWPcptC7rs"
-    );
-} catch (err) {
-    console.error("Failed to initialize CredLayerClient:", err);
+type FlowState =
+  | "disconnected"
+  | "wallet"
+  | "preparing"
+  | "existing"
+  | "scoring"
+  | "issuing"
+  | "verifying"
+  | "success"
+  | "error";
+
+type AttestationResult = {
+  score: {
+    trustScore: number;
+    riskLevel: string;
+  };
+  attestation: {
+    verified: boolean;
+    alreadyExisted: boolean;
+    trustScore: number;
+    riskLevel: string;
+  };
+};
+
+const progressSteps: { state: FlowState; label: string }[] = [
+  { state: "preparing", label: "Preparing" },
+  { state: "scoring", label: "Calculating trust score" },
+  { state: "issuing", label: "Creating your attestation" },
+  { state: "verifying", label: "Confirming your credential" },
+];
+const existingSteps: { state: FlowState; label: string }[] = [
+  { state: "preparing", label: "Preparing" },
+  { state: "existing", label: "Checking your existing credential" },
+  { state: "verifying", label: "Confirming your credential" },
+];
+
+function friendlyError(code: string) {
+  switch (code) {
+    case "scoring":
+      return "We couldn't calculate your trust score right now. Please try again shortly.";
+    case "verification":
+      return "We couldn't verify your attestation on-chain. Please try again.";
+    case "wallet_disconnected":
+      return "Your wallet was disconnected. Please reconnect and try again.";
+    case "attestation":
+      return "We couldn't create your attestation right now. Please try again shortly.";
+    default:
+      return "We couldn't reach CredLayer right now. Please try again shortly.";
+  }
 }
 
-// The Relayer is no longer called directly from the Frontend.
-// All requests go through the Backend Gateway using apiClient.
-
 export function TrustScoreLiveDemo() {
-    const [hasMounted, setHasMounted] = useState(false);
-    const client = useAppClient();
-    const connectedWallet = useConnectedWallet(client);
-    const [inputAddress, setInputAddress] = useState<string>("");
+  const client = useAppClient();
+  const connectedWallet = useConnectedWallet(client);
+  const walletAddress = connectedWallet?.account.address
+    ? String(connectedWallet.account.address)
+    : null;
+  const [flowState, setFlowState] = useState<FlowState>(
+    walletAddress ? "wallet" : "disconnected",
+  );
+  const [result, setResult] = useState<AttestationResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [progressMessage, setProgressMessage] = useState<string | null>(null);
+  const requestController = useRef<AbortController | null>(null);
+  const previousWalletAddress = useRef(walletAddress);
 
-    // Auto-fill when a wallet is connected
-    useEffect(() => {
-        if (connectedWallet?.account.address) {
-            setInputAddress(connectedWallet.account.address);
-        }
-    }, [connectedWallet?.account.address]);
-    
-    const walletAddress = inputAddress;
+  useEffect(() => {
+    const walletChanged = previousWalletAddress.current !== walletAddress;
+    const hadInFlightRequest = requestController.current !== null;
+    previousWalletAddress.current = walletAddress;
+    if (walletChanged && requestController.current) {
+      requestController.current.abort();
+      requestController.current = null;
+    }
 
-    const [scoreData, setScoreData] = useState<{
-        trustScore: number;
-        riskLevel: string;
-        isValid: boolean;
-    } | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [txHash, setTxHash] = useState<string | null>(null);
-    const [status, setStatus] = useState("Ready");
-    const [error, setError] = useState<string | null>(null);
+    if (!walletAddress && walletChanged && hadInFlightRequest) {
+      setResult(null);
+      setErrorMessage(friendlyError("wallet_disconnected"));
+      setFlowState("error");
+      return;
+    }
+    setResult(null);
+    setErrorMessage(null);
+    setProgressMessage(null);
+    setFlowState(walletAddress ? "wallet" : "disconnected");
+  }, [walletAddress]);
 
-    // Prevent hydration mismatch
-    useEffect(() => {
-        setHasMounted(true);
-    }, []);
+  const runAttestation = async () => {
+    if (!walletAddress || requestController.current) return;
 
-    // Reset data when wallet changes
-    useEffect(() => {
-        if (hasMounted) {
-            setScoreData(null);
-            setTxHash(null);
-            setError(null);
-            setStatus(walletAddress ? "Ready" : "Please enter a wallet address");
-        }
-    }, [walletAddress, hasMounted]);
+    const controller = new AbortController();
+    requestController.current = controller;
+    setErrorMessage(null);
+    setProgressMessage(null);
+    setResult(null);
+    setFlowState("preparing");
 
-    // 1. Issue attestation via Backend (which calls ML service + relayer)
-    const handleMintMockScore = async () => {
-        if (!walletAddress || walletAddress.length < 32) {
-            setStatus("Please enter a valid base58 wallet address.");
-            return;
-        }
+    try {
+      const url = apiClient.getUri({
+        url: `/scores/${encodeURIComponent(walletAddress)}/attestation`,
+      });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { Accept: "text/event-stream" },
+        signal: controller.signal,
+      });
 
-        try {
-            setLoading(true);
-            setError(null);
-            setStatus("Calling AI engine to calculate trust score...");
+      if (!response.ok || !response.body) {
+        throw new Error("backend");
+      }
 
-            const response = await apiClient.get(`/scores/${walletAddress}`);
-            const scoreData = unwrap(response.data) as { trustScore: number; riskLevel: string; isValid: boolean };
-            
-            // Extract meta from response (includes txHash if relayer succeeded)
-            const meta = (response.data as any)?.meta;
-            const txHash = meta?.txHash;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let pending = "";
+      let receivedResult = false;
 
-            setScoreData({
-                trustScore: scoreData.trustScore,
-                riskLevel: scoreData.riskLevel,
-                isValid: true
-            });
-            
-            if (txHash) {
-                setTxHash(txHash);
-                setStatus(`✅ Attestation issued on-chain! Trust score: ${scoreData.trustScore}`);
-            } else {
-                // Score calculated but relayer didn't mint
-                setStatus(`⚠️ Score calculated (${scoreData.trustScore}), but on-chain minting failed. Check if relayer is running.`);
-                setError("The attestation was not minted on-chain. The relayer service may be offline or misconfigured.");
+      while (true) {
+        const { value, done } = await reader.read();
+        pending += decoder.decode(value, { stream: !done });
+        const events = pending.split("\n\n");
+        pending = events.pop() ?? "";
+
+        for (const event of events) {
+          const eventName = event.match(/^event:\s*(.+)$/m)?.[1]?.trim();
+          const dataLine = event.match(/^data:\s*(.+)$/m)?.[1];
+          if (!dataLine) continue;
+
+          let payload: Record<string, unknown>;
+          try {
+            payload = JSON.parse(dataLine) as Record<string, unknown>;
+          } catch {
+            throw new Error("backend");
+          }
+
+          if (eventName === "progress" && typeof payload.stage === "string") {
+            if (typeof payload.message === "string") {
+              setProgressMessage(payload.message);
             }
-        } catch (err: any) {
-            console.error("Issue attestation error:", err);
-            const errorMsg = err?.response?.data?.error?.message || err?.response?.statusText || err?.message || "Could not reach the CredLayer API";
-            setError(errorMsg);
-            
-            if (err?.response?.status === 503) {
-                setStatus("❌ ML Engine Unavailable");
-            } else if (err?.response?.status === 502) {
-                setStatus("❌ ML Engine Error");
+            if (payload.stage === "already_verified") {
+              setFlowState("existing");
             } else {
-                setStatus("❌ Attestation Issuance Failed");
+              setFlowState(payload.stage as FlowState);
             }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 2. Fetch directly from Solana using @credlayer/sdk
-    const handleVerifyOnChain = async () => {
-        if (!credlayer) {
-            setError("SDK not initialized properly");
-            setStatus("Error: SDK initialization failed");
-            return;
-        }
-
-        if (!walletAddress) {
-            setStatus("Please enter a wallet address");
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-        setStatus("Querying Solana Devnet RPC via @credlayer/sdk...");
-
-        try {
-            const data = await credlayer.getScore(walletAddress);
-            if (data) {
-                setScoreData(data);
-                setStatus("Score successfully verified directly from on-chain PDA!");
-            } else {
-                setScoreData(null);
-                setStatus("No attestation found on-chain for this wallet address.");
+          } else if (eventName === "error") {
+            throw new Error(
+              typeof payload.code === "string" ? payload.code : "backend",
+            );
+          } else if (eventName === "result") {
+            const finalResult = payload as unknown as AttestationResult;
+            if (
+              typeof finalResult.score?.trustScore !== "number" ||
+              typeof finalResult.score?.riskLevel !== "string" ||
+              finalResult.attestation?.verified !== true ||
+              typeof finalResult.attestation.trustScore !== "number" ||
+              typeof finalResult.attestation.riskLevel !== "string"
+            ) {
+              throw new Error("verification");
             }
-        } catch (err: any) {
-            console.error("On-chain verification error:", err);
-            setError(err.message || "Failed to query on-chain attestation");
-            setStatus("Query failed");
-        } finally {
-            setLoading(false);
+            setResult(finalResult);
+            setFlowState("success");
+            receivedResult = true;
+          }
         }
-    };
 
-    return (
-        <div className="p-6 max-w-xl mx-auto bg-neutral-900 border border-neutral-800 rounded-xl text-white shadow-lg space-y-5">
-            <h2 className="text-xl font-semibold text-neutral-100">Live Attestation Testbench</h2>
+        if (done) break;
+      }
 
-            <div>
-                <label className="block text-xs uppercase tracking-wider text-neutral-400 mb-1">
-                    Wallet Address to Test
-                </label>
-                {!hasMounted ? (
-                    <div className="w-full px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-lg text-sm font-mono text-neutral-500">
-                        Loading...
-                    </div>
-                ) : (
-                    <input
-                        type="text"
-                        value={inputAddress}
-                        onChange={(e) => setInputAddress(e.target.value)}
-                        placeholder="Enter base58 wallet address..."
-                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-lg text-sm font-mono text-neutral-200 focus:outline-none focus:border-cyan-500 transition-colors"
-                    />
-                )}
-            </div>
+      if (!receivedResult) throw new Error("verification");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.error("Attestation flow failed", error);
+      const code = error instanceof Error ? error.message : "backend";
+      setErrorMessage(friendlyError(code));
+      setFlowState("error");
+    } finally {
+      if (requestController.current === controller) {
+        requestController.current = null;
+      }
+    }
+  };
 
-            {/* Error Alert */}
-            {error && (
-                <div className="flex items-start gap-3 p-4 bg-red-950/50 border border-red-800/50 rounded-lg">
-                    <AlertCircle className="size-5 text-red-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-red-200">Error</p>
-                        <p className="text-xs text-red-300 mt-1">{error}</p>
-                    </div>
-                </div>
-            )}
+  const isProcessing = [
+    "preparing",
+    "existing",
+    "scoring",
+    "issuing",
+    "verifying",
+  ].includes(flowState);
+  const currentSteps = flowState === "existing" ? existingSteps : progressSteps;
 
-            <div className="flex gap-3">
-                <button
-                    onClick={handleMintMockScore}
-                    disabled={loading || !walletAddress || !hasMounted}
-                    className="flex-1 py-2 px-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition"
-                >
-                    {loading ? "Processing..." : "1. Issue Attestation (Relayer)"}
-                </button>
-
-                <button
-                    onClick={handleVerifyOnChain}
-                    disabled={loading || !walletAddress || !hasMounted}
-                    className="flex-1 py-2 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition"
-                >
-                    2. Verify On-Chain (SDK)
-                </button>
-            </div>
-
-            <div className="p-3 bg-neutral-950/60 rounded-lg text-xs font-mono text-neutral-400 border border-neutral-800">
-                Status: <span className="text-neutral-200">{status}</span>
-                {txHash && (
-                    <div className="mt-1">
-                        <a
-                            href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-cyan-400 underline"
-                        >
-                            View on Solana Explorer ↗
-                        </a>
-                    </div>
-                )}
-            </div>
-
-            {scoreData && (
-                <div className="mt-4 p-5 bg-neutral-950 border border-neutral-800 rounded-lg text-center space-y-2">
-                    <div className="text-4xl font-extrabold text-blue-400 font-mono">
-                        {scoreData.trustScore}
-                    </div>
-                    <div className="text-sm font-medium text-neutral-300">
-                        Risk Assessment:{" "}
-                        <span
-                            className={
-                                scoreData.riskLevel === "LOW"
-                                    ? "text-emerald-400 font-bold"
-                                    : scoreData.riskLevel === "MEDIUM"
-                                        ? "text-amber-400 font-bold"
-                                        : "text-red-400 font-bold"
-                            }
-                        >
-                            {scoreData.riskLevel}
-                        </span>
-                    </div>
-                    <div className="text-xs text-neutral-500">
-                        Status: {scoreData.isValid ? "✅ Active On-Chain Attestation" : "❌ Revoked"}
-                    </div>
-                </div>
-            )}
-
-            {/* Info Card */}
-            <div className="p-3 bg-blue-950/20 border border-blue-800/30 rounded-lg">
-                <p className="text-xs text-blue-200">
-                    <span className="font-semibold">Note:</span> The relayer service must be running to issue attestations.
-                    Verification queries the blockchain directly and works independently.
-                </p>
-            </div>
+  return (
+    <section aria-labelledby="reputation-flow-title" className="py-2">
+      <div className="mx-auto max-w-3xl">
+        <div className="border-b border-border pb-7">
+          <div className="flex items-center gap-3 text-primary">
+            <ShieldCheck className="size-5" aria-hidden="true" />
+            <span className="text-xs font-semibold uppercase tracking-[0.14em]">
+              CredLayer Reputation
+            </span>
+          </div>
+          <h2
+            id="reputation-flow-title"
+            className="mt-5 max-w-2xl text-3xl font-semibold leading-tight text-foreground sm:text-4xl"
+          >
+            Verify your on-chain reputation
+          </h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+            Connect your Solana wallet to calculate your trust score and create
+            a verifiable credential.
+          </p>
         </div>
-    );
+
+        <div className="flex flex-col gap-5 border-b border-border py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {walletAddress ? "Wallet connected" : "Wallet"}
+            </p>
+            <p className="mt-2 font-mono text-sm text-foreground">
+              {walletAddress
+                ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+                : "Not connected"}
+            </p>
+          </div>
+        </div>
+
+        {walletAddress && flowState !== "success" && (
+          <div className="py-6">
+            <button
+              type="button"
+              onClick={runAttestation}
+              disabled={isProcessing}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+            >
+              {isProcessing && (
+                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              )}
+              {isProcessing
+                ? "Working on your verification..."
+                : "Get Trust Score & Attestation"}
+            </button>
+          </div>
+        )}
+
+        {isProcessing && (
+          <ol
+            aria-label="Verification progress"
+            aria-live="polite"
+            className="space-y-4 border-b border-border py-5"
+          >
+            {currentSteps.map((step) => {
+              const currentIndex = currentSteps.findIndex(
+                (item) => item.state === flowState,
+              );
+              const stepIndex = currentSteps.findIndex(
+                (item) => item.state === step.state,
+              );
+              const complete = stepIndex < currentIndex;
+              const current = step.state === flowState;
+              return (
+                <li key={step.state} className="flex items-center gap-3 text-sm">
+                  {complete ? (
+                    <Check className="size-4 text-primary" aria-hidden="true" />
+                  ) : current ? (
+                    <LoaderCircle
+                      className="size-4 animate-spin text-primary"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Circle
+                      className="size-4 text-muted-foreground/50"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span
+                    className={
+                      current || complete
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    }
+                  >
+                    {step.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {isProcessing && progressMessage && (
+          <p aria-live="polite" className="py-3 text-sm text-muted-foreground">
+            {progressMessage}
+          </p>
+        )}
+
+        {errorMessage && (
+          <div
+            role="alert"
+            className="border-b border-border py-5 text-sm text-destructive"
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        {flowState === "success" && result && (
+          <div aria-live="polite" className="py-7">
+            <div className="flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Trust score
+                </p>
+                <p className="mt-2 text-5xl font-semibold tabular-nums text-foreground">
+                  {result.attestation.trustScore}
+                  <span className="ml-2 text-base font-medium text-muted-foreground">
+                    / 1000
+                  </span>
+                </p>
+              </div>
+              <div className="sm:text-right">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Risk level
+                </p>
+                <p className="mt-2 text-lg font-medium capitalize text-foreground">
+                  {result.attestation.riskLevel.toLowerCase()} risk
+                </p>
+              </div>
+            </div>
+            <p className="flex items-center gap-2 pt-5 text-sm font-medium text-primary">
+              <Check className="size-4" aria-hidden="true" />
+              Attestation verified on-chain
+              {result.attestation.alreadyExisted && (
+                <span className="font-normal text-muted-foreground">
+                  · Existing credential confirmed
+                </span>
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={runAttestation}
+              disabled={isProcessing}
+              className="mt-6 min-h-10 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:opacity-60"
+            >
+              Refresh
+            </button>
+          </div>
+        )}
+
+        {!walletAddress && (
+          <p className="py-5 text-sm text-muted-foreground">
+            Connect a wallet to get started.
+          </p>
+        )}
+      </div>
+    </section>
+  );
 }

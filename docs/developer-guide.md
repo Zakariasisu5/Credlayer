@@ -61,22 +61,12 @@ A normal response is an envelope:
 ```json
 {
   "success": true,
-  "data": {
-    "address": "YOUR_SOLANA_WALLET",
-    "trustScore": 500,
-    "trustLevel": "low",
-    "riskLevel": "medium",
-    "confidence": 0.0,
-    "fraudProbability": 0.5,
-    "network": "solana",
-    "explanation": "..."
-  },
-  "message": null,
-  "timestamp": "2026-01-01T00:00:00Z"
+  "data": "WalletScore returned by the configured ML service",
+  "timestamp": "<response timestamp>"
 }
 ```
 
-The score route currently falls back to a default score when the ML service is unavailable. Treat a fallback response as degraded service, not as a verified production risk decision.
+The score route fails with a service error when the ML service is unavailable or its trained artifacts are not ready. It never returns a substitute score.
 
 ## Copy-paste clients
 
@@ -217,7 +207,7 @@ Webhook registration metadata is supported at `/webhooks`. The current backend s
 
 - `401` immediately after key creation: ensure the deployed API-key creation code hashes the actual secret, not a random unrelated value; regenerate keys after deploying the fix.
 - `relation request_logs does not exist`: create the table in Supabase or apply migration 007; do not blindly rerun migrations against a manually initialized schema.
-- Score returns a default-looking result: inspect ML service availability and `ML_SERVICE_URL`; the gateway intentionally returns a fallback when ML is unavailable.
+- Scoring is unavailable: check ML service readiness and the deployment-specific `ML_SERVICE_URL`. No score is returned unless the configured service produces a valid model result.
 - `404` on `/request-logs/stats/...`: deploy the request-log stats route and register its router in `api/router.py`.
 - API key appears to work after revocation: deploy the authentication middleware and verify that the request includes the same secret; revocation is enforced server-side, not by the frontend list refresh.
 - CORS/browser failures: use a server-side proxy or configure backend `CORS_ORIGINS`; never solve CORS by exposing the secret to the browser.

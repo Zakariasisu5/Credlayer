@@ -59,7 +59,11 @@ async def fetch_live_context(target_address: str, tx_limit: int = 50) -> Dict:
         signatures = await get_signatures(client, target_address, limit=tx_limit)
         
         if not signatures:
-            return {"nodes": [target_address], "edges": []}
+            return {
+                "target_address": target_address,
+                "counterparties": [],
+                "edges": [],
+            }
             
         transactions = await get_parsed_transactions(client, signatures)
 

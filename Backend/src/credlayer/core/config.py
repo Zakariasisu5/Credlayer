@@ -37,11 +37,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://credlayer:credlayer@localhost:5432/credlayer"
     redis_url: str | None = None  # Optional: if not set, Redis features will be disabled
 
-    # Standalone ML microservice connection (explicit IPv4 loopback)
-    ml_service_url: str = Field(default="http://127.0.0.1:8001", alias="ML_SERVICE_URL")
+    # Must be configured to the deployed scoring service in each environment.
+    ml_service_url: str | None = Field(default=None, alias="ML_SERVICE_URL")
 
     # Solana attestation relayer service URL
-    relayer_service_url: str = "http://127.0.0.1:3001"
+    relayer_service_url: str | None = None
 
     # Reserved for a future Supabase-backed identity provider (see CLAUDE.md
     # "Blockchain / Solana layer" auth notes) - unused until then.

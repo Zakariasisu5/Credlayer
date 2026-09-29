@@ -195,12 +195,10 @@ npm run create-schema
 ## Understanding the Flow
 
 1. **User connects wallet** in the frontend
-2. **User clicks "Issue Attestation"** in the dashboard
-3. **Frontend sends request** to relayer with wallet address
-4. **Relayer generates** a random trust score (600-850)
-5. **Relayer creates** an on-chain attestation on Solana
-6. **Frontend receives** transaction hash
-7. **User can verify** on Solana Explorer
+2. **The backend scores** the connected wallet through the configured ML service
+3. **The backend requests** the attestation from the relayer
+4. **The relayer reuses or creates** the on-chain attestation and confirms the transaction
+5. **The backend verifies** the resulting attestation account
 
 ---
 

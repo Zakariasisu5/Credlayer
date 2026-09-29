@@ -14,9 +14,6 @@ from pydantic.alias_generators import to_camel
 from credlayer_ml.config import ServerSettings
 from credlayer_ml.inference import get_scorer
 
-from credlayer_ml.data.live_rpc import fetch_live_context
-from credlayer_ml.data.live_features import build_live_graph
-
 T = TypeVar("T")
 
 
@@ -78,10 +75,13 @@ def create_app() -> FastAPI:
     @app.get("/readyz", tags=["infra"])
     async def readyz() -> dict[str, str]:
         scorer = get_scorer()
-        is_ready = scorer.config.paths.graph_path.exists()
+        graph_exists = scorer.config.paths.graph_path.exists()
+        model_exists = scorer.config.paths.best_model_path.exists()
+        is_ready = graph_exists and model_exists
         return {
-            "status": "ok" if is_ready else "not_trained",
-            "graph_exists": str(is_ready)
+            "status": "ok" if is_ready else "not_ready",
+            "graph_exists": str(graph_exists),
+            "model_exists": str(model_exists),
         }
 
     @app.get(
