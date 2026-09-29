@@ -5,14 +5,9 @@ import { CredLayerClient } from "@credlayer/sdk";
 import { apiClient } from "../lib/api-client";
 import { Shell } from "../components/layout/app-shell";
 
-const rpcUrl =
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-const credentialPda =
-  process.env.NEXT_PUBLIC_CREDENTIAL_PDA ||
-  "CbqejxfaSkP8VypE1CSr39U1UJNjzFWcVM9NMJvGxqqn";
-const schemaPda =
-  process.env.NEXT_PUBLIC_SCHEMA_PDA ||
-  "3djJWtGKBXvM8P9WbsX1RFe3dnMkMj5DxQYWPcptC7rs";
+const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+const credentialPda = process.env.NEXT_PUBLIC_CREDENTIAL_PDA;
+const schemaPda = process.env.NEXT_PUBLIC_SCHEMA_PDA;
 
 export default function DeveloperAttestationPage() {
   const [address, setAddress] = useState("");
@@ -92,6 +87,9 @@ export default function DeveloperAttestationPage() {
               type="button"
               onClick={() =>
                 run("verify", async () => {
+                  if (!rpcUrl || !credentialPda || !schemaPda) {
+                    throw new Error("Configure the Solana RPC URL, credential PDA, and schema PDA.");
+                  }
                   const sdk = new CredLayerClient(rpcUrl, credentialPda, schemaPda);
                   return sdk.getScore(address);
                 })
