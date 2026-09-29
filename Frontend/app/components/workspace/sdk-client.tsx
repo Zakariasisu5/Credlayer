@@ -21,9 +21,8 @@ try {
     console.error("Failed to initialize CredLayerClient:", err);
 }
 
-// URL of your running Express Relayer
-// const RELAYER_URL = process.env.NEXT_PUBLIC_RELAYER_URL || "http://localhost:3001/api/v1/attestations/issue";
-const GATEWAY_URL = "http://localhost:3001/api/v1/attestations/issue"
+// The Relayer is no longer called directly from the Frontend.
+// All requests go through the Backend Gateway using apiClient.
 
 export function TrustScoreLiveDemo() {
     const [hasMounted, setHasMounted] = useState(false);

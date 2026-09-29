@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     redis_url: str | None = None  # Optional: if not set, Redis features will be disabled
 
     # Standalone ML microservice connection (explicit IPv4 loopback)
-    ml_service_url: str = "http://127.0.0.1:8001"
+    ml_service_url: str = Field(default="http://127.0.0.1:8001", alias="ML_SERVICE_URL")
 
     # Solana attestation relayer service URL
     relayer_service_url: str = "http://127.0.0.1:3001"

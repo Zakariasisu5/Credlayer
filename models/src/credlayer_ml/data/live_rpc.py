@@ -6,8 +6,10 @@ from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
+import os
+
 # Default Helius or QuickNode RPC URL. Set this via environment variables in production.
-SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com" 
+SOLANA_RPC_URL = os.getenv("SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com") 
 
 async def rpc_call(client: httpx.AsyncClient, method: str, params: List[Any]) -> Any:
     """Helper to execute JSON-RPC calls."""
