@@ -152,7 +152,7 @@ async def score_wallet(address: str, scorer: WalletScorer = Depends(get_scorer))
     result = await scorer.score_address(address)
     validated_score = WalletScore.model_validate(result)
 
-    # --- Post the relayer to mint on-chain attestation ---
+    # --- Post to the relayer to mint on-chain attestation ---
     settings = scorer.settings
     relayer_url = f"{settings.relayer_service_url.rstrip('/')}/api/v1/attestations/issue"
 
@@ -169,15 +169,30 @@ async def score_wallet(address: str, scorer: WalletScorer = Depends(get_scorer))
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             relayer_resp = await client.post(relayer_url, json=relayer_payload)
-            if relayer_resp.status_code == 200:
-                tx_hash = relayer_resp.json().get("txHash")
-                logger.info("attestation_minted", tx_hash=tx_hash)
+            relayer_resp.raise_for_status()
+            
+            relayer_data = relayer_resp.json()
+            tx_hash = relayer_data.get("txHash") or relayer_data.get("signature")
+            
+            if tx_hash:
+                logger.info("attestation_minted", address=address, tx_hash=tx_hash, trust_score=validated_score.trust_score)
             else:
-                logger.error("relayer_mint_failed", status=relayer_resp.status_code, error=relayer_resp.text)
+                logger.warning("relayer_no_txhash", address=address, response=relayer_data)
+                
+    except httpx.RequestError as e:
+        logger.error("relayer_unreachable", url=relayer_url, error=str(e), address=address)
+    except httpx.HTTPStatusError as e:
+        logger.error("relayer_http_error", status=e.response.status_code, error=e.response.text, address=address)
     except Exception as e:
-        logger.error("relayer_unreachable", url=relayer_url, error=str(e))
+        logger.error("relayer_unexpected_error", error=repr(e), address=address)
 
-    return ok(validated_score, meta={"txHash": tx_hash} if tx_hash else None)
+    # Build envelope with meta containing txHash (if successful)
+    return Envelope(
+        success=True,
+        data=validated_score,
+        meta={"txHash": tx_hash} if tx_hash else None,
+        timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    )
 
 
 @router.post(

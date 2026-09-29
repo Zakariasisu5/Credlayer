@@ -64,7 +64,7 @@ export function TrustScoreLiveDemo() {
         }
     }, [walletAddress, hasMounted]);
 
-    // 1. Simulate AI Backend -> Trigger Relayer to Mint On-Chain
+    // 1. Issue attestation via Backend (which calls ML service + relayer)
     const handleMintMockScore = async () => {
         if (!walletAddress || walletAddress.length < 32) {
             setStatus("Please enter a valid base58 wallet address.");
@@ -74,34 +74,40 @@ export function TrustScoreLiveDemo() {
         try {
             setLoading(true);
             setError(null);
-            setStatus("1. Querying AI Engine & Minting...");
+            setStatus("Calling AI engine to calculate trust score...");
 
             const response = await apiClient.get(`/scores/${walletAddress}`);
             const scoreData = unwrap(response.data) as { trustScore: number; riskLevel: string; isValid: boolean };
             
-            // Extract txHash if the backend was able to mint via the relayer
-            const txHash = (response.data as any)?.meta?.txHash;
+            // Extract meta from response (includes txHash if relayer succeeded)
+            const meta = (response.data as any)?.meta;
+            const txHash = meta?.txHash;
 
             setScoreData({
                 trustScore: scoreData.trustScore,
                 riskLevel: scoreData.riskLevel,
-                isValid: true // Just minted, so it's valid
+                isValid: true
             });
             
             if (txHash) {
                 setTxHash(txHash);
+                setStatus(`✅ Attestation issued on-chain! Trust score: ${scoreData.trustScore}`);
+            } else {
+                // Score calculated but relayer didn't mint
+                setStatus(`⚠️ Score calculated (${scoreData.trustScore}), but on-chain minting failed. Check if relayer is running.`);
+                setError("The attestation was not minted on-chain. The relayer service may be offline or misconfigured.");
             }
-
-            setStatus(`✅ Success! AI Trust Score (${scoreData.trustScore}) minted on Devnet.`);
         } catch (err: any) {
-            console.error("Gateway Error:", err);
+            console.error("Issue attestation error:", err);
             const errorMsg = err?.response?.data?.error?.message || err?.response?.statusText || err?.message || "Could not reach the CredLayer API";
             setError(errorMsg);
             
             if (err?.response?.status === 503) {
-                setStatus("ML Engine Syncing / Unavailable");
+                setStatus("❌ ML Engine Unavailable");
+            } else if (err?.response?.status === 502) {
+                setStatus("❌ ML Engine Error");
             } else {
-                setStatus("Attestation Failed");
+                setStatus("❌ Attestation Issuance Failed");
             }
         } finally {
             setLoading(false);
