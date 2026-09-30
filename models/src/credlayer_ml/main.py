@@ -2,17 +2,25 @@
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Generic, TypeVar
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
+from credlayer_ml.artifacts import ensure_inference_artifacts
 from credlayer_ml.config import ServerSettings
 from credlayer_ml.inference import get_scorer
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_inference_artifacts()
+    yield
 
 T = TypeVar("T")
 
@@ -57,7 +65,11 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="CredLayer ML Scoring Service",
         version="0.1.0",
-        description="Standalone microservice providing GNN-based wallet reputation scores and fraud intelligence.",
+        description=(
+            "Standalone microservice providing GNN-based wallet reputation scores "
+            "and fraud intelligence."
+        ),
+        lifespan=lifespan,
     )
 
     app.add_middleware(
