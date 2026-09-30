@@ -8,7 +8,7 @@ import httpx
 from fastapi import HTTPException
 
 from credlayer.api.envelope import error_envelope, ok, paginated
-from credlayer.api.v1.scores import WalletScorer, score_and_attest
+from credlayer.api.v1.scores import WalletScorer, issue_attestation, score_wallet
 from credlayer.schemas.common import CamelModel, Pagination
 
 
@@ -100,7 +100,7 @@ class TestProductionScoringFlow(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(error.exception.status_code, 503)
 
-    async def test_existing_attestation_is_reused_and_verified(self):
+    async def test_explicit_attestation_endpoint_returns_success_payload(self):
         address = "11111111111111111111111111111111"
         score = {
             "address": address,
@@ -113,66 +113,7 @@ class TestProductionScoringFlow(unittest.IsolatedAsyncioTestCase):
             "explanation": "Model-derived score",
         }
         scorer = SimpleNamespace(
-            settings=SimpleNamespace(relayer_service_url="https://relayer.example"),
-            score_address=AsyncMock(return_value=score),
-        )
-        requests = []
-
-        class MockClient:
-            def __init__(self, **_kwargs):
-                pass
-
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *_args):
-                return None
-
-            async def get(self, url):
-                requests.append(("GET", url))
-                response = httpx.Response(
-                    200,
-                    json={
-                        "success": True,
-                        "data": {
-                            "verified": True,
-                            "attestation": {"trustScore": 700, "riskLevel": "LOW"},
-                        },
-                    },
-                )
-                response.request = httpx.Request("GET", url)
-                return response
-
-            async def post(self, *_args, **_kwargs):
-                self.fail("Existing attestation must not be issued again")
-
-        from unittest.mock import patch
-
-        with patch("credlayer.api.v1.scores.httpx.AsyncClient", MockClient):
-            response = await score_and_attest(address, scorer)
-            events = [event async for event in response.body_iterator]
-
-        body = "".join(events)
-        self.assertIn('"alreadyExisted":true', body)
-        self.assertIn('"trustScore":700', body)
-        self.assertIn("event: result", body)
-        self.assertEqual(len(requests), 1)
-        scorer.score_address.assert_not_awaited()
-
-    async def test_relayer_failure_does_not_emit_success(self):
-        address = "11111111111111111111111111111111"
-        score = {
-            "address": address,
-            "trust_score": 731,
-            "trust_level": "medium",
-            "risk_level": "low",
-            "confidence": 0.8,
-            "fraud_probability": 0.2,
-            "network": "solana",
-            "explanation": "Model-derived score",
-        }
-        scorer = SimpleNamespace(
-            settings=SimpleNamespace(relayer_service_url="https://relayer.example"),
+            settings=SimpleNamespace(relayer_url="https://relayer.example"),
             score_address=AsyncMock(return_value=score),
         )
 
@@ -185,88 +126,27 @@ class TestProductionScoringFlow(unittest.IsolatedAsyncioTestCase):
 
             async def __aexit__(self, *_args):
                 return None
-
-            async def get(self, url):
-                response = httpx.Response(200, json={"success": True, "data": {"verified": False}})
-                response.request = httpx.Request("GET", url)
-                return response
-
-            async def post(self, url, **_kwargs):
-                response = httpx.Response(503, json={"error": "internal relayer detail"})
-                response.request = httpx.Request("POST", url)
-                return response
-
-        from unittest.mock import patch
-
-        with patch("credlayer.api.v1.scores.httpx.AsyncClient", MockClient):
-            response = await score_and_attest(address, scorer)
-            events = [event async for event in response.body_iterator]
-
-        body = "".join(events)
-        self.assertIn('"code":"attestation"', body)
-        self.assertNotIn("event: result", body)
-        self.assertNotIn("internal relayer detail", body)
-
-    async def test_new_wallet_is_scored_issued_and_verified(self):
-        address = "11111111111111111111111111111111"
-        score = {
-            "address": address,
-            "trust_score": 731,
-            "trust_level": "medium",
-            "risk_level": "low",
-            "confidence": 0.8,
-            "fraud_probability": 0.2,
-            "network": "solana",
-            "explanation": "Model-derived score",
-        }
-        scorer = SimpleNamespace(
-            settings=SimpleNamespace(relayer_service_url="https://relayer.example"),
-            score_address=AsyncMock(return_value=score),
-        )
-        requests = []
-
-        class MockClient:
-            def __init__(self, **_kwargs):
-                pass
-
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *_args):
-                return None
-
-            async def get(self, url):
-                requests.append(("GET", url))
-                verified = len([request for request in requests if request[0] == "GET"]) > 1
-                data = {
-                    "verified": verified,
-                    "attestation": {"trustScore": 731, "riskLevel": "LOW"} if verified else None,
-                }
-                response = httpx.Response(200, json={"success": True, "data": data})
-                response.request = httpx.Request("GET", url)
-                return response
 
             async def post(self, url, json):
-                requests.append(("POST", url, json))
-                response = httpx.Response(200, json={"success": True, "alreadyExists": False})
+                assert url == "https://relayer.example/api/v1/attestations/issue"
+                assert json["targetWallet"] == address
+                response = httpx.Response(
+                    200,
+                    json={"success": True, "txHash": "0xabc123", "alreadyExists": False},
+                )
                 response.request = httpx.Request("POST", url)
                 return response
 
         from unittest.mock import patch
 
         with patch("credlayer.api.v1.scores.httpx.AsyncClient", MockClient):
-            response = await score_and_attest(address, scorer)
-            events = [event async for event in response.body_iterator]
+            response = await issue_attestation(address, scorer)
 
-        body = "".join(events)
-        self.assertEqual(requests[1][0], "POST")
-        self.assertEqual(requests[1][2]["trustScore"], 731)
-        self.assertEqual(requests[1][2]["riskLevel"], "LOW")
-        self.assertIn('"trustScore":731', body)
-        self.assertIn('"verified":true', body)
-        self.assertIn("event: result", body)
+        self.assertTrue(response["success"])
+        self.assertEqual(response["txHash"], "0xabc123")
+        scorer.score_address.assert_awaited_once_with(address)
 
-    async def test_verification_read_failure_is_not_reported_as_issuance_success(self):
+    async def test_score_read_has_no_side_effects(self):
         address = "11111111111111111111111111111111"
         score = {
             "address": address,
@@ -279,10 +159,32 @@ class TestProductionScoringFlow(unittest.IsolatedAsyncioTestCase):
             "explanation": "Model-derived score",
         }
         scorer = SimpleNamespace(
-            settings=SimpleNamespace(relayer_service_url="https://relayer.example"),
+            settings=SimpleNamespace(relayer_url="https://relayer.example"),
             score_address=AsyncMock(return_value=score),
         )
-        get_count = 0
+
+        response = await score_wallet(address, scorer)
+
+        self.assertEqual(response.data.trust_score, 731)
+        self.assertEqual(response.data.risk_level, "low")
+        scorer.score_address.assert_awaited_once_with(address)
+
+    async def test_attestation_failure_returns_specific_error(self):
+        address = "11111111111111111111111111111111"
+        score = {
+            "address": address,
+            "trust_score": 731,
+            "trust_level": "medium",
+            "risk_level": "low",
+            "confidence": 0.8,
+            "fraud_probability": 0.2,
+            "network": "solana",
+            "explanation": "Model-derived score",
+        }
+        scorer = SimpleNamespace(
+            settings=SimpleNamespace(relayer_url="https://relayer.example"),
+            score_address=AsyncMock(return_value=score),
+        )
 
         class MockClient:
             def __init__(self, **_kwargs):
@@ -294,33 +196,19 @@ class TestProductionScoringFlow(unittest.IsolatedAsyncioTestCase):
             async def __aexit__(self, *_args):
                 return None
 
-            async def get(self, url):
-                nonlocal get_count
-                get_count += 1
-                if get_count == 1:
-                    response = httpx.Response(
-                        200, json={"success": True, "data": {"verified": False}}
-                    )
-                else:
-                    response = httpx.Response(503, json={"error": "internal RPC failure"})
-                response.request = httpx.Request("GET", url)
-                return response
-
-            async def post(self, url, **_kwargs):
-                response = httpx.Response(200, json={"success": True, "alreadyExists": False})
+            async def post(self, url, json):
+                response = httpx.Response(503, json={"error": "Relayer unavailable"})
                 response.request = httpx.Request("POST", url)
                 return response
 
         from unittest.mock import patch
 
         with patch("credlayer.api.v1.scores.httpx.AsyncClient", MockClient):
-            response = await score_and_attest(address, scorer)
-            events = [event async for event in response.body_iterator]
+            with self.assertRaises(HTTPException) as error:
+                await issue_attestation(address, scorer)
 
-        body = "".join(events)
-        self.assertIn('"code":"verification"', body)
-        self.assertNotIn("event: result", body)
-        self.assertNotIn("internal RPC failure", body)
+        self.assertEqual(error.exception.status_code, 503)
+        self.assertIn("Relayer unavailable", str(error.exception.detail))
 
 
 if __name__ == "__main__":

@@ -123,3 +123,5 @@ test-ledger/
 logs/
 temp/
 tmp/
+.vercel
+.env*

@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     ml_service_url: str | None = Field(default=None, alias="ML_SERVICE_URL")
 
     # Solana attestation relayer service URL
-    relayer_service_url: str | None = None
+    relayer_url: str | None = Field(default=None, alias="RELAYER_URL")
+    relayer_service_url: str | None = Field(default=None, alias="RELAYER_SERVICE_URL")
 
     # Reserved for a future Supabase-backed identity provider (see CLAUDE.md
     # "Blockchain / Solana layer" auth notes) - unused until then.

@@ -9,7 +9,6 @@ from typing import Annotated
 import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from credlayer.api.envelope import Envelope, ok
@@ -167,13 +166,9 @@ async def score_wallet(address: str, scorer: ScorerDependency) -> Envelope[Walle
     return ok(validated_score)
 
 
-def _sse(event: str, payload: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(payload, separators=(',', ':'))}\n\n"
-
-
 @router.get("/dev/relayer-status", include_in_schema=False)
 async def relayer_status(scorer: ScorerDependency) -> dict:
-    relayer_base = scorer.settings.relayer_service_url
+    relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
     if not relayer_base:
         return {"available": False}
     try:
@@ -190,7 +185,7 @@ async def relayer_status(scorer: ScorerDependency) -> dict:
 async def issue_attestation_debug(address: str, scorer: ScorerDependency) -> dict:
     if not re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{32,44}", address):
         raise HTTPException(status_code=422, detail="Invalid Solana wallet address.")
-    relayer_base = scorer.settings.relayer_service_url
+    relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
     if not relayer_base:
         raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
 
@@ -214,117 +209,76 @@ async def issue_attestation_debug(address: str, scorer: ScorerDependency) -> dic
 
 @router.post(
     "/{address}/attestation",
-    summary="Calculate a real score and verify a wallet attestation",
-    description=(
-        "Streams user-safe progress while scoring, issuing when needed, and verifying on-chain."
-    ),
+    summary="Create an attestation for a wallet",
+    description="Fetch the wallet score and request a relayer attestation explicitly.",
 )
-async def score_and_attest(address: str, scorer: ScorerDependency) -> StreamingResponse:
+async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
     if not re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{32,44}", address):
         raise HTTPException(status_code=422, detail="Invalid Solana wallet address.")
 
-    async def event_stream():
-        relayer_base = scorer.settings.relayer_service_url
-        if not relayer_base:
-            logger.error("relayer_service_url_not_configured", address=address)
-            yield _sse("error", {"code": "attestation"})
-            return
+    relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
+    if not relayer_base:
+        logger.error("relayer_url_not_configured", address=address)
+        raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
 
-        relayer_base = relayer_base.rstrip("/")
-        verify_url = f"{relayer_base}/api/v1/attestations/{address}"
-        yield _sse("progress", {"stage": "preparing"})
-        failure_code = "attestation"
-
-        try:
-            async with httpx.AsyncClient(timeout=35.0) as client:
-                existing_response = await client.get(verify_url)
-                existing_response.raise_for_status()
-                existing_data = existing_response.json().get("data", {})
-                already_exists = existing_data.get("verified") is True
-
-                if already_exists:
-                    yield _sse(
-                        "progress",
-                        {
-                            "stage": "already_verified",
-                            "message": (
-                                "Your wallet is already verified. We're checking "
-                                "your existing attestation."
-                            ),
-                        },
-                    )
-                else:
-                    yield _sse("progress", {"stage": "scoring"})
-                    try:
-                        score = WalletScore.model_validate(await scorer.score_address(address))
-                    except Exception as exc:
-                        logger.exception(
-                            "wallet_score_workflow_failed", address=address, error=repr(exc)
-                        )
-                        yield _sse("error", {"code": "scoring"})
-                        return
-
-                    yield _sse("progress", {"stage": "issuing"})
-                    issue_response = await client.post(
-                        f"{relayer_base}/api/v1/attestations/issue",
-                        json={
-                            "targetWallet": address,
-                            "trustScore": score.trust_score,
-                            "riskLevel": score.risk_level.upper(),
-                        },
-                    )
-                    issue_response.raise_for_status()
-                    issue_data = issue_response.json()
-                    if issue_data.get("success") is not True:
-                        raise ValueError("Relayer did not confirm attestation issuance")
-                    already_exists = issue_data.get("alreadyExists") is True
-
-                yield _sse("progress", {"stage": "verifying"})
-                failure_code = "verification"
-                if already_exists and existing_data.get("verified") is True:
-                    verification_data = existing_data
-                else:
-                    verification_response = await client.get(verify_url)
-                    verification_response.raise_for_status()
-                    verification_data = verification_response.json().get("data", {})
-                if verification_data.get("verified") is not True:
-                    logger.error("attestation_verification_missing", address=address)
-                    yield _sse("error", {"code": "verification"})
-                    return
-                verified_score = verification_data.get("attestation") or {}
-                verified_trust_score = verified_score.get("trustScore")
-                verified_risk_level = verified_score.get("riskLevel")
-                if not isinstance(verified_trust_score, int) or not isinstance(
-                    verified_risk_level, str
-                ):
-                    logger.error("attestation_payload_invalid", address=address)
-                    yield _sse("error", {"code": "verification"})
-                    return
-
-            yield _sse(
-                "result",
-                {
-                    "score": {
-                        "trustScore": verified_trust_score,
-                        "riskLevel": verified_risk_level,
-                    },
-                    "attestation": {
-                        "verified": True,
-                        "alreadyExisted": already_exists,
-                        "trustScore": verified_trust_score,
-                        "riskLevel": verified_risk_level,
-                    },
+    score = WalletScore.model_validate(await scorer.score_address(address))
+    try:
+        async with httpx.AsyncClient(timeout=35.0) as client:
+            response = await client.post(
+                f"{relayer_base.rstrip('/')}/api/v1/attestations/issue",
+                json={
+                    "targetWallet": address,
+                    "trustScore": score.trust_score,
+                    "riskLevel": score.risk_level.upper(),
                 },
             )
-        except Exception as exc:
-            logger.exception("attestation_workflow_failed", address=address, error=repr(exc))
-            yield _sse("error", {"code": failure_code})
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = {}
 
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
+            if response.is_error:
+                detail = payload.get("detail") or payload.get("error") or payload.get("message")
+                if detail:
+                    raise HTTPException(status_code=response.status_code, detail=str(detail))
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail="Attestation service rejected the request.",
+                )
+
+            if payload.get("success") is not True:
+                detail = payload.get("detail") or payload.get("error") or payload.get("message")
+                raise HTTPException(
+                    status_code=502,
+                    detail=str(detail) if detail else "Attestation creation failed.",
+                )
+
+            data_payload = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+            tx_hash = (
+                payload.get("txHash")
+                or payload.get("tx_hash")
+                or payload.get("transactionHash")
+                or data_payload.get("txHash")
+            )
+            return {
+                "success": True,
+                "txHash": tx_hash,
+                "alreadyExists": bool(payload.get("alreadyExists") or payload.get("already_exists")),
+                "score": score.model_dump(by_alias=True),
+            }
+    except HTTPException:
+        raise
+    except httpx.RequestError as exc:
+        logger.exception("attestation_issue_failed", address=address, error=repr(exc))
+        raise HTTPException(
+            status_code=503, detail="Attestation service is currently unreachable."
+        ) from exc
+    except Exception as exc:
+        logger.exception("attestation_issue_failed", address=address, error=repr(exc))
+        raise HTTPException(status_code=502, detail="Attestation creation failed.") from exc
+
+
+score_and_attest = issue_attestation
 
 
 @router.post(

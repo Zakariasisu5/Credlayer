@@ -109,76 +109,64 @@ export function TrustScoreLiveDemo() {
       });
       const response = await fetch(url, {
         method: "POST",
-        headers: { Accept: "text/event-stream" },
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
         signal: controller.signal,
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error("backend");
+      const payload = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        txHash?: string;
+        alreadyExists?: boolean;
+        score?: {
+          trustScore?: number;
+          riskLevel?: string;
+          trust_score?: number;
+          risk_level?: string;
+        };
+        detail?: string;
+        error?: string;
+        message?: string;
+      };
+
+      if (!response.ok || payload.success !== true) {
+        const detail = payload.detail || payload.error || payload.message || "attestation";
+        throw new Error(typeof detail === "string" ? detail : "attestation");
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let pending = "";
-      let receivedResult = false;
+      const trustScore = Number(
+        payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
+      );
+      const riskLevel = String(
+        payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
+      ).toUpperCase();
 
-      while (true) {
-        const { value, done } = await reader.read();
-        pending += decoder.decode(value, { stream: !done });
-        const events = pending.split("\n\n");
-        pending = events.pop() ?? "";
-
-        for (const event of events) {
-          const eventName = event.match(/^event:\s*(.+)$/m)?.[1]?.trim();
-          const dataLine = event.match(/^data:\s*(.+)$/m)?.[1];
-          if (!dataLine) continue;
-
-          let payload: Record<string, unknown>;
-          try {
-            payload = JSON.parse(dataLine) as Record<string, unknown>;
-          } catch {
-            throw new Error("backend");
-          }
-
-          if (eventName === "progress" && typeof payload.stage === "string") {
-            if (typeof payload.message === "string") {
-              setProgressMessage(payload.message);
-            }
-            if (payload.stage === "already_verified") {
-              setFlowState("existing");
-            } else {
-              setFlowState(payload.stage as FlowState);
-            }
-          } else if (eventName === "error") {
-            throw new Error(
-              typeof payload.code === "string" ? payload.code : "backend",
-            );
-          } else if (eventName === "result") {
-            const finalResult = payload as unknown as AttestationResult;
-            if (
-              typeof finalResult.score?.trustScore !== "number" ||
-              typeof finalResult.score?.riskLevel !== "string" ||
-              finalResult.attestation?.verified !== true ||
-              typeof finalResult.attestation.trustScore !== "number" ||
-              typeof finalResult.attestation.riskLevel !== "string"
-            ) {
-              throw new Error("verification");
-            }
-            setResult(finalResult);
-            setFlowState("success");
-            receivedResult = true;
-          }
-        }
-
-        if (done) break;
+      if (!Number.isFinite(trustScore) || !riskLevel) {
+        throw new Error("verification");
       }
 
-      if (!receivedResult) throw new Error("verification");
+      const finalResult: AttestationResult = {
+        score: {
+          trustScore,
+          riskLevel,
+        },
+        attestation: {
+          verified: true,
+          alreadyExisted: Boolean(payload.alreadyExists ?? false),
+          trustScore,
+          riskLevel,
+        },
+      };
+
+      setResult(finalResult);
+      setFlowState("success");
     } catch (error) {
       if (controller.signal.aborted) return;
       console.error("Attestation flow failed", error);
-      const code = error instanceof Error ? error.message : "backend";
-      setErrorMessage(friendlyError(code));
+      const detail = error instanceof Error ? error.message : "backend";
+      setErrorMessage(friendlyError(detail === "backend" ? "attestation" : "attestation"));
       setFlowState("error");
     } finally {
       if (requestController.current === controller) {
