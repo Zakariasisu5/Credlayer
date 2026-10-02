@@ -5,6 +5,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Must match the trained model's input dimension (SAGEConv in_features=6).
+NUM_NODE_FEATURES = 6
+
 def build_live_graph(context_data: dict) -> Data:
     """
     Transforms raw RPC context into a 1-hop ego-graph for PyTorch Geometric.
@@ -16,7 +19,7 @@ def build_live_graph(context_data: dict) -> Data:
     # Handle the edge case of a brand new wallet with zero transactions
     if not edges_list:
         logger.warning(f"No edges found for {target_address}. Creating isolated node.")
-        x = torch.zeros((1, 5), dtype=torch.float)
+        x = torch.zeros((1, NUM_NODE_FEATURES), dtype=torch.float)
         edge_index = torch.empty((2, 0), dtype=torch.long)
         return Data(x=x, edge_index=edge_index)
 
@@ -65,7 +68,20 @@ def build_live_graph(context_data: dict) -> Data:
     )
     
     # 5. Extract Tensors for PyTorch Geometric
-    feature_cols = ["in_degree", "out_degree", "total_received", "total_sent", "avg_tx_size"]
+    # node_index_normalized is a 0-1 positional feature (target wallet is 0.0)
+    num_nodes = len(unique_nodes)
+    df_features = df_features.with_columns(
+        (pl.Series("node_index_normalized", range(num_nodes), dtype=pl.Float64) / max(num_nodes - 1, 1))
+    )
+    feature_cols = [
+        "in_degree",
+        "out_degree",
+        "total_received",
+        "total_sent",
+        "avg_tx_size",
+        "node_index_normalized",
+    ]
+    assert len(feature_cols) == NUM_NODE_FEATURES
     x_tensor = torch.tensor(df_features.select(feature_cols).to_numpy(), dtype=torch.float)
     
     source_indices = [node_mapping[src] for src in df_edges["source"].to_list()]
