@@ -122,6 +122,8 @@ class ServerSettings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8001
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://localhost:8000", "https://credlayer1.vercel.app"])
+    # Base URL of the attestation relayer; read from the RELAYER_URL environment variable.
+    relayer_url: str | None = None
 
 
 # ---------------------------------------------------------------------------

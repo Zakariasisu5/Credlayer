@@ -2,13 +2,16 @@
 """
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
+import httpx
 import structlog
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -53,6 +56,44 @@ class WalletScore(CamelModel):
 
 class BatchScoreRequest(BaseModel):
     addresses: list[str] = Field(..., min_length=1, max_length=100)
+
+
+class AttestationResponse(CamelModel):
+    """Result of issuing an on-chain attestation for a wallet score.
+
+    The attestation states that CredLayer, as a registered issuer, claims the
+    wallet has this score. It does not prove the score is accurate.
+    """
+
+    success: bool
+    tx_hash: str | None = None
+    attestation_address: str | None = None
+    score: WalletScore | None = None
+    error: str | None = None
+
+
+# Solana addresses are 32-byte public keys, base58-encoded (32-44 characters).
+_BASE58_ADDRESS_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
+_RELAYER_TIMEOUT_SECONDS = 30.0
+
+
+def _attestation_error(status_code: int, error: str) -> JSONResponse:
+    return JSONResponse(status_code=status_code, content={"success": False, "error": error})
+
+
+def _extract(payload: Any, *keys: str) -> str | None:
+    """Look up the first matching key in a relayer payload, top-level or under ``data``."""
+    if not isinstance(payload, dict):
+        return None
+    containers = [payload]
+    if isinstance(payload.get("data"), dict):
+        containers.append(payload["data"])
+    for container in containers:
+        for key in keys:
+            value = container.get(key)
+            if isinstance(value, str) and value:
+                return value
+    return None
 
 
 def create_app() -> FastAPI:
@@ -139,6 +180,82 @@ def create_app() -> FastAPI:
         scorer = get_scorer()
         results = await scorer.score_batch(body.addresses)
         return ok([WalletScore(**r) for r in results])
+
+    @app.post(
+        "/api/v1/scores/{address}/attestation",
+        response_model=AttestationResponse,
+        response_model_exclude_none=True,
+        tags=["scores"],
+        summary="Score a wallet and issue an on-chain attestation via the relayer",
+    )
+    async def attest_score(address: str):
+        if not _BASE58_ADDRESS_RE.match(address):
+            return _attestation_error(400, "Invalid Solana address")
+
+        relayer_url = server_settings.relayer_url
+        if not relayer_url:
+            logger.error("RELAYER_URL is not configured")
+            return _attestation_error(503, "Attestation relayer is not configured")
+
+        scorer = get_scorer()
+        try:
+            result = await scorer.score_address(address)
+            score = WalletScore(**result)
+        except RuntimeError as exc:
+            logger.error("Scoring unavailable for attestation", address=address, error=str(exc))
+            return _attestation_error(503, "Scoring service unavailable")
+        except Exception as exc:
+            logger.error("Scoring failed for attestation", address=address, error=str(exc))
+            return _attestation_error(500, "Failed to score wallet")
+
+        url = f"{relayer_url.rstrip('/')}/api/v1/attestations/issue"
+        payload = {
+            "targetWallet": address,
+            "trustScore": score.trust_score,
+            "riskLevel": score.risk_level,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=_RELAYER_TIMEOUT_SECONDS) as client:
+                response = await client.post(url, json=payload)
+        except httpx.RequestError as exc:
+            logger.error("Relayer unavailable", address=address, error=str(exc))
+            return _attestation_error(503, "Attestation relayer unavailable")
+
+        if response.status_code >= 400:
+            logger.error(
+                "Relayer rejected attestation",
+                address=address,
+                status=response.status_code,
+                body=response.text[:500],
+            )
+            return _attestation_error(
+                502, f"Attestation relayer rejected the request (status {response.status_code})"
+            )
+
+        try:
+            body = response.json()
+        except ValueError:
+            logger.error("Relayer returned non-JSON response", address=address)
+            return _attestation_error(502, "Attestation relayer returned an invalid response")
+
+        if isinstance(body, dict) and body.get("success") is False:
+            reason = _extract(body, "error", "message") or "Attestation relayer reported failure"
+            return _attestation_error(502, reason)
+
+        tx_hash = _extract(body, "txHash", "signature", "transactionHash", "tx_hash")
+        if not tx_hash:
+            logger.error("Relayer response missing transaction hash", address=address)
+            return _attestation_error(502, "Attestation relayer returned no transaction hash")
+
+        return AttestationResponse(
+            success=True,
+            tx_hash=tx_hash,
+            attestation_address=_extract(
+                body, "attestationAddress", "attestationPda", "attestation_address"
+            ),
+            score=score,
+        )
 
     return app
 
