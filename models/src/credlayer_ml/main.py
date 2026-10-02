@@ -5,14 +5,18 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Generic, TypeVar
 
+import structlog
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from credlayer_ml.config import ServerSettings
+from credlayer_ml.config import ServerSettings, get_default_config
 from credlayer_ml.inference import get_scorer
+from credlayer_ml.model_manager import download_model_artifacts, verify_artifacts
+
+logger = structlog.get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -68,6 +72,31 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.on_event("startup")
+    async def startup_event():
+        """Download model artifacts from Hugging Face if not present locally."""
+        logger.info("Starting up ML service, checking model artifacts...")
+        config = get_default_config()
+        
+        try:
+            model_success, graph_success = download_model_artifacts(config.paths)
+            if model_success and graph_success:
+                logger.info("Model artifacts ready for inference")
+            else:
+                logger.warning(
+                    "Model artifacts partially available",
+                    model_success=model_success,
+                    graph_success=graph_success,
+                )
+        except RuntimeError as exc:
+            logger.error(
+                "CRITICAL: Failed to initialize model artifacts at startup",
+                error=str(exc),
+            )
+            # Allow service to start but /readyz will report not ready
+            # This makes the failure visible in Railway deployment status
+            pass
+
     @app.get("/healthz", tags=["infra"])
     async def healthz() -> dict[str, str]:
         return {"status": "ok", "service": "credlayer-ml"}
@@ -75,13 +104,18 @@ def create_app() -> FastAPI:
     @app.get("/readyz", tags=["infra"])
     async def readyz() -> dict[str, str]:
         scorer = get_scorer()
-        graph_exists = scorer.config.paths.graph_path.exists()
-        model_exists = scorer.config.paths.best_model_path.exists()
-        is_ready = graph_exists and model_exists
+        model_exists, graph_exists = verify_artifacts(scorer.config.paths)
+        
+        # Also verify the scorer actually loaded the artifacts
+        scorer._load()
+        models_loaded = scorer.model is not None and scorer.graph is not None
+        
+        is_ready = model_exists and graph_exists and models_loaded
         return {
             "status": "ok" if is_ready else "not_ready",
             "graph_exists": str(graph_exists),
             "model_exists": str(model_exists),
+            "models_loaded": str(models_loaded),
         }
 
     @app.get(
