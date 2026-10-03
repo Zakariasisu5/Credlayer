@@ -5,7 +5,8 @@ import {
     Keypair,
     Transaction,
     PublicKey,
-    TransactionInstruction
+    TransactionInstruction,
+    ComputeBudgetProgram
 } from '@solana/web3.js';
 import {
     getCreateAttestationInstruction,
@@ -224,13 +225,30 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
         });
 
         const v1Ix = toV1Instruction(v2Ix);
-        const tx = new Transaction().add(v1Ix);
+        const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+            microLamports: 100000,
+        });
+
+        const tx = new Transaction().add(priorityFeeIx, v1Ix);
+
+        const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+        tx.recentBlockhash = latestBlockhash.blockhash;
+        tx.feePayer = issuer.publicKey;
 
         // 4. Send and Confirm Transaction
-        const txId = await connection.sendTransaction(tx, [issuer]);
-        const confirmation = await connection.confirmTransaction(txId, 'confirmed');
+        const txId = await connection.sendTransaction(tx, [issuer], {
+            skipPreflight: false,
+            preflightCommitment: 'confirmed'
+        });
+        
+        const confirmation = await connection.confirmTransaction({
+            signature: txId,
+            blockhash: latestBlockhash.blockhash,
+            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+        }, 'confirmed');
+        
         if (confirmation.value.err) {
-            throw new Error('Attestation transaction was not confirmed');
+            throw new Error(`Attestation transaction failed: ${JSON.stringify(confirmation.value.err)}`);
         }
 
         console.log(`[Relayer] Success! Tx Hash: ${txId}`);
