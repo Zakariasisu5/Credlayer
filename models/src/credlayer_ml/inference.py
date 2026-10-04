@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 import structlog
 import torch
+torch.set_num_threads(1)
 import asyncio
 
 from credlayer_ml.config import PipelineConfig, get_default_config
