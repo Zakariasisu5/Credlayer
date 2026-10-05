@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import asyncio
 from typing import Annotated
 
 import httpx
@@ -65,24 +66,55 @@ class WalletScorer:
         ml_service_url = f"{self.settings.ml_service_url.rstrip('/')}/api/v1/scores/{address}"
 
         async with httpx.AsyncClient(timeout=15.0) as client:
-            try:
-                # Explicit GET request to the ML service
-                response = await client.get(ml_service_url)
-                response.raise_for_status()
+            # Retry loop for transient failures (429 / network errors)
+            attempt = 0
+            MAX_RETRIES = 3
+            BASE_BACKOFF = 1.0
+            while True:
+                try:
+                    response = await client.get(ml_service_url)
 
-            except httpx.RequestError as exc:
-                logger.error("ml_service_unreachable", address=address, error=repr(exc))
-                raise HTTPException(
-                    status_code=503, detail="GNN scoring engine is currently unreachable."
-                ) from exc
-            except httpx.HTTPStatusError as exc:
-                logger.error(
-                    "ml_service_http_error", address=address, status=exc.response.status_code
-                )
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"GNN scoring engine returned an error: {exc.response.status_code}",
-                ) from exc
+                    # Handle explicit 429 rate-limit responses with backoff
+                    if response.status_code == 429 and attempt < MAX_RETRIES:
+                        retry_after = 0
+                        try:
+                            retry_after = int(response.headers.get("Retry-After", "0"))
+                        except Exception:
+                            retry_after = 0
+                        backoff = retry_after or (BASE_BACKOFF * (2 ** attempt))
+                        logger.warning("ml_service_rate_limited", address=address, attempt=attempt, backoff=backoff)
+                        await asyncio.sleep(backoff)
+                        attempt += 1
+                        continue
+
+                    response.raise_for_status()
+                    break  # success
+
+                except httpx.RequestError as exc:
+                    logger.error("ml_service_unreachable", address=address, error=repr(exc), attempt=attempt)
+                    if attempt < MAX_RETRIES:
+                        await asyncio.sleep(BASE_BACKOFF * (2 ** attempt))
+                        attempt += 1
+                        continue
+                    raise HTTPException(status_code=503, detail="GNN scoring engine is currently unreachable.") from exc
+
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    logger.error("ml_service_http_error", address=address, status=status, attempt=attempt)
+                    if status == 429 and attempt < MAX_RETRIES:
+                        retry_after = 0
+                        try:
+                            retry_after = int(exc.response.headers.get("Retry-After", "0"))
+                        except Exception:
+                            retry_after = 0
+                        backoff = retry_after or (BASE_BACKOFF * (2 ** attempt))
+                        await asyncio.sleep(backoff)
+                        attempt += 1
+                        continue
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f"GNN scoring engine returned an error: {status}",
+                    ) from exc
 
             try:
                 ml_response = response.json()
