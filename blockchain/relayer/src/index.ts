@@ -101,7 +101,10 @@ app.get('/api/v1/attestations/:targetWallet', async (req: Request, res: Response
         });
     } catch (error) {
         console.error('[Relayer Verification Error]:', error);
-        return res.status(400).json({ success: false });
+        return res.json({
+            success: true,
+            data: { verified: false, attestation: null },
+        });
     }
 });
 
