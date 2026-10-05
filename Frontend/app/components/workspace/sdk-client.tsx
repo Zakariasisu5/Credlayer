@@ -71,6 +71,12 @@ export function TrustScoreLiveDemo() {
   const [progressMessage, setProgressMessage] = useState<string | null>(null);
   const requestController = useRef<AbortController | null>(null);
   const previousWalletAddress = useRef(walletAddress);
+  const lastValidResultRef = useRef<AttestationResult | null>(null);
+
+  const setLastKnownResult = (value: AttestationResult | null) => {
+    lastValidResultRef.current = value;
+    setResult(value);
+  };
 
   useEffect(() => {
     const walletChanged = previousWalletAddress.current !== walletAddress;
@@ -82,12 +88,16 @@ export function TrustScoreLiveDemo() {
     }
 
     if (!walletAddress && walletChanged && hadInFlightRequest) {
-      setResult(null);
+      setLastKnownResult(null);
       setErrorMessage(friendlyError("wallet_disconnected"));
       setFlowState("error");
       return;
     }
-    setResult(null);
+
+    if (!walletAddress) {
+      setLastKnownResult(null);
+    }
+
     setErrorMessage(null);
     setProgressMessage(null);
     setFlowState(walletAddress ? "wallet" : "disconnected");
@@ -100,7 +110,13 @@ export function TrustScoreLiveDemo() {
     requestController.current = controller;
     setErrorMessage(null);
     setProgressMessage(null);
-    setResult(null);
+
+    // Preserve the last good result while reloading/refetching. This prevents the
+    // UI from disappearing after a refresh even if the attestation request races.
+    const previousResult = lastValidResultRef.current;
+    if (!previousResult) {
+      setResult(null);
+    }
     setFlowState("preparing");
 
     try {
@@ -160,16 +176,23 @@ export function TrustScoreLiveDemo() {
         },
       };
 
-      setResult(finalResult);
+      setLastKnownResult(finalResult);
       setFlowState("success");
     } catch (error) {
       if (controller.signal.aborted) return;
       console.error("Attestation flow failed", error);
 
-      // Prefer showing backend detail when running in development, otherwise keep the friendly message
       const rawDetail = error instanceof Error ? error.message : String(error);
       const showableDetail =
         process.env.NODE_ENV === "development" && rawDetail ? rawDetail : null;
+
+      // If we already have a valid attestation, do not hide the real data during a
+      // refresh or a duplicate request; keep the last known value on screen.
+      if (lastValidResultRef.current) {
+        setFlowState("success");
+        setErrorMessage(null);
+        return;
+      }
 
       setErrorMessage(showableDetail ?? friendlyError("attestation"));
       setFlowState("error");
@@ -188,6 +211,7 @@ export function TrustScoreLiveDemo() {
     "verifying",
   ].includes(flowState);
   const currentSteps = flowState === "existing" ? existingSteps : progressSteps;
+  const displayedResult = result ?? lastValidResultRef.current;
 
   return (
     <section aria-labelledby="reputation-flow-title" className="py-2">
@@ -303,7 +327,7 @@ export function TrustScoreLiveDemo() {
           </div>
         )}
 
-        {flowState === "success" && result && (
+        {flowState === "success" && displayedResult && (
           <div aria-live="polite" className="py-7">
             <div className="flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -311,7 +335,7 @@ export function TrustScoreLiveDemo() {
                   Trust score
                 </p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums text-foreground">
-                  {result.attestation.trustScore}
+                  {displayedResult.attestation.trustScore}
                   <span className="ml-2 text-base font-medium text-muted-foreground">
                     / 1000
                   </span>
@@ -322,14 +346,14 @@ export function TrustScoreLiveDemo() {
                   Risk level
                 </p>
                 <p className="mt-2 text-lg font-medium capitalize text-foreground">
-                  {result.attestation.riskLevel.toLowerCase()} risk
+                  {displayedResult.attestation.riskLevel.toLowerCase()} risk
                 </p>
               </div>
             </div>
             <p className="flex items-center gap-2 pt-5 text-sm font-medium text-primary">
               <Check className="size-4" aria-hidden="true" />
               Attestation verified on-chain
-              {result.attestation.alreadyExisted && (
+              {displayedResult.attestation.alreadyExisted && (
                 <span className="font-normal text-muted-foreground">
                   · Existing credential confirmed
                 </span>
