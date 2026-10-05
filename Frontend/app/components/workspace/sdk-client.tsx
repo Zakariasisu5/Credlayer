@@ -276,7 +276,8 @@ export function TrustScoreLiveDemo() {
           payload.score?.trust_score ?? 0,
         );
         const riskLevel = String(
-          payload.attestation?.riskLevel ??\n          payload.score?.riskLevel ?? 
+          payload.attestation?.riskLevel ??
+          payload.score?.riskLevel ?? 
           payload.score?.risk_level ?? "unknown",
         ).toUpperCase();
 
