@@ -134,12 +134,16 @@ export function TrustScoreLiveDemo() {
       return;
     }
 
+    console.log(`[FRONTEND] Wallet connected: ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}`);
+    
     // New wallet connected — check LOCAL cache only, never hit the network
     const cached = loadCachedResult(walletAddress);
     if (cached) {
+      console.log(`[FRONTEND] Found cached attestation for wallet`)
       setLastKnownResult(cached);
       setFlowState("success");
     } else {
+      console.log(`[FRONTEND] No cached attestation, ready for user to click button`)
       setLastKnownResult(null);
       setErrorMessage(null);
       setFlowState("wallet"); // idle — waiting for the user to click the button
@@ -148,6 +152,9 @@ export function TrustScoreLiveDemo() {
 
   const runAttestation = async () => {
     if (!walletAddress || requestController.current) return;
+
+    const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    console.log(`[${requestId}] FRONTEND: Starting attestation flow for wallet: ${walletAddress}`);
 
     const controller = new AbortController();
     requestController.current = controller;
@@ -162,10 +169,13 @@ export function TrustScoreLiveDemo() {
 
     try {
       // Step 1: Check if attestation already exists
+      console.log(`[${requestId}] FRONTEND: Step 1 - Checking if attestation exists`)
       setFlowState("checking");
       const checkUrl = apiClient.getUri({
         url: `/scores/${encodeURIComponent(walletAddress)}/attestation/check`,
       });
+      console.log(`[${requestId}] FRONTEND: GET ${checkUrl}`)
+      
       const checkResponse = await fetch(checkUrl, {
         method: "GET",
         headers: {
@@ -173,6 +183,8 @@ export function TrustScoreLiveDemo() {
         },
         signal: controller.signal,
       });
+
+      console.log(`[${requestId}] FRONTEND: Check response status: ${checkResponse.status}`)
 
       if (checkResponse.ok) {
         const checkPayload = (await checkResponse.json().catch(() => ({}))) as {
@@ -185,10 +197,14 @@ export function TrustScoreLiveDemo() {
           };
         };
 
+        console.log(`[${requestId}] FRONTEND: Check payload: ${JSON.stringify(checkPayload)}`)
+
         // If attestation exists, display it without creating a new one
         if (checkPayload.success && checkPayload.exists && checkPayload.attestation) {
           const trustScore = Number(checkPayload.attestation.trustScore ?? 0);
           const riskLevel = String(checkPayload.attestation.riskLevel ?? "unknown").toUpperCase();
+
+          console.log(`[${requestId}] FRONTEND: Existing attestation found!`)
 
           if (Number.isFinite(trustScore) && riskLevel) {
             setFlowState("existing");
@@ -211,10 +227,14 @@ export function TrustScoreLiveDemo() {
       }
 
       // Step 2: If no existing attestation, create a new one
+      console.log(`[${requestId}] FRONTEND: Step 2 - Creating new attestation`)
       setFlowState("scoring");
       const url = apiClient.getUri({
         url: `/scores/${encodeURIComponent(walletAddress)}/attestation`,
       });
+      console.log(`[${requestId}] FRONTEND: POST ${url}`)
+      console.log(`[${requestId}] FRONTEND: Wallet being sent: ${walletAddress}`)
+      
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -223,6 +243,8 @@ export function TrustScoreLiveDemo() {
         },
         signal: controller.signal,
       });
+
+      console.log(`[${requestId}] FRONTEND: POST response status: ${response.status}`)
 
       const payload = (await response.json().catch(() => ({}))) as {
         success?: boolean;
@@ -244,6 +266,8 @@ export function TrustScoreLiveDemo() {
         message?: string;
       };
 
+      console.log(`[${requestId}] FRONTEND: Response payload:`, payload)
+
       // Handle success (200 OK with success: true)
       if (response.ok && payload.success === true) {
         const trustScore = Number(
@@ -252,14 +276,15 @@ export function TrustScoreLiveDemo() {
           payload.score?.trust_score ?? 0,
         );
         const riskLevel = String(
-          payload.attestation?.riskLevel ??
-          payload.score?.riskLevel ?? 
+          payload.attestation?.riskLevel ??\n          payload.score?.riskLevel ?? 
           payload.score?.risk_level ?? "unknown",
         ).toUpperCase();
 
         if (!Number.isFinite(trustScore) || !riskLevel) {
           throw new Error("verification");
         }
+
+        console.log(`[${requestId}] FRONTEND: SUCCESS - Attestation created`)
 
         const finalResult: AttestationResult = {
           score: { trustScore, riskLevel },
@@ -279,10 +304,11 @@ export function TrustScoreLiveDemo() {
 
       // Otherwise, treat as error
       const detail = payload.detail || payload.error || payload.message || "attestation";
+      console.log(`[${requestId}] FRONTEND: ERROR - ${detail}`)
       throw new Error(typeof detail === "string" ? detail : "attestation");
     } catch (error) {
       if (controller.signal.aborted) return;
-      console.error("Attestation flow failed", error);
+      console.error(`[${requestId}] FRONTEND: Attestation flow failed`, error);
 
       const rawDetail = error instanceof Error ? error.message : String(error);
       const showableDetail =
@@ -488,3 +514,4 @@ export function TrustScoreLiveDemo() {
     </section>
   );
 }
+
