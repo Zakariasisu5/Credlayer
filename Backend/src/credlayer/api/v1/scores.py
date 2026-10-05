@@ -74,7 +74,6 @@ class WalletScorer:
                 try:
                     response = await client.get(ml_service_url)
 
-                    # Handle explicit 429 rate-limit responses with backoff
                     if response.status_code == 429 and attempt < MAX_RETRIES:
                         retry_after = 0
                         try:
@@ -82,13 +81,18 @@ class WalletScorer:
                         except Exception:
                             retry_after = 0
                         backoff = retry_after or (BASE_BACKOFF * (2 ** attempt))
-                        logger.warning("ml_service_rate_limited", address=address, attempt=attempt, backoff=backoff)
+                        logger.warning(
+                            "ml_service_rate_limited",
+                            address=address,
+                            attempt=attempt,
+                            backoff=backoff,
+                        )
                         await asyncio.sleep(backoff)
                         attempt += 1
                         continue
 
                     response.raise_for_status()
-                    break  # success
+                    break
 
                 except httpx.RequestError as exc:
                     logger.error("ml_service_unreachable", address=address, error=repr(exc), attempt=attempt)
@@ -96,7 +100,9 @@ class WalletScorer:
                         await asyncio.sleep(BASE_BACKOFF * (2 ** attempt))
                         attempt += 1
                         continue
-                    raise HTTPException(status_code=503, detail="GNN scoring engine is currently unreachable.") from exc
+                    raise HTTPException(
+                        status_code=503, detail="GNN scoring engine is currently unreachable."
+                    ) from exc
 
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
@@ -219,9 +225,17 @@ async def issue_attestation_debug(address: str, scorer: ScorerDependency) -> dic
         raise HTTPException(status_code=422, detail="Invalid Solana wallet address.")
     relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
     if not relayer_base:
+        logger.error("relayer_url_not_configured", address=address)
         raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
 
-    score = WalletScore.model_validate(await scorer.score_address(address))
+    try:
+        score = WalletScore.model_validate(await scorer.score_address(address))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("score_address_failed_in_debug", address=address, error=repr(exc))
+        raise HTTPException(status_code=502, detail="Failed to score wallet.") from exc
+
     try:
         async with httpx.AsyncClient(timeout=35.0) as client:
             response = await client.post(
@@ -245,7 +259,14 @@ async def issue_attestation_debug(address: str, scorer: ScorerDependency) -> dic
     description="Fetch the wallet score and request a relayer attestation explicitly.",
 )
 async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
+    """
+    Issue an attestation for a wallet by:
+    1. Validating the wallet address format
+    2. Scoring it via the ML service
+    3. Posting to the relayer service
+    """
     if not re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{32,44}", address):
+        logger.warning("invalid_wallet_address", address=address)
         raise HTTPException(status_code=422, detail="Invalid Solana wallet address.")
 
     relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
@@ -253,55 +274,102 @@ async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
         logger.error("relayer_url_not_configured", address=address)
         raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
 
-    score = WalletScore.model_validate(await scorer.score_address(address))
+    # Step 1: Score the wallet
+    try:
+        score_data = await scorer.score_address(address)
+        score = WalletScore.model_validate(score_data)
+        logger.info("wallet_scored", address=address, trust_score=score.trust_score)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("score_address_failed", address=address, error=repr(exc))
+        raise HTTPException(status_code=502, detail="Failed to score wallet.") from exc
+
+    # Step 2: Post to relayer
     try:
         async with httpx.AsyncClient(timeout=35.0) as client:
-            response = await client.post(
-                f"{relayer_base.rstrip('/')}/api/v1/attestations/issue",
-                json={
-                    "targetWallet": address,
-                    "trustScore": score.trust_score,
-                    "riskLevel": score.risk_level.upper(),
-                },
-            )
+            relayer_url = f"{relayer_base.rstrip('/')}/api/v1/attestations/issue"
+            payload = {
+                "targetWallet": address,
+                "trustScore": score.trust_score,
+                "riskLevel": score.risk_level.upper(),
+            }
+            logger.info("posting_to_relayer", address=address, relayer_url=relayer_url)
+
+            response = await client.post(relayer_url, json=payload)
+
             try:
-                payload = response.json()
+                response_payload = response.json()
             except ValueError:
-                payload = {}
+                logger.error(
+                    "relayer_invalid_json",
+                    address=address,
+                    status=response.status_code,
+                    body=response.text[:500],
+                )
+                response_payload = {}
 
             if response.is_error:
-                detail = payload.get("detail") or payload.get("error") or payload.get("message")
-                if detail:
-                    raise HTTPException(status_code=response.status_code, detail=str(detail))
+                detail = (
+                    response_payload.get("detail")
+                    or response_payload.get("error")
+                    or response_payload.get("message")
+                )
+                logger.error(
+                    "relayer_http_error",
+                    address=address,
+                    status=response.status_code,
+                    detail=detail,
+                )
                 raise HTTPException(
                     status_code=response.status_code,
-                    detail="Attestation service rejected the request.",
+                    detail=str(detail) if detail else "Attestation service rejected the request.",
                 )
 
-            if payload.get("success") is not True:
-                detail = payload.get("detail") or payload.get("error") or payload.get("message")
+            if response_payload.get("success") is not True:
+                detail = (
+                    response_payload.get("detail")
+                    or response_payload.get("error")
+                    or response_payload.get("message")
+                )
+                logger.error(
+                    "relayer_success_false",
+                    address=address,
+                    detail=detail,
+                    payload=response_payload,
+                )
                 raise HTTPException(
                     status_code=502,
                     detail=str(detail) if detail else "Attestation creation failed.",
                 )
 
-            data_payload = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+            data_payload = (
+                response_payload.get("data")
+                if isinstance(response_payload.get("data"), dict)
+                else {}
+            )
             tx_hash = (
-                payload.get("txHash")
-                or payload.get("tx_hash")
-                or payload.get("transactionHash")
+                response_payload.get("txHash")
+                or response_payload.get("tx_hash")
+                or response_payload.get("transactionHash")
                 or data_payload.get("txHash")
             )
+
+            logger.info("attestation_issued", address=address, tx_hash=tx_hash)
+
             return {
                 "success": True,
                 "txHash": tx_hash,
-                "alreadyExists": bool(payload.get("alreadyExists") or payload.get("already_exists")),
+                "alreadyExists": bool(
+                    response_payload.get("alreadyExists") or response_payload.get("already_exists")
+                ),
                 "score": score.model_dump(by_alias=True),
             }
+
     except HTTPException:
         raise
     except httpx.RequestError as exc:
-        logger.exception("attestation_issue_failed", address=address, error=repr(exc))
+        logger.exception("relayer_unreachable", address=address, error=repr(exc))
         raise HTTPException(
             status_code=503, detail="Attestation service is currently unreachable."
         ) from exc
