@@ -165,8 +165,13 @@ export function TrustScoreLiveDemo() {
     } catch (error) {
       if (controller.signal.aborted) return;
       console.error("Attestation flow failed", error);
-      const detail = error instanceof Error ? error.message : "backend";
-      setErrorMessage(friendlyError(detail === "backend" ? "attestation" : "attestation"));
+
+      // Prefer showing backend detail when running in development, otherwise keep the friendly message
+      const rawDetail = error instanceof Error ? error.message : String(error);
+      const showableDetail =
+        process.env.NODE_ENV === "development" && rawDetail ? rawDetail : null;
+
+      setErrorMessage(showableDetail ?? friendlyError("attestation"));
       setFlowState("error");
     } finally {
       if (requestController.current === controller) {
@@ -225,7 +230,7 @@ export function TrustScoreLiveDemo() {
               type="button"
               onClick={runAttestation}
               disabled={isProcessing}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90[...]
             >
               {isProcessing && (
                 <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
