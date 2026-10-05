@@ -153,11 +153,30 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
                 ? decodeTrustAttestation(existingAccount.data, wallet, credentialPda, schemaPda)
                 : null;
             if (existingAttestation) {
-                console.log(`[Relayer] Attestation already exists for ${targetWallet}`);
-                return res.json({ success: true, alreadyExists: true });
+                console.log(`[Relayer] Attestation already exists for ${targetWallet} with score ${existingAttestation.trustScore}`);
+                return res.json({
+                    success: true,
+                    alreadyExists: true,
+                    txHash: null,
+                    attestationPda: attestationPda.toBase58(),
+                    wallet: targetWallet,
+                    trustScore: existingAttestation.trustScore,
+                    riskLevel: existingAttestation.riskLevel,
+                });
             }
-            // Existing account is corrupt or invalid — try to close and recreate it
-            console.log(`[Relayer] Existing account at ${attestationPda.toBase58()} is invalid. Attempting to close and recreate.`);
+            // Existing account is corrupt or invalid - cannot recreate without closing
+            console.error(`[Relayer] PDA ${attestationPda.toBase58()} exists but contains invalid attestation data.`);
+            console.error(`[Relayer] Owner: ${existingAccount.owner.toBase58()}, Expected: ${SAS_PROGRAM_ID.toBase58()}`);
+            return res.status(409).json({
+                success: false,
+                error: "Attestation PDA already exists but contains invalid or unrecognized data. Cannot overwrite existing account.",
+                attestationPda: attestationPda.toBase58(),
+                details: {
+                    accountExists: true,
+                    validOwner: existingAccount.owner.equals(SAS_PROGRAM_ID),
+                    canDecode: false,
+                }
+            });
         }
 
         const issuerKey = process.env.ISSUER_PRIVATE_KEY;
@@ -268,24 +287,39 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
 
     } catch (error: any) {
         console.error("[Relayer Error]:", error);
-        if (attestationPda) {
+        
+        // Handle race condition: check if attestation was created by another request
+        if (attestationPda && targetWalletKey) {
             try {
                 const accountInfo = await connection.getAccountInfo(attestationPda);
-                const existingAttestation = accountInfo?.owner.equals(SAS_PROGRAM_ID)
-                    ? decodeTrustAttestation(
-                        accountInfo.data,
-                        targetWalletKey!,
-                        new PublicKey(process.env.CREDENTIAL_PDA!),
-                        new PublicKey(process.env.SCHEMA_PDA!),
-                    )
-                    : null;
-                if (existingAttestation) {
-                    return res.json({ success: true, alreadyExists: true });
+                if (accountInfo) {
+                    const existingAttestation = accountInfo.owner.equals(SAS_PROGRAM_ID)
+                        ? decodeTrustAttestation(
+                            accountInfo.data,
+                            targetWalletKey,
+                            new PublicKey(process.env.CREDENTIAL_PDA!),
+                            new PublicKey(process.env.SCHEMA_PDA!),
+                        )
+                        : null;
+                    
+                    if (existingAttestation) {
+                        console.log(`[Relayer] Race condition detected: attestation was created by concurrent request`);
+                        return res.json({
+                            success: true,
+                            alreadyExists: true,
+                            txHash: null,
+                            attestationPda: attestationPda.toBase58(),
+                            wallet: targetWalletKey.toBase58(),
+                            trustScore: existingAttestation.trustScore,
+                            riskLevel: existingAttestation.riskLevel,
+                        });
+                    }
                 }
             } catch (verificationError) {
                 console.error("[Relayer Idempotency Check Error]:", verificationError);
             }
         }
+        
         return res.status(500).json({
             success: false,
             error: error.message || "Failed to process on-chain attestation"

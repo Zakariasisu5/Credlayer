@@ -161,6 +161,57 @@ export function TrustScoreLiveDemo() {
     setFlowState("preparing");
 
     try {
+      // Step 1: Check if attestation already exists
+      setFlowState("checking");
+      const checkUrl = apiClient.getUri({
+        url: `/scores/${encodeURIComponent(walletAddress)}/attestation/check`,
+      });
+      const checkResponse = await fetch(checkUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      });
+
+      if (checkResponse.ok) {
+        const checkPayload = (await checkResponse.json().catch(() => ({}))) as {
+          success?: boolean;
+          exists?: boolean;
+          attestation?: {
+            trustScore?: number;
+            riskLevel?: string;
+            verified?: boolean;
+          };
+        };
+
+        // If attestation exists, display it without creating a new one
+        if (checkPayload.success && checkPayload.exists && checkPayload.attestation) {
+          const trustScore = Number(checkPayload.attestation.trustScore ?? 0);
+          const riskLevel = String(checkPayload.attestation.riskLevel ?? "unknown").toUpperCase();
+
+          if (Number.isFinite(trustScore) && riskLevel) {
+            setFlowState("existing");
+            const finalResult: AttestationResult = {
+              score: { trustScore, riskLevel },
+              attestation: {
+                verified: true,
+                alreadyExisted: true,
+                trustScore,
+                riskLevel,
+              },
+            };
+
+            setLastKnownResult(finalResult);
+            saveCachedResult(walletAddress, finalResult);
+            setFlowState("success");
+            return;
+          }
+        }
+      }
+
+      // Step 2: If no existing attestation, create a new one
+      setFlowState("scoring");
       const url = apiClient.getUri({
         url: `/scores/${encodeURIComponent(walletAddress)}/attestation`,
       });
@@ -177,11 +228,16 @@ export function TrustScoreLiveDemo() {
         success?: boolean;
         txHash?: string;
         alreadyExists?: boolean;
+        attestationPda?: string;
         score?: {
           trustScore?: number;
           riskLevel?: string;
           trust_score?: number;
           risk_level?: string;
+        };
+        attestation?: {
+          trustScore?: number;
+          riskLevel?: string;
         };
         detail?: string;
         error?: string;
@@ -191,10 +247,14 @@ export function TrustScoreLiveDemo() {
       // Handle success (200 OK with success: true)
       if (response.ok && payload.success === true) {
         const trustScore = Number(
-          payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
+          payload.attestation?.trustScore ?? 
+          payload.score?.trustScore ?? 
+          payload.score?.trust_score ?? 0,
         );
         const riskLevel = String(
-          payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
+          payload.attestation?.riskLevel ??
+          payload.score?.riskLevel ?? 
+          payload.score?.risk_level ?? "unknown",
         ).toUpperCase();
 
         if (!Number.isFinite(trustScore) || !riskLevel) {
@@ -215,34 +275,6 @@ export function TrustScoreLiveDemo() {
         saveCachedResult(walletAddress, finalResult);
         setFlowState("success");
         return;
-      }
-
-      // Handle 409 Conflict: attestation already exists
-      // The backend returns 200 with alreadyExists=true, but treat this as success
-      if (payload.alreadyExists === true || payload.success === true) {
-        const trustScore = Number(
-          payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
-        );
-        const riskLevel = String(
-          payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
-        ).toUpperCase();
-
-        if (Number.isFinite(trustScore) && riskLevel) {
-          const finalResult: AttestationResult = {
-            score: { trustScore, riskLevel },
-            attestation: {
-              verified: true,
-              alreadyExisted: true,
-              trustScore,
-              riskLevel,
-            },
-          };
-
-          setLastKnownResult(finalResult);
-          saveCachedResult(walletAddress, finalResult);
-          setFlowState("success");
-          return;
-        }
       }
 
       // Otherwise, treat as error

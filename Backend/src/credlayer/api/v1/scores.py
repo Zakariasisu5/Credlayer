@@ -253,6 +253,73 @@ async def issue_attestation_debug(address: str, scorer: ScorerDependency) -> dic
         raise HTTPException(status_code=502, detail="Attestation issuance failed.") from exc
 
 
+@router.get(
+    "/{address}/attestation/check",
+    summary="Check if an attestation exists for a wallet",
+    description="Query the relayer to check if an attestation already exists on-chain.",
+)
+async def check_attestation(address: str, scorer: ScorerDependency) -> dict:
+    """
+    Check if an attestation exists for a wallet without creating one.
+    Returns the existing attestation data if found.
+    """
+    if not re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{32,44}", address):
+        logger.warning("invalid_wallet_address_check", address=address)
+        raise HTTPException(status_code=422, detail="Invalid Solana wallet address.")
+
+    relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
+    if not relayer_base:
+        logger.error("relayer_url_not_configured_check", address=address)
+        raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            relayer_url = f"{relayer_base.rstrip('/')}/api/v1/attestations/{address}"
+            logger.info("checking_attestation_existence", address=address, relayer_url=relayer_url)
+            
+            response = await client.get(relayer_url)
+            
+            try:
+                response_payload = response.json()
+            except ValueError:
+                logger.error(
+                    "relayer_check_invalid_json",
+                    address=address,
+                    status=response.status_code,
+                )
+                return {"success": True, "exists": False}
+
+            if response.is_error:
+                logger.warning("attestation_check_failed", address=address, status=response.status_code)
+                return {"success": True, "exists": False}
+
+            data = response_payload.get("data", {})
+            verified = data.get("verified", False)
+            attestation = data.get("attestation")
+
+            if verified and attestation:
+                logger.info("attestation_found", address=address, attestation=attestation)
+                return {
+                    "success": True,
+                    "exists": True,
+                    "attestation": {
+                        "trustScore": attestation.get("trustScore"),
+                        "riskLevel": attestation.get("riskLevel"),
+                        "verified": True,
+                    },
+                }
+
+            logger.info("no_attestation_found", address=address)
+            return {"success": True, "exists": False}
+
+    except httpx.RequestError as exc:
+        logger.warning("relayer_unreachable_check", address=address, error=repr(exc))
+        return {"success": True, "exists": False}
+    except Exception as exc:
+        logger.exception("attestation_check_error", address=address, error=repr(exc))
+        return {"success": True, "exists": False}
+
+
 @router.post(
     "/{address}/attestation",
     summary="Create an attestation for a wallet",
@@ -262,8 +329,9 @@ async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
     """
     Issue an attestation for a wallet by:
     1. Validating the wallet address format
-    2. Scoring it via the ML service
-    3. Posting to the relayer service
+    2. Checking if an attestation already exists (idempotency)
+    3. Scoring it via the ML service
+    4. Posting to the relayer service if needed
     """
     if not re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{32,44}", address):
         logger.warning("invalid_wallet_address", address=address)
@@ -273,6 +341,49 @@ async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
     if not relayer_base:
         logger.error("relayer_url_not_configured", address=address)
         raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
+
+    # Step 0: Check if attestation already exists (idempotency check)
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            check_url = f"{relayer_base.rstrip('/')}/api/v1/attestations/{address}"
+            logger.info("checking_existing_attestation", address=address)
+            
+            check_response = await client.get(check_url)
+            
+            if check_response.is_success:
+                try:
+                    check_payload = check_response.json()
+                    data = check_payload.get("data", {})
+                    if data.get("verified") and data.get("attestation"):
+                        attestation = data["attestation"]
+                        trust_score = attestation.get("trustScore")
+                        risk_level = attestation.get("riskLevel")
+                        
+                        if trust_score is not None and risk_level:
+                            logger.info(
+                                "attestation_already_exists",
+                                address=address,
+                                trust_score=trust_score,
+                                risk_level=risk_level,
+                            )
+                            return {
+                                "success": True,
+                                "alreadyExists": True,
+                                "txHash": None,
+                                "attestation": {
+                                    "trustScore": trust_score,
+                                    "riskLevel": risk_level,
+                                },
+                                "score": {
+                                    "trustScore": trust_score,
+                                    "riskLevel": risk_level,
+                                },
+                            }
+                except (ValueError, KeyError) as exc:
+                    logger.warning("existing_attestation_check_parse_failed", address=address, error=repr(exc))
+    except Exception as exc:
+        logger.warning("existing_attestation_check_failed", address=address, error=repr(exc))
+        # Continue with creation attempt if check fails
 
     # Step 1: Score the wallet
     try:
@@ -354,15 +465,32 @@ async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
                 or response_payload.get("transactionHash")
                 or data_payload.get("txHash")
             )
+            attestation_pda = response_payload.get("attestationPda") or data_payload.get("attestationPda")
+            already_exists = bool(
+                response_payload.get("alreadyExists") or response_payload.get("already_exists")
+            )
 
-            logger.info("attestation_issued", address=address, tx_hash=tx_hash)
+            # Extract attestation data from relayer response
+            attestation_trust_score = response_payload.get("trustScore")
+            attestation_risk_level = response_payload.get("riskLevel")
+
+            logger.info(
+                "attestation_issued",
+                address=address,
+                tx_hash=tx_hash,
+                already_exists=already_exists,
+                attestation_pda=attestation_pda,
+            )
 
             return {
                 "success": True,
                 "txHash": tx_hash,
-                "alreadyExists": bool(
-                    response_payload.get("alreadyExists") or response_payload.get("already_exists")
-                ),
+                "alreadyExists": already_exists,
+                "attestationPda": attestation_pda,
+                "attestation": {
+                    "trustScore": attestation_trust_score or score.trust_score,
+                    "riskLevel": attestation_risk_level or score.risk_level.upper(),
+                },
                 "score": score.model_dump(by_alias=True),
             }
 
