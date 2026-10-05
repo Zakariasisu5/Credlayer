@@ -10,6 +10,7 @@ type FlowState =
   | "disconnected"
   | "wallet"
   | "preparing"
+  | "checking"
   | "existing"
   | "scoring"
   | "issuing"
@@ -36,10 +37,15 @@ const progressSteps: { state: FlowState; label: string }[] = [
   { state: "issuing", label: "Creating your attestation" },
   { state: "verifying", label: "Confirming your credential" },
 ];
+
 const existingSteps: { state: FlowState; label: string }[] = [
   { state: "preparing", label: "Preparing" },
   { state: "existing", label: "Checking your existing credential" },
   { state: "verifying", label: "Confirming your credential" },
+];
+
+const checkingSteps: { state: FlowState; label: string }[] = [
+  { state: "checking", label: "Looking for your attestation..." },
 ];
 
 function friendlyError(code: string) {
@@ -72,36 +78,120 @@ export function TrustScoreLiveDemo() {
   const requestController = useRef<AbortController | null>(null);
   const previousWalletAddress = useRef(walletAddress);
   const lastValidResultRef = useRef<AttestationResult | null>(null);
+  const hasAttemptedCheckRef = useRef(false);
 
   const setLastKnownResult = (value: AttestationResult | null) => {
     lastValidResultRef.current = value;
     setResult(value);
   };
 
+  // On wallet connection, check for existing attestation
   useEffect(() => {
     const walletChanged = previousWalletAddress.current !== walletAddress;
-    const hadInFlightRequest = requestController.current !== null;
     previousWalletAddress.current = walletAddress;
+
     if (walletChanged && requestController.current) {
       requestController.current.abort();
       requestController.current = null;
     }
 
-    if (!walletAddress && walletChanged && hadInFlightRequest) {
+    if (!walletAddress && walletChanged) {
       setLastKnownResult(null);
-      setErrorMessage(friendlyError("wallet_disconnected"));
-      setFlowState("error");
+      setErrorMessage(null);
+      setFlowState("disconnected");
+      hasAttemptedCheckRef.current = false;
+      return;
+    }
+
+    if (walletAddress && walletChanged && !hasAttemptedCheckRef.current) {
+      // New wallet connected: fetch existing attestation
+      hasAttemptedCheckRef.current = true;
+      fetchExistingAttestation();
       return;
     }
 
     if (!walletAddress) {
       setLastKnownResult(null);
+      setErrorMessage(null);
+      hasAttemptedCheckRef.current = false;
     }
-
-    setErrorMessage(null);
-    setProgressMessage(null);
-    setFlowState(walletAddress ? "wallet" : "disconnected");
   }, [walletAddress]);
+
+  const fetchExistingAttestation = async () => {
+    if (!walletAddress || requestController.current) return;
+
+    const controller = new AbortController();
+    requestController.current = controller;
+    setErrorMessage(null);
+    setFlowState("checking");
+
+    try {
+      const url = apiClient.getUri({
+        url: `/scores/${encodeURIComponent(walletAddress)}/attestation`,
+      });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        txHash?: string;
+        alreadyExists?: boolean;
+        score?: {
+          trustScore?: number;
+          riskLevel?: string;
+          trust_score?: number;
+          risk_level?: string;
+        };
+        detail?: string;
+        error?: string;
+        message?: string;
+      };
+
+      // Success: new or existing attestation retrieved
+      if (response.ok && payload.success === true) {
+        const trustScore = Number(
+          payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
+        );
+        const riskLevel = String(
+          payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
+        ).toUpperCase();
+
+        if (Number.isFinite(trustScore) && riskLevel) {
+          const finalResult: AttestationResult = {
+            score: { trustScore, riskLevel },
+            attestation: {
+              verified: true,
+              alreadyExisted: Boolean(payload.alreadyExists ?? false),
+              trustScore,
+              riskLevel,
+            },
+          };
+
+          setLastKnownResult(finalResult);
+          setFlowState("success");
+          return;
+        }
+      }
+
+      // If we get here, show idle state to allow manual retry
+      setFlowState("wallet");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.error("Failed to fetch attestation on wallet connect", error);
+      // Allow retry via button
+      setFlowState("wallet");
+    } finally {
+      if (requestController.current === controller) {
+        requestController.current = null;
+      }
+    }
+  };
 
   const runAttestation = async () => {
     if (!walletAddress || requestController.current) return;
@@ -111,8 +201,6 @@ export function TrustScoreLiveDemo() {
     setErrorMessage(null);
     setProgressMessage(null);
 
-    // Preserve the last good result while reloading/refetching. This prevents the
-    // UI from disappearing after a refresh even if the attestation request races.
     const previousResult = lastValidResultRef.current;
     if (!previousResult) {
       setResult(null);
@@ -147,37 +235,64 @@ export function TrustScoreLiveDemo() {
         message?: string;
       };
 
-      if (!response.ok || payload.success !== true) {
-        const detail = payload.detail || payload.error || payload.message || "attestation";
-        throw new Error(typeof detail === "string" ? detail : "attestation");
+      // Handle success (200 OK with success: true)
+      if (response.ok && payload.success === true) {
+        const trustScore = Number(
+          payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
+        );
+        const riskLevel = String(
+          payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
+        ).toUpperCase();
+
+        if (!Number.isFinite(trustScore) || !riskLevel) {
+          throw new Error("verification");
+        }
+
+        const finalResult: AttestationResult = {
+          score: { trustScore, riskLevel },
+          attestation: {
+            verified: true,
+            alreadyExisted: Boolean(payload.alreadyExists ?? false),
+            trustScore,
+            riskLevel,
+          },
+        };
+
+        setLastKnownResult(finalResult);
+        setFlowState("success");
+        return;
       }
 
-      const trustScore = Number(
-        payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
-      );
-      const riskLevel = String(
-        payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
-      ).toUpperCase();
+      // Handle 409 Conflict: attestation already exists
+      // The backend returns 200 with alreadyExists=true, but treat this as success
+      if (payload.alreadyExists === true || payload.success === true) {
+        const trustScore = Number(
+          payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
+        );
+        const riskLevel = String(
+          payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
+        ).toUpperCase();
 
-      if (!Number.isFinite(trustScore) || !riskLevel) {
-        throw new Error("verification");
+        if (Number.isFinite(trustScore) && riskLevel) {
+          const finalResult: AttestationResult = {
+            score: { trustScore, riskLevel },
+            attestation: {
+              verified: true,
+              alreadyExisted: true,
+              trustScore,
+              riskLevel,
+            },
+          };
+
+          setLastKnownResult(finalResult);
+          setFlowState("success");
+          return;
+        }
       }
 
-      const finalResult: AttestationResult = {
-        score: {
-          trustScore,
-          riskLevel,
-        },
-        attestation: {
-          verified: true,
-          alreadyExisted: Boolean(payload.alreadyExists ?? false),
-          trustScore,
-          riskLevel,
-        },
-      };
-
-      setLastKnownResult(finalResult);
-      setFlowState("success");
+      // Otherwise, treat as error
+      const detail = payload.detail || payload.error || payload.message || "attestation";
+      throw new Error(typeof detail === "string" ? detail : "attestation");
     } catch (error) {
       if (controller.signal.aborted) return;
       console.error("Attestation flow failed", error);
@@ -186,8 +301,7 @@ export function TrustScoreLiveDemo() {
       const showableDetail =
         process.env.NODE_ENV === "development" && rawDetail ? rawDetail : null;
 
-      // If we already have a valid attestation, do not hide the real data during a
-      // refresh or a duplicate request; keep the last known value on screen.
+      // If we have a previous valid result, keep showing it
       if (lastValidResultRef.current) {
         setFlowState("success");
         setErrorMessage(null);
@@ -205,12 +319,20 @@ export function TrustScoreLiveDemo() {
 
   const isProcessing = [
     "preparing",
+    "checking",
     "existing",
     "scoring",
     "issuing",
     "verifying",
   ].includes(flowState);
-  const currentSteps = flowState === "existing" ? existingSteps : progressSteps;
+
+  let currentSteps = progressSteps;
+  if (flowState === "checking") {
+    currentSteps = checkingSteps;
+  } else if (flowState === "existing") {
+    currentSteps = existingSteps;
+  }
+
   const displayedResult = result ?? lastValidResultRef.current;
 
   return (
