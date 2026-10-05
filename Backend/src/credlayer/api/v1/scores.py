@@ -333,14 +333,21 @@ async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
     3. Scoring it via the ML service
     4. Posting to the relayer service if needed
     """
+    import uuid
+    request_id = str(uuid.uuid4())[:8]
+    logger.info(f"TRACE[{request_id}] POST /attestation START", address=address)
+    
     if not re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{32,44}", address):
         logger.warning("invalid_wallet_address", address=address)
         raise HTTPException(status_code=422, detail="Invalid Solana wallet address.")
 
+    logger.info(f"TRACE[{request_id}] Wallet address validated", address=address)
     relayer_base = scorer.settings.relayer_url or scorer.settings.relayer_service_url
     if not relayer_base:
         logger.error("relayer_url_not_configured", address=address)
         raise HTTPException(status_code=503, detail="Attestation service is unavailable.")
+    
+    logger.info(f"TRACE[{request_id}] Relayer base URL resolved", relayer_base=relayer_base)
 
     # Step 0: Check if attestation already exists (idempotency check)
     try:
@@ -405,9 +412,14 @@ async def issue_attestation(address: str, scorer: ScorerDependency) -> dict:
                 "trustScore": score.trust_score,
                 "riskLevel": score.risk_level.upper(),
             }
-            logger.info("posting_to_relayer", address=address, relayer_url=relayer_url)
+            logger.info("posting_to_relayer", address=address, relayer_url=relayer_url, payload=payload)
+            logger.info(f"TRACE[{request_id}] Sending POST to relayer", 
+                       targetWallet=payload.get("targetWallet"),
+                       trustScore=payload.get("trustScore"),
+                       riskLevel=payload.get("riskLevel"))
 
             response = await client.post(relayer_url, json=payload)
+            logger.info(f"TRACE[{request_id}] Relayer response received", status=response.status_code)
 
             try:
                 response_payload = response.json()
