@@ -6,7 +6,8 @@ import {
     Transaction,
     PublicKey,
     TransactionInstruction,
-    ComputeBudgetProgram
+    ComputeBudgetProgram,
+    SystemProgram
 } from '@solana/web3.js';
 import {
     getCreateAttestationInstruction,
@@ -152,9 +153,11 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
                 ? decodeTrustAttestation(existingAccount.data, wallet, credentialPda, schemaPda)
                 : null;
             if (existingAttestation) {
+                console.log(`[Relayer] Attestation already exists for ${targetWallet}`);
                 return res.json({ success: true, alreadyExists: true });
             }
-            return res.status(409).json({ success: false, error: "Existing account is not a valid attestation" });
+            // Existing account is corrupt or invalid — try to close and recreate it
+            console.log(`[Relayer] Existing account at ${attestationPda.toBase58()} is invalid. Attempting to close and recreate.`);
         }
 
         const issuerKey = process.env.ISSUER_PRIVATE_KEY;
