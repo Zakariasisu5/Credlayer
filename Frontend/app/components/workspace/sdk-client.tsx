@@ -63,6 +63,34 @@ function friendlyError(code: string) {
   }
 }
 
+// ---- Local persistence helpers (per-wallet, survives page refresh) ----
+const cacheKey = (wallet: string) => `credlayer_attestation_${wallet}`;
+
+function loadCachedResult(wallet: string): AttestationResult | null {
+  try {
+    const raw = localStorage.getItem(cacheKey(wallet));
+    return raw ? (JSON.parse(raw) as AttestationResult) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedResult(wallet: string, result: AttestationResult) {
+  try {
+    localStorage.setItem(cacheKey(wallet), JSON.stringify(result));
+  } catch {
+    // storage full or unavailable — non-fatal, just skip caching
+  }
+}
+
+function clearCachedResult(wallet: string) {
+  try {
+    localStorage.removeItem(cacheKey(wallet));
+  } catch {
+    // non-fatal
+  }
+}
+
 export function TrustScoreLiveDemo() {
   const client = useAppClient();
   const connectedWallet = useConnectedWallet(client);
@@ -78,120 +106,45 @@ export function TrustScoreLiveDemo() {
   const requestController = useRef<AbortController | null>(null);
   const previousWalletAddress = useRef(walletAddress);
   const lastValidResultRef = useRef<AttestationResult | null>(null);
-  const hasAttemptedCheckRef = useRef(false);
 
   const setLastKnownResult = (value: AttestationResult | null) => {
     lastValidResultRef.current = value;
     setResult(value);
   };
 
-  // On wallet connection, check for existing attestation
+  // On wallet connect/disconnect/change — local cache only, no network call.
   useEffect(() => {
     const walletChanged = previousWalletAddress.current !== walletAddress;
+    const prevWallet = previousWalletAddress.current;
     previousWalletAddress.current = walletAddress;
 
-    if (walletChanged && requestController.current) {
+    if (!walletChanged) return;
+
+    if (requestController.current) {
       requestController.current.abort();
       requestController.current = null;
     }
 
-    if (!walletAddress && walletChanged) {
+    if (!walletAddress) {
+      // Disconnected — clear this wallet's cached data and reset state
+      if (prevWallet) clearCachedResult(prevWallet);
       setLastKnownResult(null);
       setErrorMessage(null);
       setFlowState("disconnected");
-      hasAttemptedCheckRef.current = false;
       return;
     }
 
-    if (walletAddress && walletChanged && !hasAttemptedCheckRef.current) {
-      // New wallet connected: fetch existing attestation
-      hasAttemptedCheckRef.current = true;
-      fetchExistingAttestation();
-      return;
-    }
-
-    if (!walletAddress) {
+    // New wallet connected — check LOCAL cache only, never hit the network
+    const cached = loadCachedResult(walletAddress);
+    if (cached) {
+      setLastKnownResult(cached);
+      setFlowState("success");
+    } else {
       setLastKnownResult(null);
       setErrorMessage(null);
-      hasAttemptedCheckRef.current = false;
+      setFlowState("wallet"); // idle — waiting for the user to click the button
     }
   }, [walletAddress]);
-
-  const fetchExistingAttestation = async () => {
-    if (!walletAddress || requestController.current) return;
-
-    const controller = new AbortController();
-    requestController.current = controller;
-    setErrorMessage(null);
-    setFlowState("checking");
-
-    try {
-      const url = apiClient.getUri({
-        url: `/scores/${encodeURIComponent(walletAddress)}/attestation`,
-      });
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-      });
-
-      const payload = (await response.json().catch(() => ({}))) as {
-        success?: boolean;
-        txHash?: string;
-        alreadyExists?: boolean;
-        score?: {
-          trustScore?: number;
-          riskLevel?: string;
-          trust_score?: number;
-          risk_level?: string;
-        };
-        detail?: string;
-        error?: string;
-        message?: string;
-      };
-
-      // Success: new or existing attestation retrieved
-      if (response.ok && payload.success === true) {
-        const trustScore = Number(
-          payload.score?.trustScore ?? payload.score?.trust_score ?? 0,
-        );
-        const riskLevel = String(
-          payload.score?.riskLevel ?? payload.score?.risk_level ?? "unknown",
-        ).toUpperCase();
-
-        if (Number.isFinite(trustScore) && riskLevel) {
-          const finalResult: AttestationResult = {
-            score: { trustScore, riskLevel },
-            attestation: {
-              verified: true,
-              alreadyExisted: Boolean(payload.alreadyExists ?? false),
-              trustScore,
-              riskLevel,
-            },
-          };
-
-          setLastKnownResult(finalResult);
-          setFlowState("success");
-          return;
-        }
-      }
-
-      // If we get here, show idle state to allow manual retry
-      setFlowState("wallet");
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      console.error("Failed to fetch attestation on wallet connect", error);
-      // Allow retry via button
-      setFlowState("wallet");
-    } finally {
-      if (requestController.current === controller) {
-        requestController.current = null;
-      }
-    }
-  };
 
   const runAttestation = async () => {
     if (!walletAddress || requestController.current) return;
@@ -259,6 +212,7 @@ export function TrustScoreLiveDemo() {
         };
 
         setLastKnownResult(finalResult);
+        saveCachedResult(walletAddress, finalResult);
         setFlowState("success");
         return;
       }
@@ -285,6 +239,7 @@ export function TrustScoreLiveDemo() {
           };
 
           setLastKnownResult(finalResult);
+          saveCachedResult(walletAddress, finalResult);
           setFlowState("success");
           return;
         }
