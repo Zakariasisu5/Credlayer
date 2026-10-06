@@ -28,29 +28,105 @@ const connection = new Connection(
 );
 const SAS_PROGRAM_ID = new PublicKey('22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG');
 
+/**
+ * AUDIT: SAS Attestation Account Layout
+ * 
+ * According to sas-lib v1.0.10 and SAS protocol spec:
+ * Byte 0:         discriminator/version (u8) = 0
+ * Bytes 1-33:     target_wallet (PublicKey, 32 bytes)
+ * Bytes 33-65:    credential (PublicKey, 32 bytes)
+ * Bytes 65-97:    schema (PublicKey, 32 bytes)
+ * Bytes 97-101:   encoded_data_length (u32, little-endian)
+ * Bytes 101+:     encoded_data (variable, Borsh-encoded payload)
+ *
+ * Payload format (as created by relayer):
+ *   Bytes 0-2:    trust_score (u16, little-endian)
+ *   Bytes 2-6:    riskLevel.length (u32, little-endian, Borsh string prefix)
+ *   Bytes 6+:     riskLevel (UTF-8 string)
+ * 
+ * This decoder validates all three PublicKey fields match expectations.
+ */
 function decodeTrustAttestation(
     accountData: Buffer,
     targetWallet: PublicKey,
     credentialPda: PublicKey,
     schemaPda: PublicKey,
 ) {
-    const dataLengthOffset = 97;
-    const payloadOffset = dataLengthOffset + 4;
-    if (accountData.length < payloadOffset + 6 || accountData.readUInt8(0) !== 0) return null;
-    if (!new PublicKey(accountData.subarray(1, 33)).equals(targetWallet)) return null;
-    if (!new PublicKey(accountData.subarray(33, 65)).equals(credentialPda)) return null;
-    if (!new PublicKey(accountData.subarray(65, 97)).equals(schemaPda)) return null;
+    const DISCRIMINATOR_OFFSET = 0;
+    const TARGET_WALLET_OFFSET = 1;
+    const CREDENTIAL_OFFSET = 33;
+    const SCHEMA_OFFSET = 65;
+    const DATA_LENGTH_OFFSET = 97;
+    const PAYLOAD_OFFSET = 101;
 
-    const encodedDataLength = accountData.readUInt32LE(dataLengthOffset);
-    if (encodedDataLength < 6 || payloadOffset + encodedDataLength > accountData.length) return null;
-    const scorePayload = accountData.subarray(payloadOffset, payloadOffset + encodedDataLength);
+    // Validate minimum length
+    if (accountData.length < PAYLOAD_OFFSET) {
+        return null;
+    }
+
+    // Check discriminator
+    if (accountData.readUInt8(DISCRIMINATOR_OFFSET) !== 0) {
+        return null;
+    }
+
+    // Validate all three PublicKey fields
+    if (!new PublicKey(accountData.subarray(TARGET_WALLET_OFFSET, CREDENTIAL_OFFSET)).equals(targetWallet)) {
+        return null;
+    }
+    if (!new PublicKey(accountData.subarray(CREDENTIAL_OFFSET, SCHEMA_OFFSET)).equals(credentialPda)) {
+        return null;
+    }
+    if (!new PublicKey(accountData.subarray(SCHEMA_OFFSET, DATA_LENGTH_OFFSET)).equals(schemaPda)) {
+        return null;
+    }
+
+    // Read and validate encoded data length
+    const encodedDataLength = accountData.readUInt32LE(DATA_LENGTH_OFFSET);
+    if (encodedDataLength < 6 || PAYLOAD_OFFSET + encodedDataLength > accountData.length) {
+        return null;
+    }
+
+    // Extract and parse payload
+    const scorePayload = accountData.subarray(PAYLOAD_OFFSET, PAYLOAD_OFFSET + encodedDataLength);
     const trustScore = scorePayload.readUInt16LE(0);
     const riskLength = scorePayload.readUInt32LE(2);
-    if (trustScore > 1000 || riskLength !== scorePayload.length - 6) return null;
+
+    // Validate trust score range and payload structure
+    if (trustScore > 1000 || riskLength !== scorePayload.length - 6) {
+        return null;
+    }
 
     const riskLevel = scorePayload.toString('utf8', 6);
-    if (!['LOW', 'MEDIUM', 'HIGH', 'MINIMAL'].includes(riskLevel)) return null;
+    if (!['LOW', 'MEDIUM', 'HIGH', 'MINIMAL'].includes(riskLevel)) {
+        return null;
+    }
+
     return { trustScore, riskLevel };
+}
+
+/**
+ * SHARED: Derive attestation PDA with consistent nonce encoding.
+ * This ensures GET and POST use identical PDA derivation logic.
+ * 
+ * CRITICAL: nonce is passed as base58-encoded wallet string.
+ * This must match sas-lib's expectations exactly.
+ */
+async function getAttestationPda(
+    wallet: PublicKey,
+    credentialPda: PublicKey,
+    schemaPda: PublicKey,
+): Promise<PublicKey> {
+    const walletBase58 = wallet.toBase58();
+    const credentialBase58 = credentialPda.toBase58();
+    const schemaBase58 = schemaPda.toBase58();
+
+    const [attestationPdaStr] = await deriveAttestationPda({
+        credential: credentialBase58 as any,
+        schema: schemaBase58 as any,
+        nonce: walletBase58 as any,
+    });
+
+    return new PublicKey(attestationPdaStr);
 }
 
 // Helper function to convert v2-style instructions to v1 TransactionInstruction
@@ -68,52 +144,77 @@ function toV1Instruction(ix: any): TransactionInstruction {
 
 // Health check endpoint for FastAPI or monitoring tools
 app.get('/health', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', service: 'credlayer-relayer' });
+    res.json({
+        status: 'ok',
+        service: 'credlayer-relayer',
+        environment: process.env.ENVIRONMENT || 'unknown',
+        commit: process.env.GIT_COMMIT || 'unknown'
+    });
 });
 
+/**
+ * GET /api/v1/attestations/:targetWallet
+ * 
+ * Check if a valid attestation exists for a wallet.
+ * 
+ * Returns:
+ *   200 success=true, verified=true/false
+ *   200 success=true, verified=false (no account or decode failed)
+ *   500 on env/config errors
+ */
 app.get('/api/v1/attestations/:targetWallet', async (req: Request, res: Response) => {
     const requestId = Date.now() + Math.random().toString(36).substr(2, 9);
     const targetWalletParam = req.params.targetWallet;
-    console.log(`[CHECK-${requestId}] TRACE: GET /api/v1/attestations/:targetWallet`);
-    console.log(`[CHECK-${requestId}] TRACE: targetWallet param = "${targetWalletParam}"`);
     
     try {
         const targetWallet = new PublicKey(targetWalletParam);
-        console.log(`[CHECK-${requestId}] TRACE: targetWallet as PublicKey = ${targetWallet.toBase58()}`);
         
         const credentialPdaStr = process.env.CREDENTIAL_PDA;
         const schemaPdaStr = process.env.SCHEMA_PDA;
-        console.log(`[CHECK-${requestId}] TRACE: credential = ${credentialPdaStr}`);
-        console.log(`[CHECK-${requestId}] TRACE: schema = ${schemaPdaStr}`);
         
         if (!credentialPdaStr || !schemaPdaStr) {
-            console.log(`[CHECK-${requestId}] ERROR: Missing credential or schema PDA`);
+            console.error(`[CHECK-${requestId}] ERROR: Missing credential or schema PDA`);
             return res.status(503).json({ success: false });
         }
 
-        console.log(`[CHECK-${requestId}] TRACE: Deriving attestation PDA with nonce = ${targetWallet.toBase58()}`);
-        const [attestationPdaStr] = await deriveAttestationPda({
-            credential: credentialPdaStr as any,
-            schema: schemaPdaStr as any,
-            nonce: targetWallet.toBase58() as any,
-        });
-        console.log(`[CHECK-${requestId}] TRACE: Derived attestationPda = ${attestationPdaStr}`);
+        const credentialPda = new PublicKey(credentialPdaStr);
+        const schemaPda = new PublicKey(schemaPdaStr);
+
+        // Derive attestation PDA using shared helper
+        const attestationPda = await getAttestationPda(targetWallet, credentialPda, schemaPda);
         
-        const accountInfo = await connection.getAccountInfo(new PublicKey(attestationPdaStr));
-        console.log(`[CHECK-${requestId}] TRACE: Account exists = ${accountInfo !== null}`);
+        console.log(`[CHECK-${requestId}] PDA_DEBUG: {
+  wallet: ${targetWallet.toBase58()},
+  credential: ${credentialPda.toBase58()},
+  schema: ${schemaPda.toBase58()},
+  nonce: ${targetWallet.toBase58()},
+  attestationPda: ${attestationPda.toBase58()}
+}`);
+
+        const accountInfo = await connection.getAccountInfo(attestationPda);
+        console.log(`[CHECK-${requestId}] ACCOUNT_DEBUG: {
+  exists: ${accountInfo !== null},
+  owner: ${accountInfo?.owner.toBase58() || 'N/A'},
+  dataLength: ${accountInfo?.data.length || 0},
+  lamports: ${accountInfo?.lamports || 0},
+  executable: ${accountInfo?.executable || false}
+}`);
         
         const attestation = accountInfo?.owner.equals(SAS_PROGRAM_ID)
             ? decodeTrustAttestation(
                 accountInfo.data,
                 targetWallet,
-                new PublicKey(credentialPdaStr),
-                new PublicKey(schemaPdaStr),
+                credentialPda,
+                schemaPda,
             )
             : null;
         
-        console.log(`[CHECK-${requestId}] TRACE: Attestation decoded = ${attestation !== null}`);
         if (attestation) {
-            console.log(`[CHECK-${requestId}] TRACE: Attestation data = {trustScore: ${attestation.trustScore}, riskLevel: ${attestation.riskLevel}}`);
+            console.log(`[CHECK-${requestId}] ATTESTATION: verified=true, trustScore=${attestation.trustScore}, riskLevel=${attestation.riskLevel}`);
+        } else if (accountInfo) {
+            console.log(`[CHECK-${requestId}] WARNING: Account exists but decode failed. Owner=${accountInfo.owner.toBase58()}, dataLen=${accountInfo.data.length}`);
+        } else {
+            console.log(`[CHECK-${requestId}] INFO: No attestation found (account does not exist)`);
         }
 
         return res.json({
@@ -129,20 +230,26 @@ app.get('/api/v1/attestations/:targetWallet', async (req: Request, res: Response
     }
 });
 
-// Endpoint called by the Python FastAPI backend
+/**
+ * POST /api/v1/attestations/issue
+ * 
+ * Create a new attestation on-chain, or return existing if valid.
+ * 
+ * Returns:
+ *   200 success=true, alreadyExists=false (created)
+ *   200 success=true, alreadyExists=true (already exists and valid)
+ *   409 success=false (PDA occupied by corrupt/invalid account)
+ *   400 invalid request
+ *   500 internal error
+ */
 app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
     const requestId = Date.now() + Math.random().toString(36).substr(2, 9);
-    console.log(`[ISSUE-${requestId}] TRACE: POST /api/v1/attestations/issue`);
-    console.log(`[ISSUE-${requestId}] TRACE: Request body = ${JSON.stringify(req.body)}`);
+    console.log(`[ISSUE-${requestId}] TRACE: POST /api/v1/attestations/issue body=${JSON.stringify(req.body)}`);
     
     let attestationPda: PublicKey | undefined;
     let targetWalletKey: PublicKey | undefined;
     try {
         const { targetWallet, trustScore, riskLevel } = req.body;
-        
-        console.log(`[ISSUE-${requestId}] TRACE: targetWallet = "${targetWallet}"`);
-        console.log(`[ISSUE-${requestId}] TRACE: trustScore = ${trustScore}`);
-        console.log(`[ISSUE-${requestId}] TRACE: riskLevel = ${riskLevel}`);
 
         if (!targetWallet || trustScore === undefined || !riskLevel) {
             console.log(`[ISSUE-${requestId}] ERROR: Missing required parameters`);
@@ -155,15 +262,13 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: "Invalid trust score" });
         }
 
-        if (!["LOW", "MEDIUM", "HIGH", "MINIMAL"].includes(String(riskLevel).toUpperCase())) {
+        if (![\"LOW\", \"MEDIUM\", \"HIGH\", \"MINIMAL\"].includes(String(riskLevel).toUpperCase())) {
             return res.status(400).json({ success: false, error: "Invalid risk level" });
         }
         const normalizedRiskLevel = String(riskLevel).toUpperCase();
 
         const credentialPdaStr = process.env.CREDENTIAL_PDA;
         const schemaPdaStr = process.env.SCHEMA_PDA;
-        console.log(`[ISSUE-${requestId}] TRACE: credential = ${credentialPdaStr}`);
-        console.log(`[ISSUE-${requestId}] TRACE: schema = ${schemaPdaStr}`);
 
         if (!credentialPdaStr || !schemaPdaStr) {
             console.log(`[ISSUE-${requestId}] ERROR: Missing credential or schema PDA`);
@@ -174,44 +279,56 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
 
         const wallet = new PublicKey(targetWallet);
         targetWalletKey = wallet;
-        console.log(`[ISSUE-${requestId}] TRACE: wallet as PublicKey = ${wallet.toBase58()}`);
-        
         const credentialPda = new PublicKey(credentialPdaStr);
         const schemaPda = new PublicKey(schemaPdaStr);
         
-        console.log(`[ISSUE-${requestId}] TRACE: Deriving attestation PDA with:`);
-        console.log(`[ISSUE-${requestId}]   - credential: ${credentialPda.toBase58()}`);
-        console.log(`[ISSUE-${requestId}]   - schema: ${schemaPda.toBase58()}`);
-        console.log(`[ISSUE-${requestId}]   - nonce: ${wallet.toBase58()}`);
+        // Derive attestation PDA using shared helper
+        attestationPda = await getAttestationPda(wallet, credentialPda, schemaPda);
         
-        const [attestationPdaStr] = await deriveAttestationPda({
-            credential: credentialPda.toBase58() as any,
-            schema: schemaPda.toBase58() as any,
-            nonce: wallet.toBase58() as any,  // ✅ FIX: Use wallet.toBase58() instead of wallet object
-        });
-        attestationPda = new PublicKey(attestationPdaStr);
-        console.log(`[ISSUE-${requestId}] TRACE: Derived attestationPda = ${attestationPda.toBase58()}`);
+        console.log(`[ISSUE-${requestId}] PDA_DEBUG: {
+  wallet: ${wallet.toBase58()},
+  credential: ${credentialPda.toBase58()},
+  schema: ${schemaPda.toBase58()},
+  nonce: ${wallet.toBase58()},
+  attestationPda: ${attestationPda.toBase58()}
+}`);
 
         console.log(`[ISSUE-${requestId}] TRACE: Checking if attestation already exists on-chain...`);
         const existingAccount = await connection.getAccountInfo(attestationPda);
-        console.log(`[ISSUE-${requestId}] TRACE: Existing account found = ${existingAccount !== null}`);
+        
+        console.log(`[ISSUE-${requestId}] ACCOUNT_DEBUG: {
+  exists: ${existingAccount !== null},
+  owner: ${existingAccount?.owner.toBase58() || 'N/A'},
+  expectedOwner: ${SAS_PROGRAM_ID.toBase58()},
+  ownerMatch: ${existingAccount?.owner.equals(SAS_PROGRAM_ID) || false},
+  dataLength: ${existingAccount?.data.length || 0},
+  lamports: ${existingAccount?.lamports || 0}
+}`);
         
         if (existingAccount) {
-            console.log(`[ISSUE-${requestId}] TRACE: Existing account owner = ${existingAccount.owner.toBase58()}`);
-            console.log(`[ISSUE-${requestId}] TRACE: Expected program ID = ${SAS_PROGRAM_ID.toBase58()}`);
-            console.log(`[ISSUE-${requestId}] TRACE: Owner matches expected = ${existingAccount.owner.equals(SAS_PROGRAM_ID)}`);
-            
-            const existingAttestation = existingAccount.owner.equals(SAS_PROGRAM_ID)
-                ? decodeTrustAttestation(existingAccount.data, wallet, credentialPda, schemaPda)
-                : null;
-            
-            console.log(`[ISSUE-${requestId}] TRACE: Existing attestation decoded = ${existingAttestation !== null}`);
+            // Verify owner is SAS_PROGRAM_ID
+            if (!existingAccount.owner.equals(SAS_PROGRAM_ID)) {
+                console.error(`[ISSUE-${requestId}] CONFLICT: PDA owned by different program`);
+                return res.status(409).json({
+                    success: false,
+                    error: "Attestation PDA is occupied by an account owned by another program.",
+                    attestationPda: attestationPda.toBase58(),
+                    owner: existingAccount.owner.toBase58(),
+                    expectedOwner: SAS_PROGRAM_ID.toBase58()
+                });
+            }
+
+            // Try to decode as valid attestation
+            const existingAttestation = decodeTrustAttestation(
+                existingAccount.data,
+                wallet,
+                credentialPda,
+                schemaPda
+            );
             
             if (existingAttestation) {
-                console.log(`[ISSUE-${requestId}] TRACE: Attestation already exists:`);
-                console.log(`[ISSUE-${requestId}]   - trustScore: ${existingAttestation.trustScore}`);
-                console.log(`[ISSUE-${requestId}]   - riskLevel: ${existingAttestation.riskLevel}`);
-                console.log(`[ISSUE-${requestId}] SUCCESS: Returning existing attestation with alreadyExists=true`);
+                console.log(`[ISSUE-${requestId}] SUCCESS: Valid attestation already exists`);
+                console.log(`[ISSUE-${requestId}] ATTESTATION: trustScore=${existingAttestation.trustScore}, riskLevel=${existingAttestation.riskLevel}`);
                 
                 return res.json({
                     success: true,
@@ -224,9 +341,11 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
                 });
             }
             
-            // Existing account is corrupt or invalid
-            console.error(`[ISSUE-${requestId}] ERROR: PDA exists but contains invalid attestation data`);
-            console.error(`[ISSUE-${requestId}] CONFLICT: Account at ${attestationPda.toBase58()} is not a valid attestation`);
+            // Account exists but cannot be decoded as valid attestation
+            console.error(`[ISSUE-${requestId}] CONFLICT: PDA contains invalid attestation data`);
+            console.error(`[ISSUE-${requestId}] DIAGNOSTIC: accountOwnerIsValid=${existingAccount.owner.equals(SAS_PROGRAM_ID)}, canDecode=false`);
+            console.error(`[ISSUE-${requestId}] DATA_DUMP: first 32 bytes: ${existingAccount.data.subarray(0, 32).toString('hex')}`);
+            
             return res.status(409).json({
                 success: false,
                 error: "Attestation PDA already exists but contains invalid or unrecognized data. Cannot overwrite existing account.",
@@ -235,6 +354,8 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
                     accountExists: true,
                     validOwner: existingAccount.owner.equals(SAS_PROGRAM_ID),
                     canDecode: false,
+                    dataLength: existingAccount.data.length,
+                    lamports: existingAccount.lamports
                 }
             });
         }
@@ -248,7 +369,6 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
             });
         }
 
-        // Validate that the issuer key is not a placeholder
         if (issuerKey.includes('YOUR_') || issuerKey.includes('HERE') || issuerKey.length < 32) {
             return res.status(500).json({
                 error: "ISSUER_PRIVATE_KEY in .env is still a placeholder. Please set it to a valid Base58 private key.",
@@ -256,7 +376,6 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
             });
         }
 
-        // Validate credential and schema PDAs
         if (credentialPdaStr.includes('YOUR_') || credentialPdaStr.includes('HERE') || credentialPdaStr.length < 32) {
             return res.status(500).json({
                 error: "CREDENTIAL_PDA in .env is still a placeholder. Please run the SAS credential creation script.",
@@ -284,25 +403,24 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
         console.log(`[ISSUE-${requestId}] TRACE: Creating transaction for wallet: ${wallet.toBase58()}`);
         console.log(`[ISSUE-${requestId}] TRACE: Using issuer: ${issuer.publicKey.toBase58()}`);
 
-        // 1. Derive Attestation PDA
-        // 2. Encode score payload (u16 trust_score + UTF-8 risk_level string)
+        // Encode score payload (u16 trust_score + Borsh string with length prefix)
         const scoreBuffer = Buffer.alloc(2);
         scoreBuffer.writeUInt16LE(trustScore, 0);
         
-        // Borsh string encoding requires a 4-byte length prefix
         const riskBytes = Buffer.from(normalizedRiskLevel, 'utf-8');
         const lengthBuffer = Buffer.alloc(4);
         lengthBuffer.writeUInt32LE(riskBytes.length, 0);
         
         const dataPayload = Buffer.concat([scoreBuffer, lengthBuffer, riskBytes]);
+        console.log(`[ISSUE-${requestId}] PAYLOAD_DEBUG: trustScore=${trustScore}, riskLevel=${normalizedRiskLevel}, payloadLen=${dataPayload.length}, payloadHex=${dataPayload.toString('hex')}`);
 
-        // 3. Build Instruction
+        // Build instruction with identical nonce encoding
         const v2Ix = getCreateAttestationInstruction({
             payer: issuer.publicKey.toBase58() as any,
             authority: issuer.publicKey.toBase58() as any,
             credential: credentialPda.toBase58() as any,
             schema: schemaPda.toBase58() as any,
-            nonce: wallet.toBase58() as any,  // ✅ FIX: Use wallet.toBase58() for consistency
+            nonce: wallet.toBase58() as any,  // ✅ CONSISTENT: wallet.toBase58()
             attestation: attestationPda.toBase58() as any,
             data: dataPayload as any,
             expiry: 0n,
@@ -319,7 +437,6 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
         tx.recentBlockhash = latestBlockhash.blockhash;
         tx.feePayer = issuer.publicKey;
 
-        // 4. Send and Confirm Transaction
         console.log(`[ISSUE-${requestId}] TRACE: Sending transaction...`);
         const txId = await connection.sendTransaction(tx, [issuer], {
             skipPreflight: false,
@@ -396,5 +513,7 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`🚀 CredLayer Relayer active on http://localhost:${PORT}`);
+    console.log(`Environment: ${process.env.ENVIRONMENT || 'unknown'}`);
+    console.log(`Solana RPC: ${process.env.SOLANA_RPC_URL || 'default'}`);
 });
 
