@@ -305,6 +305,13 @@ async def check_attestation(address: str, scorer: ScorerDependency) -> dict:
                     "attestation": {
                         "trustScore": attestation.get("trustScore"),
                         "riskLevel": attestation.get("riskLevel"),
+                        "trustLevel": attestation.get("trustLevel"),
+                        "confidence": attestation.get("confidence"),
+                        "fraudProbability": attestation.get("fraudProbability"),
+                        "network": attestation.get("network"),
+                        "explanation": attestation.get("explanation"),
+                        "attestationPda": data.get("attestationPda") or data.get("pda"),
+                        "txHash": data.get("txHash") or data.get("transactionHash"),
                         "verified": True,
                     },
                 }

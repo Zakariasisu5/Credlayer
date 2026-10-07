@@ -188,6 +188,13 @@ export function TrustScoreLiveDemo() {
             attestation?: {
               trustScore?: number;
               riskLevel?: string;
+              trustLevel?: string;
+              confidence?: number;
+              fraudProbability?: number;
+              network?: string;
+              explanation?: string;
+              attestationPda?: string;
+              txHash?: string;
               verified?: boolean;
             };
           };
@@ -202,18 +209,27 @@ export function TrustScoreLiveDemo() {
             if (Number.isFinite(trustScore) && riskLevel) {
               console.log(`[Wallet Flow] Existing wallet found - trustScore: ${trustScore}, riskLevel: ${riskLevel}`);
               
+              // Merge with cached data to preserve all fields
               const existingResult: AttestationResult = {
                 walletAddress,
                 score: { 
                   trustScore, 
                   riskLevel,
+                  trustLevel: checkPayload.attestation.trustLevel || cached?.score.trustLevel,
+                  confidence: checkPayload.attestation.confidence ?? cached?.score.confidence,
+                  fraudProbability: checkPayload.attestation.fraudProbability ?? cached?.score.fraudProbability,
+                  network: checkPayload.attestation.network || cached?.score.network || "solana",
+                  explanation: checkPayload.attestation.explanation || cached?.score.explanation,
+                  address: cached?.score.address,
                 },
                 attestation: {
-                  verified: true,
+                  verified: checkPayload.attestation.verified ?? true,
                   alreadyExisted: true,
                   trustScore,
                   riskLevel,
                 },
+                attestationPda: checkPayload.attestation.attestationPda || cached?.attestationPda,
+                txHash: checkPayload.attestation.txHash || cached?.txHash,
                 timestamp: Date.now(),
               };
 
