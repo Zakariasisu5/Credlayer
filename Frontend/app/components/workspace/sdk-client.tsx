@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/refs */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -19,9 +21,16 @@ type FlowState =
   | "error";
 
 type AttestationResult = {
+  walletAddress: string;
   score: {
+    address?: string;
     trustScore: number;
+    trustLevel?: string;
     riskLevel: string;
+    confidence?: number;
+    fraudProbability?: number;
+    network?: string;
+    explanation?: string;
   };
   attestation: {
     verified: boolean;
@@ -29,6 +38,9 @@ type AttestationResult = {
     trustScore: number;
     riskLevel: string;
   };
+  txHash?: string;
+  attestationPda?: string;
+  timestamp: number;
 };
 
 const progressSteps: { state: FlowState; label: string }[] = [
@@ -190,13 +202,18 @@ export function TrustScoreLiveDemo() {
               console.log(`[Wallet Flow] Existing wallet found - trustScore: ${trustScore}, riskLevel: ${riskLevel}`);
               
               const existingResult: AttestationResult = {
-                score: { trustScore, riskLevel },
+                walletAddress,
+                score: { 
+                  trustScore, 
+                  riskLevel,
+                },
                 attestation: {
                   verified: true,
                   alreadyExisted: true,
                   trustScore,
                   riskLevel,
                 },
+                timestamp: Date.now(),
               };
 
               setLastKnownResult(existingResult);
@@ -268,10 +285,16 @@ export function TrustScoreLiveDemo() {
         alreadyExists?: boolean;
         attestationPda?: string;
         score?: {
+          address?: string;
           trustScore?: number;
+          trustLevel?: string;
           riskLevel?: string;
           trust_score?: number;
           risk_level?: string;
+          confidence?: number;
+          fraudProbability?: number;
+          network?: string;
+          explanation?: string;
         };
         attestation?: {
           trustScore?: number;
@@ -305,13 +328,26 @@ export function TrustScoreLiveDemo() {
         console.log(`[Wallet Flow] Trust Score: ${trustScore}, Risk Level: ${riskLevel}`)
 
         const finalResult: AttestationResult = {
-          score: { trustScore, riskLevel },
+          walletAddress,
+          score: { 
+            address: payload.score?.address,
+            trustScore, 
+            trustLevel: payload.score?.trustLevel,
+            riskLevel,
+            confidence: payload.score?.confidence,
+            fraudProbability: payload.score?.fraudProbability,
+            network: payload.score?.network,
+            explanation: payload.score?.explanation,
+          },
           attestation: {
             verified: true,
             alreadyExisted: Boolean(payload.alreadyExists ?? false),
             trustScore,
             riskLevel,
           },
+          txHash: payload.txHash,
+          attestationPda: payload.attestationPda,
+          timestamp: Date.now(),
         };
 
         setLastKnownResult(finalResult);
@@ -501,6 +537,11 @@ export function TrustScoreLiveDemo() {
                     / 1000
                   </span>
                 </p>
+                {displayedResult.score.trustLevel && (
+                  <p className="mt-2 text-sm text-muted-foreground capitalize">
+                    Trust Level: {displayedResult.score.trustLevel}
+                  </p>
+                )}
               </div>
               <div className="sm:text-right">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -511,6 +552,92 @@ export function TrustScoreLiveDemo() {
                 </p>
               </div>
             </div>
+            
+            {/* Additional Details */}
+            <div className="grid grid-cols-1 gap-4 border-b border-border py-5 sm:grid-cols-2">
+              {displayedResult.score.confidence !== undefined && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Confidence
+                  </p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {(displayedResult.score.confidence * 100).toFixed(2)}%
+                  </p>
+                </div>
+              )}
+              {displayedResult.score.fraudProbability !== undefined && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Fraud Probability
+                  </p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {(displayedResult.score.fraudProbability * 100).toFixed(2)}%
+                  </p>
+                </div>
+              )}
+              {displayedResult.attestationPda && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Attestation PDA
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-foreground break-all">
+                    {displayedResult.attestationPda}
+                  </p>
+                </div>
+              )}
+              {displayedResult.txHash && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Transaction Hash
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-foreground break-all">
+                    {displayedResult.txHash}
+                  </p>
+                </div>
+              )}
+              {displayedResult.walletAddress && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Wallet Address
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-foreground break-all">
+                    {displayedResult.walletAddress}
+                  </p>
+                </div>
+              )}
+              {displayedResult.timestamp && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Last Updated
+                  </p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {new Date(displayedResult.timestamp).toLocaleString()}
+                  </p>
+                </div>
+              )}
+              {displayedResult.score.network && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Network
+                  </p>
+                  <p className="mt-1 text-sm text-foreground capitalize">
+                    {displayedResult.score.network}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {displayedResult.score.explanation && (
+              <div className="border-b border-border py-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Analysis Explanation
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {displayedResult.score.explanation}
+                </p>
+              </div>
+            )}
+
             <p className="flex items-center gap-2 pt-5 text-sm font-medium text-primary">
               <Check className="size-4" aria-hidden="true" />
               Attestation verified on-chain
@@ -555,8 +682,10 @@ export function TrustScoreLiveDemo() {
                           const riskLevel = String(checkPayload.attestation.riskLevel ?? "unknown").toUpperCase();
                           if (Number.isFinite(trustScore) && riskLevel) {
                             const refreshedResult: AttestationResult = {
+                              walletAddress: currentWallet,
                               score: { trustScore, riskLevel },
                               attestation: { verified: true, alreadyExisted: true, trustScore, riskLevel },
+                              timestamp: Date.now(),
                             };
                             setLastKnownResult(refreshedResult);
                             saveCachedResult(currentWallet, refreshedResult);

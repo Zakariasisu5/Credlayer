@@ -1,100 +1,146 @@
 "use client";
 
-import { UserRound } from "lucide-react";
+import { UserRound, RefreshCw } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Empty, Stat } from "../shared/common-components";
-import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
-import { useAppClient } from "../../lib/client-provider";
-import { useTrustScore, useCredentials, useConnections } from "../../lib/hooks";
+import { useWalletData } from "../../hooks/use-wallet-data";
 
 export function ProfilePage() {
-  const client = useAppClient();
-  const connectedWallet = useConnectedWallet(client);
-  const walletAddress = connectedWallet?.account.address;
+  const { data, loading, error, exists, refetch } = useWalletData();
 
-  // Fetch real data from backend (same hooks as dashboard for consistency)
-  const { data: trustScore, isLoading: scoreLoading } = useTrustScore(walletAddress);
-  const { data: credentials, isLoading: credentialsLoading } = useCredentials(walletAddress);
-  const { data: connections, isLoading: connectionsLoading } = useConnections(walletAddress);
-
-  // Calculate stats
-  const verifiedSignals = trustScore?.signals?.filter(s => s.verified).length ?? 0;
-  const connectionCount = connections?.totalCount ?? 0;
-  const credentialCount = credentials?.length ?? 0;
-  const verifiedCredentials = credentials?.filter(c => c.verificationStatus === 'verified').length ?? 0;
-
-  const hasData = walletAddress && (verifiedSignals > 0 || connectionCount > 0 || credentialCount > 0);
+  const walletAddress = data?.walletAddress;
+  const hasAttestation = exists && data !== null;
 
   return (
     <Shell title="Profile" eyebrow="App workspace">
       <div className="mx-auto max-w-7xl px-5 py-8 lg:px-10">
-        <p className="mb-7 text-sm text-muted-foreground">
-          Your identity, your permissions.
-        </p>
-        <div className="grid gap-5 md:grid-cols-3">
-          <Stat 
-            label="Verified signals" 
-            value={scoreLoading ? "..." : verifiedSignals > 0 ? verifiedSignals.toString() : "—"}
-            note={walletAddress ? (verifiedSignals > 0 ? "Trust score signals" : "No signals yet") : "Connect wallet"}
-          />
-          <Stat 
-            label="Trust connections" 
-            value={connectionsLoading ? "..." : connectionCount > 0 ? connectionCount.toString() : "—"}
-            note={walletAddress ? (connectionCount > 0 ? "Linked identities" : "No connections yet") : "Connect wallet"}
-          />
-          <Stat 
-            label="Credentials" 
-            value={credentialsLoading ? "..." : credentialCount > 0 ? credentialCount.toString() : "—"}
-            note={walletAddress ? (credentialCount > 0 ? `${verifiedCredentials} verified` : "No credentials yet") : "Connect wallet"}
-          />
+        <div className="mb-7 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Your identity and verification status.
+          </p>
+          {walletAddress && (
+            <button
+              onClick={() => refetch()}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          )}
         </div>
-        <div className="mt-5">
-          {!walletAddress ? (
-            <Empty
-              icon={UserRound}
-              title="No wallet connected"
-              description="Connect your wallet to view your profile data and identity verification status."
-            />
-          ) : !hasData ? (
-            <Empty
-              icon={UserRound}
-              title="No profile data yet"
-              description="This workspace is connected to the CredLayer protocol. Issue an attestation or verify credentials to see your profile data."
-            />
-          ) : (
-            <div className="rounded-lg border border-border bg-background/50 p-6">
-              <h3 className="mb-4 font-semibold">Profile Summary</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
+
+        {loading && !data ? (
+          <div className="rounded-lg border border-border bg-background/50 p-6 text-center">
+            <p className="text-sm text-muted-foreground">Loading wallet data...</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-6 text-center">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        ) : !walletAddress ? (
+          <Empty
+            icon={UserRound}
+            title="No wallet connected"
+            description="Connect your Solana wallet to view your CredLayer profile and verification status."
+          />
+        ) : !hasAttestation ? (
+          <Empty
+            icon={UserRound}
+            title="No CredLayer attestation"
+            description="You haven't created a CredLayer attestation yet. Go to the Dashboard to get your trust score and create your on-chain attestation."
+          />
+        ) : (
+          <>
+            <div className="grid gap-5 md:grid-cols-3 mb-6">
+              <Stat 
+                label="Trust Score" 
+                value={data.score.trustScore.toString()}
+                note={`${data.score.trustScore} / 1000`}
+              />
+              <Stat 
+                label="Risk Level" 
+                value={data.score.riskLevel}
+                note={`${data.score.trustLevel ? data.score.trustLevel.toUpperCase() + ' trust' : 'Risk assessment'}`}
+              />
+              {data.score.confidence !== undefined && (
+                <Stat 
+                  label="Confidence" 
+                  value={`${(data.score.confidence * 100).toFixed(1)}%`}
+                  note="Model confidence"
+                />
+              )}
+            </div>
+
+            <div className="rounded-lg border border-border bg-background/50 p-6 space-y-4">
+              <h3 className="font-semibold">Wallet Information</h3>
+              
+              <div className="grid gap-3 text-sm">
+                <div className="flex items-start justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Wallet Address</span>
-                  <span className="font-mono text-xs text-primary">
-                    {walletAddress.slice(0, 8)}...{walletAddress.slice(-8)}
+                  <span className="font-mono text-xs text-primary break-all text-right max-w-[60%]">
+                    {walletAddress}
                   </span>
                 </div>
-                {trustScore && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Trust Score</span>
-                    <span className="font-semibold text-primary">{trustScore.score}</span>
+
+                {data.score.network && (
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Network</span>
+                    <span className="capitalize">{data.score.network}</span>
                   </div>
                 )}
-                {trustScore && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Confidence</span>
-                    <span className="text-muted-foreground">{trustScore.confidence}%</span>
+
+                {data.attestation.verified && (
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Attestation Status</span>
+                    <span className="text-green-500 font-medium">Verified On-Chain</span>
                   </div>
                 )}
-                {credentials && credentials.length > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Verification Status</span>
-                    <span className={verifiedCredentials > 0 ? "text-green-500" : "text-amber-400"}>
-                      {verifiedCredentials > 0 ? "Verified" : "Pending"}
+
+                {data.attestationPda && (
+                  <div className="flex items-start justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Attestation PDA</span>
+                    <span className="font-mono text-xs break-all text-right max-w-[60%]">
+                      {data.attestationPda}
                     </span>
+                  </div>
+                )}
+
+                {data.txHash && (
+                  <div className="flex items-start justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Transaction Hash</span>
+                    <span className="font-mono text-xs break-all text-right max-w-[60%]">
+                      {data.txHash}
+                    </span>
+                  </div>
+                )}
+
+                {data.score.fraudProbability !== undefined && (
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Fraud Probability</span>
+                    <span>{(data.score.fraudProbability * 100).toFixed(2)}%</span>
+                  </div>
+                )}
+
+                {data.timestamp && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-muted-foreground">Last Updated</span>
+                    <span className="text-xs">{new Date(data.timestamp).toLocaleString()}</span>
                   </div>
                 )}
               </div>
             </div>
-          )}
-        </div>
+
+            {data.score.explanation && (
+              <div className="mt-6 rounded-lg border border-border bg-background/50 p-6">
+                <h3 className="mb-3 font-semibold">Analysis Explanation</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {data.score.explanation}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </Shell>
   );
