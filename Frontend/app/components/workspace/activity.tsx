@@ -6,9 +6,8 @@ import { Empty, Stat } from "../shared/common-components";
 import { useWalletData } from "../../hooks/use-wallet-data";
 
 export function ActivityPage() {
-  const { data, loading, error, exists, refetch } = useWalletData();
+  const { data, loading, error, exists, refetch, walletAddress } = useWalletData();
 
-  const walletAddress = data?.walletAddress;
   const hasAttestation = exists && data !== null;
 
   return (

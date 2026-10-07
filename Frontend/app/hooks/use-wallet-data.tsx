@@ -37,6 +37,7 @@ export type WalletDataState = {
   error: string | null;
   exists: boolean;
   refetch: () => Promise<void>;
+  walletAddress: string | null;
 };
 
 const CACHE_KEY = (wallet: string) => `credlayer_wallet_${wallet}`;
@@ -71,9 +72,9 @@ function clearCached(wallet: string) {
  * 
  * Usage:
  * ```ts
- * const { data, loading, error, exists, refetch } = useWalletData();
+ * const { data, loading, error, exists, refetch, walletAddress } = useWalletData();
  * 
- * if (!data) return <div>Connect wallet</div>;
+ * if (!walletAddress) return <div>Connect wallet</div>;
  * if (loading) return <div>Loading...</div>;
  * if (error) return <div>{error}</div>;
  * 
@@ -86,6 +87,12 @@ export function useWalletData(): WalletDataState {
   const walletAddress = connectedWallet?.account.address
     ? String(connectedWallet.account.address)
     : null;
+
+  console.log('[useWalletData] Wallet connection state:', {
+    hasClient: !!client,
+    hasConnectedWallet: !!connectedWallet,
+    walletAddress,
+  });
 
   const [data, setData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -234,5 +241,6 @@ export function useWalletData(): WalletDataState {
     error,
     exists,
     refetch,
+    walletAddress,
   };
 }

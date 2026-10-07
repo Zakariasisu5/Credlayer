@@ -6,9 +6,8 @@ import { Settings as SettingsIcon, RefreshCw } from "lucide-react";
 import { useWalletData } from "../../hooks/use-wallet-data";
 
 export function SettingsPage() {
-  const { data, loading, error, exists, refetch } = useWalletData();
+  const { data, loading, error, exists, refetch, walletAddress } = useWalletData();
 
-  const walletAddress = data?.walletAddress;
   const hasAttestation = exists && data !== null;
 
   return (
