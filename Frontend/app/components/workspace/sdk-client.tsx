@@ -76,7 +76,8 @@ function friendlyError(code: string) {
 }
 
 // ---- Local persistence helpers (per-wallet, survives page refresh) ----
-const cacheKey = (wallet: string) => `credlayer_attestation_${wallet}`;
+// IMPORTANT: Use same cache key as useWalletData hook for consistency
+const cacheKey = (wallet: string) => `credlayer_wallet_${wallet}`;
 
 function loadCachedResult(wallet: string): AttestationResult | null {
   try {
@@ -224,14 +225,27 @@ export function TrustScoreLiveDemo() {
           }
         }
 
-        // No existing attestation found
+        // No existing attestation found on backend
         console.log(`[Wallet Flow] New wallet - no existing attestation found`);
-        setFlowState("wallet"); // Show "Get Trust Score & Attestation" button
+        
+        // Only show "Get Trust Score" button if we don't have cached data
+        if (!cached) {
+          setFlowState("wallet"); // Show "Get Trust Score & Attestation" button
+        } else {
+          console.log(`[Wallet Flow] Keeping cached data even though backend returned no attestation`);
+          // Keep showing cached data and stay in success state
+        }
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error(`[Wallet Flow] Error checking existing attestation:`, error);
-        // On error, assume new wallet and show button
-        setFlowState("wallet");
+        
+        // On error, only show button if we don't have cached data
+        if (!cached) {
+          setFlowState("wallet");
+        } else {
+          console.log(`[Wallet Flow] Keeping cached data despite fetch error`);
+          // Keep showing cached data
+        }
       } finally {
         if (requestController.current === controller) {
           requestController.current = null;

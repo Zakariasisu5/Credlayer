@@ -116,13 +116,14 @@ export function useWalletData(): WalletDataState {
     setError(null);
 
     // Try cache first
+    let hasCachedData = false;
     if (useCache) {
       const cached = loadCached(wallet);
       if (cached) {
         console.log(`[useWalletData] Using cached data`);
         setData(cached);
         setExists(true);
-        setLoading(false);
+        hasCachedData = true;
         // Continue to fetch fresh data in background
       }
     }
@@ -175,23 +176,36 @@ export function useWalletData(): WalletDataState {
             setError(null);
             saveCached(wallet, walletData);
             console.log(`[useWalletData] Loaded existing attestation`);
+            setLoading(false);
             return;
           }
         }
       }
 
-      // No attestation found
+      // No attestation found from server
       console.log(`[useWalletData] No attestation found for wallet`);
-      setData(null);
-      setExists(false);
+      
+      // Only clear data if we don't have cached data
+      if (!hasCachedData) {
+        setData(null);
+        setExists(false);
+      } else {
+        console.log(`[useWalletData] Keeping cached data since server returned no data`);
+      }
       setError(null);
     } catch (err) {
       if (controller.signal.aborted) return;
       
       console.error(`[useWalletData] Error fetching wallet data:`, err);
-      setError("Failed to load wallet data");
-      setData(null);
-      setExists(false);
+      
+      // Only show error if we don't have cached data
+      if (!hasCachedData) {
+        setError("Failed to load wallet data");
+        setData(null);
+        setExists(false);
+      } else {
+        console.log(`[useWalletData] Keeping cached data despite fetch error`);
+      }
     } finally {
       if (!controller.signal.aborted) {
         setLoading(false);
