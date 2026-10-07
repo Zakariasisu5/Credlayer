@@ -3,199 +3,217 @@
 import { ShieldCheck, RefreshCw } from "lucide-react";
 import { Shell } from "../layout/app-shell";
 import { Empty, Stat, StyledCard } from "../shared/common-components";
-import { SkeletonStat, SkeletonList } from "../ui";
-import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
-import { useAppClient } from "../../lib/client-provider";
-import { useCredentials, reverifyCredential } from "../../lib/hooks";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useWalletData } from "../../hooks/use-wallet-data";
 
 export function CredentialsPage() {
-  const client = useAppClient();
-  const connectedWallet = useConnectedWallet(client);
-  const walletAddress = connectedWallet?.account.address;
+  const { data, loading, error, exists, refetch } = useWalletData();
 
-  const { data: credentials, isLoading, mutate: refreshCredentials } = useCredentials(walletAddress);
-  const [reverifyingId, setReverifyingId] = useState<string | null>(null);
-
-  const credentialCount = credentials?.length ?? 0;
-  const verifiedCount = credentials?.filter(c => c.verificationStatus === 'verified').length ?? 0;
-  const pendingCount = credentials?.filter(c => c.verificationStatus === 'pending').length ?? 0;
-  const failedCount = credentials?.filter(c => c.verificationStatus === 'failed').length ?? 0;
-
-  const handleReverify = async (credentialId: string) => {
-    if (!walletAddress) return;
-    
-    setReverifyingId(credentialId);
-    try {
-      await reverifyCredential(credentialId, walletAddress);
-      toast.success('Credential re-verification initiated');
-      refreshCredentials();
-    } catch (error) {
-      console.error('Reverify error:', error);
-      toast.error('Failed to re-verify credential');
-    } finally {
-      setReverifyingId(null);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'verified': return 'bg-green-500/10 text-green-500';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-500';
-      case 'failed': return 'bg-red-500/10 text-red-500';
-      default: return 'bg-gray-500/10 text-gray-500';
-    }
-  };
-
-  const getCredentialStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'text-green-500';
-      case 'revoked': return 'text-red-500';
-      case 'expired': return 'text-gray-500';
-      case 'pending': return 'text-yellow-500';
-      default: return 'text-gray-500';
-    }
-  };
+  const walletAddress = data?.walletAddress;
+  const hasAttestation = exists && data !== null;
 
   return (
     <Shell title="Credentials" eyebrow="App workspace">
       <div className="mx-auto max-w-7xl px-5 py-8 lg:px-10">
-        <p className="mb-7 text-sm text-muted-foreground">
-          Portable proof you can share with consent.
-        </p>
-        <div className="grid gap-5 md:grid-cols-3">
-          {isLoading ? (
-            <>
-              <SkeletonStat />
-              <SkeletonStat />
-              <SkeletonStat />
-            </>
-          ) : (
-            <>
-              <Stat 
-                label="Total Credentials" 
-                value={credentialCount > 0 ? credentialCount.toString() : "—"}
-                note={walletAddress ? (credentialCount > 0 ? "Issued credentials" : "No credentials yet") : "Connect wallet"}
-              />
-              <Stat 
-                label="Verified" 
-                value={verifiedCount > 0 ? verifiedCount.toString() : "—"}
-                note={walletAddress ? (verifiedCount > 0 ? "Successfully verified" : "None verified") : "Connect wallet"}
-              />
-              <Stat 
-                label="Pending" 
-                value={pendingCount > 0 ? pendingCount.toString() : "—"}
-                note={walletAddress ? (pendingCount > 0 ? "Awaiting verification" : "None pending") : "Connect wallet"}
-              />
-            </>
+        <div className="mb-7 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Your verifiable credentials and attestations.
+          </p>
+          {walletAddress && (
+            <button
+              onClick={() => refetch()}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
           )}
         </div>
-        <div className="mt-5">
-          {!walletAddress ? (
-            <Empty
-              icon={ShieldCheck}
-              title="No wallet connected"
-              description="Connect your wallet to view and manage your credentials."
-            />
-          ) : isLoading ? (
-            <SkeletonList count={3} />
-          ) : !credentials || credentials.length === 0 ? (
-            <Empty
-              icon={ShieldCheck}
-              title="No credentials yet"
-              description="Issue attestations to receive verifiable credentials that you can share with consent."
-            />
-          ) : (
+
+        {loading && !data ? (
+          <div className="rounded-lg border border-border bg-background/50 p-6 text-center">
+            <p className="text-sm text-muted-foreground">Loading credentials...</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-6 text-center">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        ) : !walletAddress ? (
+          <Empty
+            icon={ShieldCheck}
+            title="No wallet connected"
+            description="Connect your Solana wallet to view your credentials and attestations."
+          />
+        ) : !hasAttestation ? (
+          <Empty
+            icon={ShieldCheck}
+            title="No credentials found"
+            description="Create a CredLayer attestation first to generate your on-chain verifiable credential."
+          />
+        ) : (
+          <>
+            <div className="grid gap-5 md:grid-cols-3 mb-6">
+              <Stat 
+                label="Credentials" 
+                value="1"
+                note="CredLayer Attestation"
+              />
+              <Stat 
+                label="Status" 
+                value="Verified"
+                note="On-chain verified"
+              />
+              <Stat 
+                label="Network" 
+                value={data.score.network || "Solana"}
+                note="Blockchain network"
+              />
+            </div>
+
             <div className="space-y-4">
-              {credentials.map((credential) => (
-                <StyledCard key={credential.id}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <ShieldCheck className="size-5 text-primary" />
-                        <div>
-                          <h3 className="font-semibold">{credential.credentialType}</h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Issued by: {credential.issuer}
-                          </p>
-                        </div>
+              {/* Main CredLayer Attestation Credential */}
+              <StyledCard>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <ShieldCheck className="size-5 text-primary" />
+                      <div>
+                        <h3 className="font-semibold">CredLayer Trust Attestation</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Issued by: CredLayer Protocol
+                        </p>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-border">
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-border">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Status</p>
+                        <p className="text-sm font-semibold mt-1 text-green-500">
+                          Active
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Verification</p>
+                        <span className="text-xs px-2 py-1 rounded mt-1 inline-block bg-green-500/10 text-green-500">
+                          Verified
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Trust Score</p>
+                        <p className="text-sm mt-1 font-semibold">
+                          {data.score.trustScore} / 1000
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Risk Level</p>
+                        <p className="text-sm mt-1 font-semibold capitalize">
+                          {data.score.riskLevel.toLowerCase()}
+                        </p>
+                      </div>
+                      {data.score.confidence !== undefined && (
                         <div>
-                          <p className="text-xs text-muted-foreground">Status</p>
-                          <p className={`text-sm font-semibold mt-1 ${getCredentialStatusColor(credential.status)}`}>
-                            {credential.status.charAt(0).toUpperCase() + credential.status.slice(1)}
+                          <p className="text-xs text-muted-foreground">Confidence</p>
+                          <p className="text-sm mt-1">
+                            {(data.score.confidence * 100).toFixed(1)}%
                           </p>
                         </div>
+                      )}
+                      {data.timestamp && (
                         <div>
-                          <p className="text-xs text-muted-foreground">Verification</p>
-                          <span className={`text-xs px-2 py-1 rounded mt-1 inline-block ${getStatusColor(credential.verificationStatus)}`}>
-                            {credential.verificationStatus.charAt(0).toUpperCase() + credential.verificationStatus.slice(1)}
+                          <p className="text-xs text-muted-foreground">Last Updated</p>
+                          <p className="text-sm mt-1">
+                            {new Date(data.timestamp).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Credential Details */}
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-3">Credential Details</p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start justify-between py-1">
+                          <span className="text-muted-foreground">Wallet Address</span>
+                          <span className="font-mono text-xs break-all text-right max-w-[60%]">
+                            {walletAddress}
                           </span>
                         </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Issued</p>
-                          <p className="text-sm mt-1">
-                            {new Date(credential.issuedAt).toLocaleDateString()}
-                          </p>
+                        {data.attestationPda && (
+                          <div className="flex items-start justify-between py-1">
+                            <span className="text-muted-foreground">Attestation PDA</span>
+                            <span className="font-mono text-xs break-all text-right max-w-[60%]">
+                              {data.attestationPda}
+                            </span>
+                          </div>
+                        )}
+                        {data.txHash && (
+                          <div className="flex items-start justify-between py-1">
+                            <span className="text-muted-foreground">Transaction Hash</span>
+                            <span className="font-mono text-xs break-all text-right max-w-[60%]">
+                              {data.txHash}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-muted-foreground">Network</span>
+                          <span className="capitalize">{data.score.network || "Solana"}</span>
                         </div>
-                        {credential.expiresAt && (
-                          <div>
-                            <p className="text-xs text-muted-foreground">Expires</p>
-                            <p className="text-sm mt-1">
-                              {new Date(credential.expiresAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        )}
-                        {credential.lastVerifiedAt && (
-                          <div className="col-span-2">
-                            <p className="text-xs text-muted-foreground">Last Verified</p>
-                            <p className="text-sm mt-1">
-                              {new Date(credential.lastVerifiedAt).toLocaleString()}
-                            </p>
-                          </div>
-                        )}
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-muted-foreground">Verification Method</span>
+                          <span>On-Chain Attestation</span>
+                        </div>
                       </div>
-
-                      {credential.metadata && Object.keys(credential.metadata).length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-border">
-                          <p className="text-xs text-muted-foreground mb-2">Metadata</p>
-                          <pre className="text-xs bg-background/50 rounded p-2 overflow-auto">
-                            {JSON.stringify(credential.metadata, null, 2)}
-                          </pre>
-                        </div>
-                      )}
                     </div>
 
-                    <div className="ml-4">
-                      {(credential.verificationStatus === 'failed' || credential.verificationStatus === 'unverified') && (
-                        <button
-                          onClick={() => handleReverify(credential.id)}
-                          disabled={reverifyingId === credential.id}
-                          className="flex items-center gap-2 px-3 py-2 rounded bg-primary/10 hover:bg-primary/20 text-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <RefreshCw className={`size-4 ${reverifyingId === credential.id ? 'animate-spin' : ''}`} />
-                          Re-verify
-                        </button>
-                      )}
+                    {/* Attestation Metadata */}
+                    {(data.score.trustLevel || data.score.fraudProbability !== undefined) && (
+                      <div className="mt-4 pt-4 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-2">Attestation Metadata</p>
+                        <div className="text-xs bg-background/50 rounded p-3 space-y-1">
+                          {data.score.trustLevel && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Trust Level:</span>
+                              <span className="capitalize">{data.score.trustLevel}</span>
+                            </div>
+                          )}
+                          {data.score.fraudProbability !== undefined && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Fraud Probability:</span>
+                              <span>{(data.score.fraudProbability * 100).toFixed(2)}%</span>
+                            </div>
+                          )}
+                          {data.attestation.alreadyExisted !== undefined && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Type:</span>
+                              <span>{data.attestation.alreadyExisted ? 'Existing' : 'Newly Created'}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="ml-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-green-500">
+                        <ShieldCheck className="size-8" />
+                      </div>
+                      <span className="text-xs text-green-500 font-medium">Verified</span>
                     </div>
                   </div>
-                </StyledCard>
-              ))}
-
-              {failedCount > 0 && (
-                <div className="mt-4 p-4 rounded-lg border border-red-500/20 bg-red-500/5">
-                  <p className="text-sm text-red-500">
-                    <strong>{failedCount}</strong> credential{failedCount > 1 ? 's' : ''} failed verification. 
-                    Click "Re-verify" to attempt verification again.
-                  </p>
                 </div>
-              )}
+              </StyledCard>
+
+              <div className="mt-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">About Credentials:</strong> Your CredLayer attestation is a verifiable credential stored on-chain. 
+                  It proves your trust score and risk assessment in a cryptographically secure way. 
+                  This credential can be verified by anyone without revealing your private data.
+                </p>
+              </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </Shell>
   );
