@@ -11,7 +11,8 @@ import {
 } from '@solana/web3.js';
 import {
     getCreateAttestationInstruction,
-    deriveAttestationPda
+    deriveAttestationPda,
+    getAttestationDecoder
 } from 'sas-lib';
 import bs58 from 'bs58';
 import dotenv from 'dotenv';
@@ -29,79 +30,78 @@ const connection = new Connection(
 const SAS_PROGRAM_ID = new PublicKey('22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG');
 
 /**
- * AUDIT: SAS Attestation Account Layout
+ * Decode and validate a CredLayer trust attestation using official sas-lib decoder.
  * 
- * According to sas-lib v1.0.10 and SAS protocol spec:
- * Byte 0:         discriminator/version (u8) = 0
- * Bytes 1-33:     target_wallet (PublicKey, 32 bytes)
- * Bytes 33-65:    credential (PublicKey, 32 bytes)
- * Bytes 65-97:    schema (PublicKey, 32 bytes)
- * Bytes 97-101:   encoded_data_length (u32, little-endian)
- * Bytes 101+:     encoded_data (variable, Borsh-encoded payload)
- *
- * Payload format (as created by relayer):
- *   Bytes 0-2:    trust_score (u16, little-endian)
- *   Bytes 2-6:    riskLevel.length (u32, little-endian, Borsh string prefix)
- *   Bytes 6+:     riskLevel (UTF-8 string)
+ * This uses the official getAttestationDecoder() from sas-lib to ensure compatibility
+ * with any SAS account layout changes. The custom data payload is then extracted
+ * from the decoded attestation.
  * 
- * This decoder validates all three PublicKey fields match expectations.
+ * Returns decoded trust score and risk level if valid, null otherwise.
  */
 function decodeTrustAttestation(
     accountData: Buffer,
     targetWallet: PublicKey,
     credentialPda: PublicKey,
     schemaPda: PublicKey,
-) {
-    const DISCRIMINATOR_OFFSET = 0;
-    const TARGET_WALLET_OFFSET = 1;
-    const CREDENTIAL_OFFSET = 33;
-    const SCHEMA_OFFSET = 65;
-    const DATA_LENGTH_OFFSET = 97;
-    const PAYLOAD_OFFSET = 101;
+): { trustScore: number; riskLevel: string } | null {
+    try {
+        // Use official sas-lib decoder for robust account parsing
+        const decoder = getAttestationDecoder();
+        const attestation = decoder.decode(new Uint8Array(accountData));
 
-    // Validate minimum length
-    if (accountData.length < PAYLOAD_OFFSET) {
+        // Verify the attestation matches our expected parameters
+        const targetWalletBase58 = targetWallet.toBase58();
+        const credentialBase58 = credentialPda.toBase58();
+        const schemaBase58 = schemaPda.toBase58();
+
+        if (attestation.nonce !== targetWalletBase58) {
+            console.log('[Decode] Nonce mismatch:', {
+                expected: targetWalletBase58,
+                actual: attestation.nonce,
+            });
+            return null;
+        }
+        if (attestation.credential !== credentialBase58) {
+            console.log('[Decode] Credential mismatch:', {
+                expected: credentialBase58,
+                actual: attestation.credential,
+            });
+            return null;
+        }
+        if (attestation.schema !== schemaBase58) {
+            console.log('[Decode] Schema mismatch:', {
+                expected: schemaBase58,
+                actual: attestation.schema,
+            });
+            return null;
+        }
+
+        // Decode the custom data payload: u16 trust_score + u32 length + UTF-8 risk_level
+        const dataPayload = Buffer.from(attestation.data);
+        if (dataPayload.length < 6) {
+            console.log('[Decode] Data payload too short:', dataPayload.length);
+            return null;
+        }
+
+        const trustScore = dataPayload.readUInt16LE(0);
+        const riskLength = dataPayload.readUInt32LE(2);
+        
+        if (trustScore > 1000 || riskLength !== dataPayload.length - 6) {
+            console.log('[Decode] Invalid trust score or length:', { trustScore, riskLength, payloadLength: dataPayload.length });
+            return null;
+        }
+
+        const riskLevel = dataPayload.toString('utf8', 6);
+        if (!['LOW', 'MEDIUM', 'HIGH', 'MINIMAL'].includes(riskLevel)) {
+            console.log('[Decode] Invalid risk level:', riskLevel);
+            return null;
+        }
+
+        return { trustScore, riskLevel };
+    } catch (error) {
+        console.error('[Decode Error]', error);
         return null;
     }
-
-    // Check discriminator
-    if (accountData.readUInt8(DISCRIMINATOR_OFFSET) !== 0) {
-        return null;
-    }
-
-    // Validate all three PublicKey fields
-    if (!new PublicKey(accountData.subarray(TARGET_WALLET_OFFSET, CREDENTIAL_OFFSET)).equals(targetWallet)) {
-        return null;
-    }
-    if (!new PublicKey(accountData.subarray(CREDENTIAL_OFFSET, SCHEMA_OFFSET)).equals(credentialPda)) {
-        return null;
-    }
-    if (!new PublicKey(accountData.subarray(SCHEMA_OFFSET, DATA_LENGTH_OFFSET)).equals(schemaPda)) {
-        return null;
-    }
-
-    // Read and validate encoded data length
-    const encodedDataLength = accountData.readUInt32LE(DATA_LENGTH_OFFSET);
-    if (encodedDataLength < 6 || PAYLOAD_OFFSET + encodedDataLength > accountData.length) {
-        return null;
-    }
-
-    // Extract and parse payload
-    const scorePayload = accountData.subarray(PAYLOAD_OFFSET, PAYLOAD_OFFSET + encodedDataLength);
-    const trustScore = scorePayload.readUInt16LE(0);
-    const riskLength = scorePayload.readUInt32LE(2);
-
-    // Validate trust score range and payload structure
-    if (trustScore > 1000 || riskLength !== scorePayload.length - 6) {
-        return null;
-    }
-
-    const riskLevel = scorePayload.toString('utf8', 6);
-    if (!['LOW', 'MEDIUM', 'HIGH', 'MINIMAL'].includes(riskLevel)) {
-        return null;
-    }
-
-    return { trustScore, riskLevel };
 }
 
 /**
@@ -262,7 +262,7 @@ app.post('/api/v1/attestations/issue', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: "Invalid trust score" });
         }
 
-        if (![\"LOW\", \"MEDIUM\", \"HIGH\", \"MINIMAL\"].includes(String(riskLevel).toUpperCase())) {
+        if (!["LOW", "MEDIUM", "HIGH", "MINIMAL"].includes(String(riskLevel).toUpperCase())) {
             return res.status(400).json({ success: false, error: "Invalid risk level" });
         }
         const normalizedRiskLevel = String(riskLevel).toUpperCase();
