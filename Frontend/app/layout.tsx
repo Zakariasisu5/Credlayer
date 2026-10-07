@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 import "./lib/polyfills";
-import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/providers";
 import { ConsoleFilter } from "./components/console-filter";
 
-const inter = Inter({
+// Using system fonts to avoid Turbopack font loading issues
+const inter = {
   variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
+};
 
-const geistMono = Geist_Mono({
+const geistMono = {
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+};
 
 export const metadata: Metadata = {
   title: "CredLayer — AI-Powered Web3 Trust & Verification",

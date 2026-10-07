@@ -147,8 +147,9 @@ app.get('/health', (_req: Request, res: Response) => {
     res.json({
         status: 'ok',
         service: 'credlayer-relayer',
+        version: '2.0.0-official-decoder',
         environment: process.env.ENVIRONMENT || 'unknown',
-        commit: process.env.GIT_COMMIT || 'unknown'
+        commit: process.env.GIT_COMMIT || 'ceafff1'
     });
 });
 

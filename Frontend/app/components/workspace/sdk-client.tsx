@@ -112,7 +112,7 @@ export function TrustScoreLiveDemo() {
     setResult(value);
   };
 
-  // On wallet connect/disconnect/change — local cache only, no network call.
+  // On wallet connect/disconnect/change — check backend for existing attestation
   useEffect(() => {
     const walletChanged = previousWalletAddress.current !== walletAddress;
     const prevWallet = previousWalletAddress.current;
@@ -134,27 +134,103 @@ export function TrustScoreLiveDemo() {
       return;
     }
 
-    console.log(`[FRONTEND] Wallet connected: ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}`);
+    console.log(`[Wallet Flow] Wallet connected: ${walletAddress}`);
     
-    // New wallet connected — check LOCAL cache only, never hit the network
+    // Check LOCAL cache first for instant display
     const cached = loadCachedResult(walletAddress);
     if (cached) {
-      console.log(`[FRONTEND] Found cached attestation for wallet`)
+      console.log(`[Wallet Flow] Found cached attestation, displaying immediately`)
       setLastKnownResult(cached);
       setFlowState("success");
+      // Don't return — still check backend to verify cache is up-to-date
     } else {
-      console.log(`[FRONTEND] No cached attestation, ready for user to click button`)
       setLastKnownResult(null);
       setErrorMessage(null);
-      setFlowState("wallet"); // idle — waiting for the user to click the button
+      setFlowState("checking");
     }
+
+    // Check backend for existing attestation (READ-ONLY)
+    const checkExistingAttestation = async () => {
+      console.log(`[Wallet Flow] Checking backend for existing attestation...`);
+      const controller = new AbortController();
+      requestController.current = controller;
+
+      try {
+        const checkUrl = apiClient.getUri({
+          url: `/scores/${encodeURIComponent(walletAddress)}/attestation/check`,
+        });
+        
+        const checkResponse = await fetch(checkUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (checkResponse.ok) {
+          const checkPayload = (await checkResponse.json().catch(() => ({}))) as {
+            success?: boolean;
+            exists?: boolean;
+            attestation?: {
+              trustScore?: number;
+              riskLevel?: string;
+              verified?: boolean;
+            };
+          };
+
+          console.log(`[Wallet Flow] Check response:`, checkPayload);
+
+          // If attestation exists on-chain, display it immediately
+          if (checkPayload.success && checkPayload.exists && checkPayload.attestation) {
+            const trustScore = Number(checkPayload.attestation.trustScore ?? 0);
+            const riskLevel = String(checkPayload.attestation.riskLevel ?? "unknown").toUpperCase();
+
+            if (Number.isFinite(trustScore) && riskLevel) {
+              console.log(`[Wallet Flow] Existing wallet found - trustScore: ${trustScore}, riskLevel: ${riskLevel}`);
+              
+              const existingResult: AttestationResult = {
+                score: { trustScore, riskLevel },
+                attestation: {
+                  verified: true,
+                  alreadyExisted: true,
+                  trustScore,
+                  riskLevel,
+                },
+              };
+
+              setLastKnownResult(existingResult);
+              saveCachedResult(walletAddress, existingResult);
+              setFlowState("success");
+              return;
+            }
+          }
+        }
+
+        // No existing attestation found
+        console.log(`[Wallet Flow] New wallet - no existing attestation found`);
+        setFlowState("wallet"); // Show "Get Trust Score & Attestation" button
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error(`[Wallet Flow] Error checking existing attestation:`, error);
+        // On error, assume new wallet and show button
+        setFlowState("wallet");
+      } finally {
+        if (requestController.current === controller) {
+          requestController.current = null;
+        }
+      }
+    };
+
+    checkExistingAttestation();
   }, [walletAddress]);
 
   const runAttestation = async () => {
     if (!walletAddress || requestController.current) return;
 
     const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    console.log(`[${requestId}] FRONTEND: Starting attestation flow for wallet: ${walletAddress}`);
+    console.log(`[Wallet Flow] User clicked "Get Trust Score & Attestation"`);
+    console.log(`[Wallet Flow] Creating attestation for wallet: ${walletAddress}`);
 
     const controller = new AbortController();
     requestController.current = controller;
@@ -168,72 +244,12 @@ export function TrustScoreLiveDemo() {
     setFlowState("preparing");
 
     try {
-      // Step 1: Check if attestation already exists
-      console.log(`[${requestId}] FRONTEND: Step 1 - Checking if attestation exists`)
-      setFlowState("checking");
-      const checkUrl = apiClient.getUri({
-        url: `/scores/${encodeURIComponent(walletAddress)}/attestation/check`,
-      });
-      console.log(`[${requestId}] FRONTEND: GET ${checkUrl}`)
-      
-      const checkResponse = await fetch(checkUrl, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        signal: controller.signal,
-      });
-
-      console.log(`[${requestId}] FRONTEND: Check response status: ${checkResponse.status}`)
-
-      if (checkResponse.ok) {
-        const checkPayload = (await checkResponse.json().catch(() => ({}))) as {
-          success?: boolean;
-          exists?: boolean;
-          attestation?: {
-            trustScore?: number;
-            riskLevel?: string;
-            verified?: boolean;
-          };
-        };
-
-        console.log(`[${requestId}] FRONTEND: Check payload: ${JSON.stringify(checkPayload)}`)
-
-        // If attestation exists, display it without creating a new one
-        if (checkPayload.success && checkPayload.exists && checkPayload.attestation) {
-          const trustScore = Number(checkPayload.attestation.trustScore ?? 0);
-          const riskLevel = String(checkPayload.attestation.riskLevel ?? "unknown").toUpperCase();
-
-          console.log(`[${requestId}] FRONTEND: Existing attestation found!`)
-
-          if (Number.isFinite(trustScore) && riskLevel) {
-            setFlowState("existing");
-            const finalResult: AttestationResult = {
-              score: { trustScore, riskLevel },
-              attestation: {
-                verified: true,
-                alreadyExisted: true,
-                trustScore,
-                riskLevel,
-              },
-            };
-
-            setLastKnownResult(finalResult);
-            saveCachedResult(walletAddress, finalResult);
-            setFlowState("success");
-            return;
-          }
-        }
-      }
-
-      // Step 2: If no existing attestation, create a new one
-      console.log(`[${requestId}] FRONTEND: Step 2 - Creating new attestation`)
+      // Create the attestation (we already checked existence on wallet connection)
+      console.log(`[Wallet Flow] Creating new attestation`)
       setFlowState("scoring");
       const url = apiClient.getUri({
         url: `/scores/${encodeURIComponent(walletAddress)}/attestation`,
       });
-      console.log(`[${requestId}] FRONTEND: POST ${url}`)
-      console.log(`[${requestId}] FRONTEND: Wallet being sent: ${walletAddress}`)
       
       const response = await fetch(url, {
         method: "POST",
@@ -244,7 +260,7 @@ export function TrustScoreLiveDemo() {
         signal: controller.signal,
       });
 
-      console.log(`[${requestId}] FRONTEND: POST response status: ${response.status}`)
+      console.log(`[Wallet Flow] POST response status: ${response.status}`)
 
       const payload = (await response.json().catch(() => ({}))) as {
         success?: boolean;
@@ -266,7 +282,7 @@ export function TrustScoreLiveDemo() {
         message?: string;
       };
 
-      console.log(`[${requestId}] FRONTEND: Response payload:`, payload)
+      console.log(`[Wallet Flow] Response payload:`, payload)
 
       // Handle success (200 OK with success: true)
       if (response.ok && payload.success === true) {
@@ -285,7 +301,8 @@ export function TrustScoreLiveDemo() {
           throw new Error("verification");
         }
 
-        console.log(`[${requestId}] FRONTEND: SUCCESS - Attestation created`)
+        console.log(`[Wallet Flow] SUCCESS - Attestation created/verified`)
+        console.log(`[Wallet Flow] Trust Score: ${trustScore}, Risk Level: ${riskLevel}`)
 
         const finalResult: AttestationResult = {
           score: { trustScore, riskLevel },
@@ -305,11 +322,11 @@ export function TrustScoreLiveDemo() {
 
       // Otherwise, treat as error
       const detail = payload.detail || payload.error || payload.message || "attestation";
-      console.log(`[${requestId}] FRONTEND: ERROR - ${detail}`)
+      console.log(`[Wallet Flow] ERROR - ${detail}`)
       throw new Error(typeof detail === "string" ? detail : "attestation");
     } catch (error) {
       if (controller.signal.aborted) return;
-      console.error(`[${requestId}] FRONTEND: Attestation flow failed`, error);
+      console.error(`[Wallet Flow] Attestation creation failed`, error);
 
       const rawDetail = error instanceof Error ? error.message : String(error);
       const showableDetail =
@@ -381,11 +398,19 @@ export function TrustScoreLiveDemo() {
                 ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
                 : "Not connected"}
             </p>
+            {walletAddress && flowState === "checking" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Checking for existing attestation...
+              </p>
+            )}
           </div>
         </div>
 
-        {walletAddress && flowState !== "success" && (
+        {walletAddress && flowState === "wallet" && (
           <div className="py-6">
+            <p className="mb-4 text-sm text-muted-foreground">
+              No existing attestation found for this wallet.
+            </p>
             <button
               type="button"
               onClick={runAttestation}
@@ -497,7 +522,63 @@ export function TrustScoreLiveDemo() {
             </p>
             <button
               type="button"
-              onClick={runAttestation}
+              onClick={() => {
+                // Clear cache and re-check from backend
+                if (walletAddress) {
+                  clearCachedResult(walletAddress);
+                  setFlowState("checking");
+                  // Trigger the wallet effect by temporarily changing state
+                  const currentWallet = walletAddress;
+                  previousWalletAddress.current = null;
+                  previousWalletAddress.current = currentWallet;
+                  // Re-run the check
+                  (async () => {
+                    const controller = new AbortController();
+                    requestController.current = controller;
+                    try {
+                      const checkUrl = apiClient.getUri({
+                        url: `/scores/${encodeURIComponent(currentWallet)}/attestation/check`,
+                      });
+                      const checkResponse = await fetch(checkUrl, {
+                        method: "GET",
+                        headers: { Accept: "application/json" },
+                        signal: controller.signal,
+                      });
+                      if (checkResponse.ok) {
+                        const checkPayload = await checkResponse.json().catch(() => ({})) as {
+                          success?: boolean;
+                          exists?: boolean;
+                          attestation?: { trustScore?: number; riskLevel?: string; verified?: boolean; };
+                        };
+                        if (checkPayload.success && checkPayload.exists && checkPayload.attestation) {
+                          const trustScore = Number(checkPayload.attestation.trustScore ?? 0);
+                          const riskLevel = String(checkPayload.attestation.riskLevel ?? "unknown").toUpperCase();
+                          if (Number.isFinite(trustScore) && riskLevel) {
+                            const refreshedResult: AttestationResult = {
+                              score: { trustScore, riskLevel },
+                              attestation: { verified: true, alreadyExisted: true, trustScore, riskLevel },
+                            };
+                            setLastKnownResult(refreshedResult);
+                            saveCachedResult(currentWallet, refreshedResult);
+                            setFlowState("success");
+                            return;
+                          }
+                        }
+                      }
+                      setFlowState("wallet");
+                    } catch (error) {
+                      if (!controller.signal.aborted) {
+                        console.error("[Wallet Flow] Refresh failed", error);
+                        setFlowState("wallet");
+                      }
+                    } finally {
+                      if (requestController.current === controller) {
+                        requestController.current = null;
+                      }
+                    }
+                  })();
+                }
+              }}
               disabled={isProcessing}
               className="mt-6 min-h-10 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:opacity-60"
             >
